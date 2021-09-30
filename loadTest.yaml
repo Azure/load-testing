@@ -1,6 +1,0 @@
-version: v0.1
-testName: sampleaztest
-testPlan: valid.jmx
-description: 'SampleApp Test Run'
-engineInstances: 1
-engineSize: S

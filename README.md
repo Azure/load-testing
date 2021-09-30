@@ -1,14 +1,42 @@
-# Project
+# Load-Testing
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
 
-As the maintainer of this project, please make a few updates:
+# Azure Service Principal for RBAC
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+For using any credentials like Azure Service Principal in your workflow, add them as secrets in the GitHub Repository and then refer them in the workflow.
+
+Run Azure CLI command to create an Azure Service Principal for RBAC:
+    az ad sp create-for-rbac --name "myApp" --role contributor \
+                             --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
+                             --sdk-auth
+    
+    # Replace {subscription-id}, {resource-group} with the subscription, resource group 
+    # The command should output a JSON object similar to this:
+
+  {
+    "clientId": "<GUID>",
+    "clientSecret": "<GUID>",
+    "subscriptionId": "<GUID>",
+    "tenantId": "<GUID>",
+    (...)
+  }
+You can further scope down the Azure Credentials using scope attribute. For example,
+ az ad sp create-for-rbac --name "myApp" --role contributor \
+                          --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Web/sites/{app-name} \
+                          --sdk-auth
+
+# Replace {subscription-id}, {resource-group}, and {app-name} with the names of your subscription, resource group, and Azure Web App.
+Paste the json response from above Azure CLI to your GitHub Repository > Settings > Secrets > Add a new secret > AZURE_CREDENTIALS
+
+- name: load-testing
+  uses: azure/load-testing@v1
+  with:
+    azuresubscription: ${{ secrets.AZURE_CREDENTIALS }}
+    YAMLFilePath: loadTest.yaml 
+    loadtestresource: 'cloudtestres'
+    resourcegroup: 'requestworkerdev'
+
+
 
 ## Contributing
 
