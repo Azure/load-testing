@@ -10,8 +10,8 @@ Run Azure CLI command to create an Azure Service Principal for RBAC:
                              --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
                              --sdk-auth
     
-    # Replace {subscription-id}, {resource-group} with the subscription, resource group 
-    # The command should output a JSON object similar to this:
+    Replace {subscription-id}, {resource-group} with the subscription, resource group 
+    The command should output a JSON object similar to this:
 
   {
     "clientId": "<GUID>",
