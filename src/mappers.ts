@@ -49,7 +49,7 @@ export async function createTestHeader() {
 export function uploadFileData(filepath: string) {
     const formData = new FormData();
     let filedata = fs.readFileSync(filepath);
-    var index = filepath.lastIndexOf('//');
+    var index = filepath.lastIndexOf('/');
     var filename = filepath.substring(index+1);
     formData.append('file',filedata,filename);
     return formData;
@@ -123,7 +123,7 @@ export function getInputParams() {
         testdesc = config.description;
         engineInstances = config.engineInstances;
         engineSize = config.engineSize;
-        let path = YamlPath.substr(0, YamlPath.indexOf('//')+1);
+        let path = YamlPath.substr(0, YamlPath.indexOf('/')+1);
         testPlan = path + config.testPlan;
         if(config.configurationFiles != null) {
             configFiles = config.configurationFiles;
@@ -175,7 +175,7 @@ export function getTestName() {
 }
 
 export function getFileName(filepath:string) {
-    var index = filepath.lastIndexOf('//');
+    var index = filepath.lastIndexOf('/');
     var filename = filepath.substring(index+1);
     var extIndex = filename.indexOf('.');
     if(extIndex != -1)
