@@ -1,0 +1,21 @@
+name: 'AzureLoadTest'
+description: 'Automation workflow for azure load test'
+inputs:
+  azuresubscription:
+    description: 'Azure Credentials'
+    required: true
+  YAMLFilePath:
+    description: 'Path of the YAML file. Should be fully qualified path or relative to the default working directory'
+    required: true
+  loadtestResource:
+    description: 'Enter or Select the name of an existing Azure Load Testing resource'
+    required: true
+  resourceGroup:
+    description: 'Enter or Select the Azure Resource Group that contains the Load test resource specified above'
+    required: true
+branding:
+    icon: 'extension-icon.svg'
+    color: 'blue'
+runs:
+  using: 'node12'
+  main: 'lib/main.js'
