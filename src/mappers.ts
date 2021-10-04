@@ -22,7 +22,7 @@ export function createTestData() {
     var data = {
         testId: testName,
         description: testdesc,
-        displayName: testName,
+        displayName: getDefaultTestName(),
         resourceId: resourceId,
         loadTestConfig: {
             engineSize: engineSize,
@@ -60,7 +60,7 @@ export async function UploadAndValidateHeader(formData:any) {
 export function startTestData(testRunName:string) {
     var data = {
         testRunId: testRunName,
-        displayName: testRunName,
+        displayName: getDefaultTestRunName(),
         testId: testName,
         resourceId: resourceId,
         description: "Sample testRun"
@@ -155,6 +155,23 @@ async function execAz(cmdArguments: string[]): Promise<any> {
       });
     });
   }
+  export function getDefaultTestName()
+  {
+    const a = (new Date(Date.now())).toLocaleString()
+    const b = a.split(", ")
+    const c = a.split(" ")
+    return "Test_"+b[0]+"_"+c[1]+c[2]
+
+}
+
+export function getDefaultTestRunName()
+{
+    const a = (new Date(Date.now())).toLocaleString()
+    const b = a.split(", ")
+    const c = a.split(" ")
+    return "TestRun_"+b[0]+"_"+c[1]+c[2]
+}
+
 export function getYamlPath() {
     return YamlPath;
 }
