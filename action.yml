@@ -1,9 +1,6 @@
 name: 'AzureLoadTest'
 description: 'Automation workflow for azure load test'
 inputs:
-  azuresubscription:
-    description: 'Azure Credentials'
-    required: true
   YAMLFilePath:
     description: 'Path of the YAML file. Should be fully qualified path or relative to the default working directory'
     required: true
