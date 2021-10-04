@@ -13,7 +13,7 @@ let resourceId = '';
 
 async function run() {
     try {  
-        map.getInputParams();
+        await map.getInputParams();
         resourceId = map.getResourceId();
         testName = map.getTestName();
 
@@ -132,16 +132,15 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         testStatus = testRunObj.status;
         if(testStatus == "DONE") {
             util.printTestDuration(testRunObj.vusers, startTime);
+            util.printClientMetrics(testRunObj.testRunStatistics);
             var testResultUrl = util.getResultFolder(testRunObj.testArtifacts);
             if(testResultUrl != null) {
                 const response = await httpClient.get(testResultUrl);
                 if (response.message.statusCode != 200) {
-                    throw "Error in fetching clientmetrics ";
+                    throw "Error in fetching results ";
                 }
                 else {
-                    var obj = await util.getResultsFile(response);
-                    if(obj != undefined)
-                        await util.getStatisticsFile(obj);
+                    await util.getResultsFile(response);
                 }
             }
             return;

@@ -35,6 +35,14 @@ export async function getResultsFile(response:any)
         throw err;
     }
 }
+export async function printClientMetrics(obj:any) {
+    var statisticsobj = JSON.stringify(obj);
+    console.log("------------------Client-side metrics------------\n");
+        for(var key in obj) {
+            if(key != "Total")
+                printMetrics(obj[key]);
+        }
+}
 export async function getStatisticsFile(obj:any) {
     let target = path.join('dropResults',"reports");
     try 

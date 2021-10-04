@@ -4,7 +4,7 @@ const yaml = require('js-yaml');
 const jwt_decode = require('jwt-decode');
 import * as fs from 'fs';
 var FormData = require('form-data');
-var AuthenticationContext = require('adal-node').AuthenticationContext;
+import { execFile } from "child_process";
 
 var testName='';
 var testdesc = 'SampleTest';
@@ -16,8 +16,6 @@ var token='';
 var resourceId='';
 var subscriptionID='';
 var tenantId='';
-var clientId='';
-var clientkey='';
 var YamlPath='';
 
 export function createTestData() {
@@ -35,10 +33,6 @@ export function createTestData() {
 }
 
 export async function createTestHeader() {
-    if(token == '') {
-        var tokenRes:any = await getTokenAPI();
-        token = tokenRes.accessToken;
-    }
     let headers: IHeaders = {
         'content-type': 'application/merge-patch+json',
         'Authorization': 'Bearer '+ token
@@ -75,8 +69,7 @@ export function startTestData(testRunName:string) {
 }
 export async function getTestRunHeader() {
     if(!isExpired()) {
-        var tokenRes:any = await getTokenAPI();
-        token = tokenRes.accessToken;
+        await getAccessToken();
     }
     let headers: IHeaders = {
         'content-type': 'application/json',
@@ -91,22 +84,6 @@ async function isExpired() {
     return header && header.exp > now
 }
 
-async function getTokenAPI() 
-{  
-    var authorityHostUrl = 'https://login.windows.net';
-    var authorityUrl = authorityHostUrl + '/' + tenantId;
-    var resource = 'https://loadtest.azure-dev.com'; 
-    var context = new AuthenticationContext(authorityUrl);
-    return new Promise((resolve, reject) => {
-        context.acquireTokenWithClientCredentials(resource, clientId, clientkey, (err:any, token:any) => {
-            if (err) {
-            reject(err);
-            } else {
-            resolve(token);
-            }
-        });
-    });
-}
 export function getResourceId() {
     const rg: string = core.getInput('resourceGroup');
     const ltres: string = core.getInput('loadtestResource');
@@ -114,21 +91,23 @@ export function getResourceId() {
     return resourceId;
 }
 
-export function getInputParams() {
+export async function getInputParams() {
     try {
-        getAuthInputs();
+        await getAccessToken();
         YamlPath = core.getInput('YAMLFilePath');
         const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
         testName = (config.testName).toLowerCase();
         testdesc = config.description;
         engineInstances = config.engineInstances;
         engineSize = config.engineSize;
-        let path = YamlPath.substr(0, YamlPath.indexOf('/')+1);
+        let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
         testPlan = path + config.testPlan;
         if(config.configurationFiles != null) {
-            configFiles = config.configurationFiles;
-            configFiles.forEach(file => {
+            var tempconfigFiles: string[]=[];
+            tempconfigFiles = config.configurationFiles;
+            tempconfigFiles.forEach(file => {
                 file = path + file;
+                configFiles.push(file);
             });
         }
         if(testName === '' || testPlan === '') {
@@ -140,25 +119,42 @@ export function getInputParams() {
     }
 }
 
-async function getAuthInputs() {
-    var credentials: string = core.getInput('azuresubscription');
-    let credsObject: { [key: string]: string };
+async function getAccessToken() {
     try {
-      credsObject = JSON.parse(credentials);
-      
-    } catch (ex) {
-      throw new Error("Credentials object is not a valid JSON");
+        let aud = "https://loadtest.azure-dev.com";
+        const cmdArguments = ["account", "get-access-token", "--resource"];
+        cmdArguments.push(aud);
+        var result: any = await execAz(cmdArguments);
+        token = result.accessToken;
+        subscriptionID = result.subscription;
+        tenantId = result.tenant;
+        return token;
+    } 
+    catch (err:any) {
+      const message =
+        `An error occurred while getting credentials from ` + `Azure CLI: ${err.stack}`;
+      throw new Error(message);
     }
-  
-    clientId = credsObject["clientId"];
-    clientkey = credsObject["clientSecret"];
-    tenantId = credsObject["tenantId"];
-    subscriptionID = credsObject["subscriptionId"];
-    if(clientId == '' || clientkey == '' || tenantId == '' || subscriptionID == '' )
-    throw new Error(
-        "Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionID are supplied in the provided object"
-      );
-}
+  }
+
+async function execAz(cmdArguments: string[]): Promise<any> {
+    const azCmd = process.platform === "win32" ? "az.cmd" : "az";
+    return new Promise<any>((resolve, reject) => {
+      execFile(azCmd, [...cmdArguments, "--out", "json"], { encoding: "utf8" }, (error:any, stdout:any) => {
+        if (error) {
+          return reject(error);
+        }
+        try {
+          return resolve(JSON.parse(stdout));
+        } catch (err:any) {
+          const msg =
+            `An error occurred while parsing the output "${stdout}", of ` +
+            `the cmd az "${cmdArguments}": ${err.stack}.`;
+          return reject(new Error(msg));
+        }
+      });
+    });
+  }
 export function getYamlPath() {
     return YamlPath;
 }
