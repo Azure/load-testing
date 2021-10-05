@@ -1,8 +1,6 @@
 # GitHub Action for Azure Load Testing
 
-[GitHub Actions](https://help.github.com/en/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow. 
-
-You can automate your workflows to deploy to run load tests on Azure.
+[GitHub Actions](https://help.github.com/en/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow. You can automate your workflows to run load tests on Azure.
 
 Get started today with a [free Azure account](https://azure.com/free/open-source)!
 
