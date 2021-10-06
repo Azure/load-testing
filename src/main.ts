@@ -6,7 +6,7 @@ import * as fs from 'fs';
 var FormData = require('form-data');
 
 const resultFolder = 'loadTest';
-const baseURL = 'https://testmanager-rel.wus2.cnt-test.azcnt-test.io/';
+const baseURL = 'https://testmanager-rel.wus2.cnt-dev.azcnt-test.io/';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('user-agent');
 let testName = '';
 let resourceId = '';
