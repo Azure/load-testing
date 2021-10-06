@@ -17,7 +17,7 @@ export async function printTestDuration(vusers:string, startTime:Date)
 export async function getResultsFile(response:any) 
 {
     try {
-        const filePath = path.join('dropResults','results.zip');
+        const filePath = path.join('loadTest','results.zip');
         const file: NodeJS.WritableStream = fs.createWriteStream(filePath);
         
         return new Promise((resolve, reject) => {
