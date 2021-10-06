@@ -53,6 +53,8 @@ For using any credentials like Azure Service Principal in your workflow, add the
     loadtestResource: '<Name of the load test resource>'
     resourceGroup: '<Name of the resource group>'
 ```
+The results files are exported to the folder “loadTest\results.zip”
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
