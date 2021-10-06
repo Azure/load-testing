@@ -4,7 +4,7 @@
 
 Get started today with a [free Azure account](https://azure.com/free/open-source)!
 
-This repository contains [GitHub Action for Azure Load Testing sercice](/action.yml) to create and run load tests.
+This repository contains [GitHub Action for Azure Load Testing service](/action.yml) to create and run load tests.
 
 The definition of this GitHub Action is in [action.yml](/action.yml).
 
