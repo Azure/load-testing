@@ -14,6 +14,32 @@ export async function printTestDuration(vusers:string, startTime:Date)
     console.log("TestStatus: DONE \n");
     return;
 }
+export function printCriteria(criteria:any) {
+    printTestResult(criteria);
+    console.log("Criteria\t\t\t\t\t :Actual Value\t   Result");
+    for(var key in criteria) {
+        var metric = criteria[key];
+        var str = metric.aggregate+"("+metric.clientmetric+") "+ metric.condition+ ' '+metric.value;
+        str += ((metric.clientmetric == "error") ? ", " : "ms, ") + metric.action;
+        var spaceCount = 50 - str.length;
+        while(spaceCount--)
+            str+=' ';
+        console.log(str + metric.actualValue+"\t\t  "+metric.result);
+    }
+    console.log("\n");
+}
+function printTestResult(criteria:any) {
+    let pass = 0; 
+    let fail = 0;
+    for(var key in criteria) {
+        if(criteria[key].result == "passed")
+            pass++;
+        else if(criteria[key].result == "failed")
+            fail++;
+    }
+    console.log("-------------------Test Criteria ---------------");
+    console.log("Results\t\t\t :"+pass+"pass  "+fail+"fail\n");
+}
 export async function getResultsFile(response:any) 
 {
     try {
@@ -90,8 +116,8 @@ export function sleep(ms:any) {
     });
 }  
 
-export function getTestRunId() {
-    return uuidv4();
+export function getUniqueId() {
+    return uuidv4().toString();
 }
 export function getResultFolder(testArtifacts:any) {
     if(testArtifacts == null || testArtifacts.outputArtifacts == null)
@@ -113,4 +139,33 @@ export function deleteFile(foldername:string)
         });
         fs.rmdirSync(foldername);
     }
+}
+export function indexOfFirstDigit(input: string) {
+    let i = 0;
+    for (; input[i] < '0' || input[i] > '9'; i++);
+    return i == input.length ? -1 : i;
+  }
+export function removeUnits(input:string) 
+{
+    let i = 0;
+    for (; input[i] >= '0' && input[i] <= '9'; i++);
+    return i == input.length ? input : input.substring(0,i);
+}
+export function validCriteria(data:any) {
+    if(data.clientmetric == "error") {
+        return validErrorCriteria(data);
+    }
+    else if(data.clientmetric == "response_time" || data.clientmetric == "latency")
+        return validClientMetricCriteria(data);
+    return false;
+}
+
+function validErrorCriteria(data:any)  {
+    return !(data.aggregate != "rate" || data.condition != '>' 
+        || Number(data.value)<0 || Number(data.value)>100 || data.action!= "continue");
+}
+
+function validClientMetricCriteria(data:any)  {
+    return !(data.aggregate != "avg" || data.condition != '>' 
+        || (data.value).indexOf('.')!=-1 || data.action!= "continue");
 }

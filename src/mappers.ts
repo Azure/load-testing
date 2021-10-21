@@ -5,7 +5,8 @@ const jwt_decode = require('jwt-decode');
 import * as fs from 'fs';
 var FormData = require('form-data');
 import { execFile } from "child_process";
-
+import * as util from './util';
+import * as index from './main';
 var testName='';
 var testdesc = 'SampleTest';
 var engineSize='s';
@@ -17,8 +18,47 @@ var resourceId='';
 var subscriptionID='';
 var tenantId='';
 var YamlPath='';
+var passFailCriteria: any[] = []
 
+export interface criteriaObj {
+    aggregate: string;
+    clientmetric: string;
+    condition: string;
+    value: number;
+    action: string;
+    actualValue: number;
+    result: null;
+};
+export interface paramObj {
+    type: string;
+    value: string;
+};
+
+let failCriteria: { [name: string]: criteriaObj|null } = {};
+let secretsYaml: { [name: string]: paramObj|null } = {};
+let secretsRun: { [name: string]: paramObj } = {};
+let envYaml: { [name: string]: string|null } = {};
+let envRun: { [name: string]: string } = {};
+let minValue: { [name: string]: number } = {};
+
+function getExistingData() {
+    var existingCriteria:any = index.getExistingCriteria();
+    for(var key in existingCriteria) {
+        failCriteria[key] = null;
+    }
+    var existingParams:any = index.getExistingParams();
+    for(var key in existingParams) {
+        if(!secretsYaml.hasOwnProperty(key))
+            secretsYaml[key] = null;
+    }
+    var existingEnv:any = index.getExistingEnv();
+    for(var key in existingEnv) {
+        if(!envYaml.hasOwnProperty(key))
+            envYaml[key] = null;
+    }
+}
 export function createTestData() {
+    getExistingData();
     var data = {
         testId: testName,
         description: testdesc,
@@ -27,6 +67,11 @@ export function createTestData() {
         loadTestConfig: {
             engineSize: engineSize,
             engineInstances: engineInstances
+        },
+        secrets: secretsYaml,
+        environmentVariables: envYaml,
+        passFailCriteria:{
+            passFailMetrics: failCriteria
         }
     };
     return data;
@@ -63,7 +108,9 @@ export function startTestData(testRunName:string) {
         displayName: getDefaultTestRunName(),
         testId: testName,
         resourceId: resourceId,
-        description: "Sample testRun"
+        description: "Sample testRun",
+        secrets: secretsRun,
+        environmentVariables: envRun
     };
     return data;
 }
@@ -92,30 +139,36 @@ export function getResourceId() {
 }
 
 export async function getInputParams() {
-    try {
-        await getAccessToken();
-        YamlPath = core.getInput('YAMLFilePath');
-        const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
-        testName = (config.testName).toLowerCase();
-        testdesc = config.description;
-        engineInstances = config.engineInstances;
-        engineSize = config.engineSize;
-        let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
-        testPlan = path + config.testPlan;
-        if(config.configurationFiles != null) {
-            var tempconfigFiles: string[]=[];
-            tempconfigFiles = config.configurationFiles;
-            tempconfigFiles.forEach(file => {
-                file = path + file;
-                configFiles.push(file);
-            });
-        }
-        if(testName === '' || testPlan === '') {
-            throw "Missing required fields ";
-        }
-    } catch (e:any) {
-        e.message = "Missing required fields ";
-        throw e;
+    await getAccessToken();
+    YamlPath = core.getInput('YAMLFilePath');
+    const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
+    testName = (config.testName).toLowerCase();
+    testdesc = config.description;
+    engineInstances = config.engineInstances;
+    engineSize = config.engineSize;
+    let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
+    testPlan = path + config.testPlan;
+    if(config.configurationFiles != null) {
+        var tempconfigFiles: string[]=[];
+        tempconfigFiles = config.configurationFiles;
+        tempconfigFiles.forEach(file => {
+            file = path + file;
+            configFiles.push(file);
+        });
+    }
+    if(config.criteria != undefined) {
+        passFailCriteria = config.criteria;
+        getPassFailCriteria();
+    }
+    if(config.secrets != undefined) {
+        getParameters(config.secrets, "secrets");
+    }
+    if(config.env != undefined) {
+        getParameters(config.env, "env");
+    }
+    getRunTimeParams();
+    if(testName === '' || testPlan === '') {
+        throw "Missing required fields ";
     }
 }
 
@@ -171,7 +224,62 @@ export function getDefaultTestRunName()
     const c = a.split(" ")
     return "TestRun_"+b[0]+"_"+c[1]+c[2]
 }
-
+function getParameters(obj:any, type:string) {
+    if(type == "secrets") {
+        for (var index in obj) {
+            var val = obj[index];
+            if(!validateUrl(val.value))
+                throw "Invalid secret URI";
+            secretsYaml[val.name] = {type: 'AKV_SECRET_URI',value: val.value};
+        }
+    }
+    else if(type == "env") {
+        for(var index in obj) {
+            var val = obj[index];
+            envYaml[val.name] = val.value;
+        }
+    }
+}
+function validateUrl(url:string) 
+{
+    var r = new RegExp(/(http|https):\/\/.*\/secrets\/[/a-zA-Z0-9]+$/);
+    return r.test(url);
+}
+function validateValue(value:string) 
+{
+    var r = new RegExp(/[a-zA-Z0-9-_]+/);
+    return r.test(value);
+}
+function getRunTimeParams() {
+    var secretRun = core.getInput('secrets');
+    if(secretRun != "") {
+        try {
+            var obj = JSON.parse(secretRun);
+            for (var index in obj) {
+                var val = obj[index];
+                if(!validateValue(val.value))
+                    throw "Invalid secret value"; 
+                secretsRun[val.name] = {type: 'SECRET_VALUE',value: val.value};
+            }
+        }
+        catch (error) {
+            throw new Error("Invalid secrets");
+        }
+    }
+    var eRun = core.getInput('env');
+    if(eRun != "") {
+        try {
+            var obj = JSON.parse(eRun);
+            for (var index in obj) {
+                var val = obj[index];
+                envRun[val.name] = val.value;
+            }
+        }
+        catch (error) {
+            throw new Error("Invalid env");
+        }
+    }    
+}
 export function getYamlPath() {
     return YamlPath;
 }
@@ -198,4 +306,76 @@ export function getFileName(filepath:string) {
 
 export function getTenantId() {
     return tenantId;
+}
+function getPassFailCriteria() {
+    passFailCriteria.forEach(criteria => {
+        let data = {
+            aggregate: "",
+            clientmetric: "",
+            condition: "",
+            value: "",
+            action: "",
+            actualValue: 0,
+            result: null
+        }
+        if(typeof criteria !== "string"){
+            var request = Object.keys(criteria)[0]
+            criteria = criteria[request]
+        }
+        let tempStr: string = "";
+        for(let i=0; i<criteria.length; i++){
+            if(criteria[i] == '('){
+                data.aggregate = tempStr.trim();
+                tempStr = "";
+            }
+            else if(criteria[i] == ')'){
+                data.clientmetric = tempStr;
+                tempStr = "";
+            }
+            else if(criteria[i] == ','){
+                data.condition = tempStr.substring(0, util.indexOfFirstDigit(tempStr)).trim();
+                data.value = tempStr.substr(util.indexOfFirstDigit(tempStr)).trim();
+                tempStr = "";
+            }
+            else{
+                tempStr += criteria[i];
+            }
+        }
+        if(criteria.indexOf(',') != -1){
+            data.action = tempStr.trim()
+        } 
+        else{
+            data.condition = tempStr.substring(0, util.indexOfFirstDigit(tempStr)).trim();
+            data.value = tempStr.substr(util.indexOfFirstDigit(tempStr)).trim();
+        } 
+        ValidateAndAddCriteria(data);
+    });
+    getFailureCriteria();
+}
+function ValidateAndAddCriteria(data:any) {
+    if(data.action == "")
+        data.action = "continue"
+    data.value = util.removeUnits(data.value);
+    if(!util.validCriteria(data)) 
+        throw "Invalid Criteria";
+    var key = data.clientmetric+' '+data.aggregate+' '+data.condition+' '+data.action;
+    var minVal = data.value;
+    var currVal=minVal;
+    if(minValue.hasOwnProperty(key))
+        currVal = minValue[key];
+    minValue[key] = (minVal<currVal)? minVal: currVal;
+}
+function getFailureCriteria() {
+    for(var key in minValue) {
+        var splitted = key.split(" "); 
+        failCriteria[util.getUniqueId()] = {
+            clientmetric: splitted[0],
+            aggregate: splitted[1],
+            condition: splitted[2],
+            value: minValue[key],
+            action: splitted[3],
+            actualValue: 0,
+            result: null,
+        };
+    }
 }

@@ -3,20 +3,22 @@ import httpc = require('typed-rest-client/HttpClient');
 import * as map from "./mappers"
 import * as util from './util';
 import * as fs from 'fs';
-var FormData = require('form-data');
 
 const resultFolder = 'loadTest';
-const baseURL = 'https://testmanager-rel.wus2.cnt-dev.azcnt-test.io/';
+const baseURL = 'https://testmanager-rel.wus2.cnt-test.azcnt-test.io/';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('user-agent');
 let testName = '';
 let resourceId = '';
+let existingCriteria: { [name: string]: map.criteriaObj } = {};
+let existingParams: { [name: string]: map.paramObj } = {};
+let existingEnv: { [name: string]: string } = {};
 
 async function run() {
     try {  
         await map.getInputParams();
         resourceId = map.getResourceId();
         testName = map.getTestName();
-
+        await getTestAPI();
         if (fs.existsSync(resultFolder)){
             util.deleteFile(resultFolder);
         }
@@ -26,6 +28,22 @@ async function run() {
     catch (err:any) {
         core.setFailed(err.message);
     }
+}
+async function getTestAPI() {
+    var urlSuffix = "loadtests/"+testName+"?resourceId="+resourceId+"&api-version=2021-07-01-preview";
+    urlSuffix = baseURL+urlSuffix;
+    let header = await map.getTestRunHeader();
+    let testResult = await httpClient.get(urlSuffix, header); 
+    if(testResult.message.statusCode == 200) {
+        let testResp: string = await testResult.readBody(); 
+        let testObj:any = JSON.parse(testResp);  
+        if(testObj.passFailCriteria != null && testObj.passFailCriteria.passFailMetrics)
+            existingCriteria = testObj.passFailCriteria.passFailMetrics;
+        if(testObj.secrets != null)
+            existingParams = testObj.secrets;
+        if(testObj.environmentVariables != null)
+            existingEnv = testObj.environmentVariables;
+    }   
 }
 async function createTestAPI() {
     var urlSuffix = "loadtests/"+testName+"?resourceId="+resourceId+"&api-version=2021-07-01-preview";
@@ -93,7 +111,7 @@ async function uploadConfigFile()
 
 async function createTestRun() {
     const tenantId = map.getTenantId();
-    const testRunId = util.getTestRunId();
+    const testRunId = util.getUniqueId();
     var urlSuffix = "testruns/"+testRunId+"?tenantId="+tenantId+"&resourceId="+resourceId+"&api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
     try {
@@ -132,6 +150,8 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         testStatus = testRunObj.status;
         if(testStatus == "DONE") {
             util.printTestDuration(testRunObj.vusers, startTime);
+            if(testRunObj.passFailCriteria != null && testRunObj.passFailCriteria.passFailMetrics != null)
+                util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
             util.printClientMetrics(testRunObj.testRunStatistics);
             var testResultUrl = util.getResultFolder(testRunObj.testArtifacts);
             if(testResultUrl != null) {
@@ -142,6 +162,10 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 else {
                     await util.getResultsFile(response);
                 }
+            }
+            if(testRunObj.testResult == "Failed") {
+                core.setFailed("TestResult: "+ testRunObj.testResult);
+                return;
             }
             return;
         }
@@ -160,5 +184,17 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
             }
         }
     }
+}
+export function getExistingCriteria()
+{
+    return existingCriteria;
+}
+export function getExistingParams()
+{
+    return existingParams;
+}
+export function getExistingEnv()
+{
+    return existingEnv;
 }
 run();
