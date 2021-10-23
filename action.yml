@@ -10,6 +10,12 @@ inputs:
   resourceGroup:
     description: 'Enter or Select the Azure Resource Group that contains the Load test resource specified above'
     required: true
+  secrets:
+    description: 'Enter secrets in JSON'
+    required: false
+  env:
+    description: 'Enter env in JSON'
+    required: false
 branding:
     icon: 'extension-icon.svg'
     color: 'blue'

@@ -5,12 +5,12 @@ import * as util from './util';
 import * as fs from 'fs';
 
 const resultFolder = 'loadTest';
-const baseURL = 'https://testmanager-rel.wus2.cnt-test.azcnt-test.io/';
+const baseURL = 'https://krchanda.eus2.cnt-canary.azloadtesting.io/';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('user-agent');
 let testName = '';
 let resourceId = '';
-let existingCriteria: { [name: string]: map.criteriaObj } = {};
-let existingParams: { [name: string]: map.paramObj } = {};
+let existingCriteria: { [name: string]: map.criteriaObj|null } = {};
+let existingParams: { [name: string]: map.paramObj|null } = {};
 let existingEnv: { [name: string]: string } = {};
 
 async function run() {

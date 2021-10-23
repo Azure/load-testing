@@ -15,8 +15,11 @@ export async function printTestDuration(vusers:string, startTime:Date)
     return;
 }
 export function printCriteria(criteria:any) {
+    console.log("criteria.size= "+Object.keys(criteria).length)
+    if(Object.keys(criteria).length == 0)
+        return;
     printTestResult(criteria);
-    console.log("Criteria\t\t\t\t\t :Actual Value\t   Result");
+    console.log("Criteria\t\t\t\t\t :Actual Value\t      Result");
     for(var key in criteria) {
         var metric = criteria[key];
         var str = metric.aggregate+"("+metric.clientmetric+") "+ metric.condition+ ' '+metric.value;
@@ -24,6 +27,9 @@ export function printCriteria(criteria:any) {
         var spaceCount = 50 - str.length;
         while(spaceCount--)
             str+=' ';
+        spaceCount = 10 - (metric.actualValue).length;
+        while(spaceCount--)
+        metric.actualValue+=' ';
         console.log(str + metric.actualValue+"\t\t  "+metric.result);
     }
     console.log("\n");

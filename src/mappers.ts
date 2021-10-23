@@ -62,7 +62,7 @@ export function createTestData() {
     var data = {
         testId: testName,
         description: testdesc,
-        displayName: getDefaultTestName(),
+        displayName: testName,
         resourceId: resourceId,
         loadTestConfig: {
             engineSize: engineSize,
