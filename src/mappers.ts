@@ -125,12 +125,18 @@ export async function getTestRunHeader() {
     return headers;
 }
 
-async function isExpired() {
+function isExpired() {
     const header = jwt_decode(token)
     const now = Math.floor(Date.now() / 1000)
     return header && header.exp > now
 }
-
+export function getTestHeader() {
+    let headers: IHeaders = {
+        'content-type': 'application/json',
+        'Authorization': 'Bearer '+ token
+    };
+    return headers;
+}
 export function getResourceId() {
     const rg: string = core.getInput('resourceGroup');
     const ltres: string = core.getInput('loadtestResource');

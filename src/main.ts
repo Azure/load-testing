@@ -32,7 +32,7 @@ async function run() {
 async function getTestAPI() {
     var urlSuffix = "loadtests/"+testName+"?resourceId="+resourceId+"&api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
-    let header = await map.getTestRunHeader();
+    let header = map.getTestHeader();
     let testResult = await httpClient.get(urlSuffix, header); 
     if(testResult.message.statusCode == 200) {
         let testResp: string = await testResult.readBody(); 
