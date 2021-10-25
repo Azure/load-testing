@@ -15,7 +15,6 @@ export async function printTestDuration(vusers:string, startTime:Date)
     return;
 }
 export function printCriteria(criteria:any) {
-    console.log("criteria.size= "+Object.keys(criteria).length)
     if(Object.keys(criteria).length == 0)
         return;
     printTestResult(criteria);
@@ -23,14 +22,16 @@ export function printCriteria(criteria:any) {
     for(var key in criteria) {
         var metric = criteria[key];
         var str = metric.aggregate+"("+metric.clientmetric+") "+ metric.condition+ ' '+metric.value;
-        str += ((metric.clientmetric == "error") ? ", " : "ms, ") + metric.action;
+        str += metric.clientmetric;
         var spaceCount = 50 - str.length;
         while(spaceCount--)
             str+=' ';
-        spaceCount = 10 - (metric.actualValue).length;
+        var actualValue = metric.actualValue.toString();
+        spaceCount = 10 - (actualValue).length;
         while(spaceCount--)
-        metric.actualValue+=' ';
-        console.log(str + metric.actualValue+"\t\t  "+metric.result);
+            actualValue = actualValue + ' ';
+        metric.result = metric.result.toUpperCase();
+        console.log(str + actualValue+"              "+ metric.result);
     }
     console.log("\n");
 }
@@ -44,7 +45,7 @@ function printTestResult(criteria:any) {
             fail++;
     }
     console.log("-------------------Test Criteria ---------------");
-    console.log("Results\t\t\t :"+pass+"pass  "+fail+"fail\n");
+    console.log("Results\t\t\t :"+pass+" Pass  "+fail+" Fail\n");
 }
 export async function getResultsFile(response:any) 
 {

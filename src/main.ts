@@ -163,7 +163,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                     await util.getResultsFile(response);
                 }
             }
-            if(testRunObj.testResult == "Failed") {
+            if(testRunObj.testResult === "FAILED") {
                 core.setFailed("TestResult: "+ testRunObj.testResult);
                 return;
             }

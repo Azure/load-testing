@@ -143,21 +143,31 @@ export function getResourceId() {
     resourceId = "/subscriptions/"+subscriptionID+"/resourcegroups/"+rg+"/providers/microsoft.loadtestservice/loadtests/"+ltres;
     return resourceId;
 }
-
+function validateName(value:string) 
+{
+    var r = new RegExp(/[a-z0-9_-]+/);
+    return r.test(value);
+}
 export async function getInputParams() {
     await getAccessToken();
     YamlPath = core.getInput('YAMLFilePath');
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
     testName = (config.testName).toLowerCase();
+    if(!validateName(getFileName(testName)))
+        throw "Invalid testName. Allowed chararcters are [a-z0-9-_]"
     testdesc = config.description;
     engineInstances = config.engineInstances;
     engineSize = config.engineSize;
     let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
     testPlan = path + config.testPlan;
+    if(!validateName(getFileName(config.testPlan)))
+        throw "Invalid testPlan name. Allowed chararcters are [a-z0-9-_]"
     if(config.configurationFiles != null) {
         var tempconfigFiles: string[]=[];
         tempconfigFiles = config.configurationFiles;
         tempconfigFiles.forEach(file => {
+            if(!validateName(getFileName(file)))
+                throw "Invalid configuration filename. Allowed chararcters are [a-z0-9-_]";
             file = path + file;
             configFiles.push(file);
         });
