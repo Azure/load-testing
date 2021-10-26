@@ -18,11 +18,10 @@ export function printCriteria(criteria:any) {
     if(Object.keys(criteria).length == 0)
         return;
     printTestResult(criteria);
-    console.log("Criteria\t\t\t\t\t :Actual Value\t      Result");
+    console.log("Criteria\t\t\t\t\t :Actual Value\t        Result");
     for(var key in criteria) {
         var metric = criteria[key];
         var str = metric.aggregate+"("+metric.clientmetric+") "+ metric.condition+ ' '+metric.value;
-        str += metric.clientmetric;
         var spaceCount = 50 - str.length;
         while(spaceCount--)
             str+=' ';
@@ -31,7 +30,7 @@ export function printCriteria(criteria:any) {
         while(spaceCount--)
             actualValue = actualValue + ' ';
         metric.result = metric.result.toUpperCase();
-        console.log(str + actualValue+"              "+ metric.result);
+        console.log(str + actualValue+"            "+ metric.result);
     }
     console.log("\n");
 }
