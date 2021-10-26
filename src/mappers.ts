@@ -139,7 +139,7 @@ export function getTestHeader() {
 }
 export function getResourceId() {
     const rg: string = core.getInput('resourceGroup');
-    const ltres: string = core.getInput('loadtestResource');
+    const ltres: string = core.getInput('loadTestResource');
     resourceId = "/subscriptions/"+subscriptionID+"/resourcegroups/"+rg+"/providers/microsoft.loadtestservice/loadtests/"+ltres;
     return resourceId;
 }
@@ -150,7 +150,7 @@ function validateName(value:string)
 }
 export async function getInputParams() {
     await getAccessToken();
-    YamlPath = core.getInput('YAMLFilePath');
+    YamlPath = core.getInput('loadTestConfigFile');
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
     testName = (config.testName).toLowerCase();
     if(!validateName(getFileName(testName)))

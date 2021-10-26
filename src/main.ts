@@ -152,7 +152,8 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
             util.printTestDuration(testRunObj.vusers, startTime);
             if(testRunObj.passFailCriteria != null && testRunObj.passFailCriteria.passFailMetrics != null)
                 util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
-            util.printClientMetrics(testRunObj.testRunStatistics);
+            if(testRunObj.testRunStatistics != null)
+                util.printClientMetrics(testRunObj.testRunStatistics);
             var testResultUrl = util.getResultFolder(testRunObj.testArtifacts);
             if(testResultUrl != null) {
                 const response = await httpClient.get(testResultUrl);

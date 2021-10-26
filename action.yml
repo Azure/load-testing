@@ -1,7 +1,7 @@
 name: 'AzureLoadTest'
 description: 'Automation workflow for azure load test'
 inputs:
-  YAMLFilePath:
+  loadtestConfigFile:
     description: 'Path of the YAML file. Should be fully qualified path or relative to the default working directory'
     required: true
   loadtestResource:

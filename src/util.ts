@@ -68,7 +68,8 @@ export async function getResultsFile(response:any)
     }
 }
 export async function printClientMetrics(obj:any) {
-    var statisticsobj = JSON.stringify(obj);
+    if(Object.keys(obj).length == 0)
+        return;
     console.log("------------------Client-side metrics------------\n");
         for(var key in obj) {
             if(key != "Total")
