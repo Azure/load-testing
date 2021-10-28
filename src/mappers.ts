@@ -172,8 +172,8 @@ export async function getInputParams() {
             configFiles.push(file);
         });
     }
-    if(config.criteria != undefined) {
-        passFailCriteria = config.criteria;
+    if(config.failureCriteria != undefined) {
+        passFailCriteria = config.failureCriteria;
         getPassFailCriteria();
     }
     if(config.secrets != undefined) {

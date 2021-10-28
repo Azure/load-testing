@@ -162,13 +162,13 @@ export function validCriteria(data:any) {
     if(data.clientmetric == "error") {
         return validErrorCriteria(data);
     }
-    else if(data.clientmetric == "response_time" || data.clientmetric == "latency")
+    else if(data.clientmetric == "response_time_ms" || data.clientmetric == "latency")
         return validClientMetricCriteria(data);
     return false;
 }
 
 function validErrorCriteria(data:any)  {
-    return !(data.aggregate != "rate" || data.condition != '>' 
+    return !(data.aggregate != "percentage" || data.condition != '>' 
         || Number(data.value)<0 || Number(data.value)>100 || data.action!= "continue");
 }
 
