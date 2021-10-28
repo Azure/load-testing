@@ -49,11 +49,65 @@ For using any credentials like Azure Service Principal in your workflow, add the
 - name: 'Azure Load Testing'
   uses: azure/load-testing@main
   with:
-    YAMLFilePath: '<Path of the Load test yaml file>'
-    loadtestResource: '<Name of the load test resource>'
-    resourceGroup: '<Name of the resource group>'
+    loadTestConfigFile: '< YAML File path>'
+    loadTestResource: '<name of the load test resource>'
+    resourceGroup: '<name of the resource group of your load test resource>' 
+    secrets: |
+      [
+          {
+          "name": "<Name of the secret>",
+          "value": "${{ secrets.MY_SECRET1 }}",
+          },
+          {
+          "name": "<Name of the secret>",
+          "value": "${{ secrets.MY_SECRET2 }}",
+          }
+      ]
+    env: |
+      [
+          {
+          "name": "<Name of the variable>",
+          "value": "<Value of the variable>",
+          },
+          {
+          "name": "<Name of the variable>",
+          "value": "<Value of the variable>",
+          }
+      ]
 ```
 The results files are exported to the folder “loadTest\results.zip”
+
+### Sample workflow to run a load test using Azure Load testing service
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: push
+
+jobs:
+  # This workflow contains a single job called "loadtest"
+
+  loadtest:
+    name: Load Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GitHub Actions 
+        uses: actions/checkout@v2
+          
+      - name: Login to Azure
+        uses: azure/login@v1
+        continue-on-error: false
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+      - name: 'Azure Load Testing'
+        uses: azure/load-testing@main
+        with:
+          loadTestConfigFile: 'SampleApp.yaml'
+          loadTestResource: 'loadTestResourceName'
+          resourceGroup: 'loadTestResourceGroup'
+
+```
 
 ## Contributing
 
