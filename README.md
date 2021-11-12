@@ -101,7 +101,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
         
       - name: 'Azure Load Testing'
-        uses: azure/load-testing@v1
+        uses: azure/load-testing@main
         with:
           loadTestConfigFile: 'SampleApp.yaml'
           loadTestResource: 'loadTestResourceName'
