@@ -5,7 +5,8 @@ import * as util from './util';
 import * as fs from 'fs';
 
 const resultFolder = 'loadTest';
-const baseURL = 'https://krchanda.eus2.cnt-canary.azloadtesting.io/';
+//const baseURL = 'https://krchanda.eus2.cnt-canary.azloadtesting.io/';
+let baseURL = '';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('user-agent');
 let testName = '';
 let resourceId = '';
@@ -17,6 +18,7 @@ async function run() {
     try {  
         await map.getInputParams();
         resourceId = map.getResourceId();
+        await getLoadTestResource(resourceId);
         testName = map.getTestName();
         await getTestAPI();
         if (fs.existsSync(resultFolder)){
@@ -32,7 +34,7 @@ async function run() {
 async function getTestAPI() {
     var urlSuffix = "loadtests/"+testName+"?resourceId="+resourceId+"&api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
-    let header = map.getTestHeader();
+    let header = await map.getTestHeader();
     let testResult = await httpClient.get(urlSuffix, header); 
     if(testResult.message.statusCode == 200) {
         let testResp: string = await testResult.readBody(); 
@@ -185,6 +187,21 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
             }
         }
     }
+}
+async function getLoadTestResource(id:string)
+{
+    let env = "canary";
+    let armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2021-09-01-preview";
+
+    if(env == "dogfood") {
+        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2021-09-01-preview";  
+    }
+    var header = map.dataPlaneHeader();
+    let response = await httpClient.get(armEndpoint, header);
+    let result: string = await response.readBody();
+    let respObj:any = JSON.parse(result);
+    let dataPlaneUrl = respObj.properties.dataPlaneURI;
+    baseURL = 'https://'+dataPlaneUrl+'/';
 }
 export function getExistingCriteria()
 {

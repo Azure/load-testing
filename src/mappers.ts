@@ -101,7 +101,12 @@ export async function UploadAndValidateHeader(formData:any) {
     };
     return headers;
 }
-
+export function dataPlaneHeader() {
+    let headers: IHeaders = {
+        'Authorization': 'Bearer '+ token
+    };
+    return headers;
+}
 export function startTestData(testRunName:string) {
     var data = {
         testRunId: testRunName,
@@ -116,7 +121,7 @@ export function startTestData(testRunName:string) {
 }
 export async function getTestRunHeader() {
     if(!isExpired()) {
-        await getAccessToken();
+        await getAccessToken("https://loadtest.azure-dev.com");
     }
     let headers: IHeaders = {
         'content-type': 'application/json',
@@ -130,7 +135,8 @@ function isExpired() {
     const now = Math.floor(Date.now() / 1000)
     return header && header.exp > now
 }
-export function getTestHeader() {
+export async function getTestHeader() {
+    await getAccessToken("https://loadtest.azure-dev.com");
     let headers: IHeaders = {
         'content-type': 'application/json',
         'Authorization': 'Bearer '+ token
@@ -149,7 +155,7 @@ function validateName(value:string)
     return r.test(value);
 }
 export async function getInputParams() {
-    await getAccessToken();
+    await getAccessToken("https://management.core.windows.net");
     YamlPath = core.getInput('loadTestConfigFile');
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
     testName = (config.testName).toLowerCase();
@@ -188,9 +194,8 @@ export async function getInputParams() {
     }
 }
 
-async function getAccessToken() {
+async function getAccessToken(aud:string) {
     try {
-        let aud = "https://loadtest.azure-dev.com";
         const cmdArguments = ["account", "get-access-token", "--resource"];
         cmdArguments.push(aud);
         var result: any = await execAz(cmdArguments);
