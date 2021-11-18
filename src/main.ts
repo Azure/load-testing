@@ -121,7 +121,7 @@ async function createTestRun() {
         console.log("Creating and running a testRun for the test");
         let header = await map.createTestHeader();
         let startTestresult = await httpClient.patch(urlSuffix,JSON.stringify(startData),header);
-        if(startTestresult.message.statusCode != 202)
+        if(startTestresult.message.statusCode != 200)
             throw "Error in running the test";
     
         let startTime = new Date();
@@ -191,8 +191,10 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
 async function getLoadTestResource(id:string)
 {
     let env = "canary";
-    let armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2021-09-01-preview";
-
+    let armEndpoint = "https://management.azure.com"+id+"?api-version=2021-09-01-preview";
+    if(env == "canary") {
+        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2021-09-01-preview";
+    }
     if(env == "dogfood") {
         armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2021-09-01-preview";  
     }
