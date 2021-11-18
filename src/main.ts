@@ -120,7 +120,7 @@ async function createTestRun() {
         console.log("Creating and running a testRun for the test");
         let header = await map.createTestHeader();
         let startTestresult = await httpClient.patch(urlSuffix,JSON.stringify(startData),header);
-        if(startTestresult.message.statusCode != 202)
+        if(startTestresult.message.statusCode != 200)
             throw "Error in running the test";
     
         let startTime = new Date();
