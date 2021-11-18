@@ -106,7 +106,7 @@ function printMetrics(data:any) {
     console.log("requests per sec \t : avg="+getAbsVal(data.throughput));
     console.log("total requests \t\t : "+data.sampleCount)
     console.log("total errors \t\t : " + data.errorCount)
-    console.log("total error rate \t : "+data.errorPct);
+    console.log("total error rate \t : "+data.errorPct + "\n");
 }
 
 function getAbsVal(data:any) {
