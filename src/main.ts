@@ -190,7 +190,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
 }
 async function getLoadTestResource(id:string)
 {
-    let env = "canary";
+    let env = "prod";
     let armEndpoint = "https://management.azure.com"+id+"?api-version=2021-09-01-preview";
     if(env == "canary") {
         armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2021-09-01-preview";
