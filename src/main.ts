@@ -5,7 +5,6 @@ import * as util from './util';
 import * as fs from 'fs';
 
 const resultFolder = 'loadTest';
-//const baseURL = 'https://krchanda.eus2.cnt-canary.azloadtesting.io/';
 let baseURL = '';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('user-agent');
 let testName = '';
