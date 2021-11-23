@@ -8,7 +8,6 @@ const resultFolder = 'loadTest';
 let baseURL = '';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('user-agent');
 let testName = '';
-let resourceId = '';
 let existingCriteria: { [name: string]: map.criteriaObj|null } = {};
 let existingParams: { [name: string]: map.paramObj|null } = {};
 let existingEnv: { [name: string]: string } = {};
@@ -16,8 +15,7 @@ let existingEnv: { [name: string]: string } = {};
 async function run() {
     try {  
         await map.getInputParams();
-        resourceId = map.getResourceId();
-        await getLoadTestResource(resourceId);
+        await getLoadTestResource();
         testName = map.getTestName();
         await getTestAPI();
         if (fs.existsSync(resultFolder)){
@@ -31,7 +29,7 @@ async function run() {
     }
 }
 async function getTestAPI() {
-    var urlSuffix = "loadtests/"+testName+"?resourceId="+resourceId+"&api-version=2021-07-01-preview";
+    var urlSuffix = "loadtests/"+testName+"?api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let testResult = await httpClient.get(urlSuffix, header); 
@@ -47,7 +45,7 @@ async function getTestAPI() {
     }   
 }
 async function createTestAPI() {
-    var urlSuffix = "loadtests/"+testName+"?resourceId="+resourceId+"&api-version=2021-07-01-preview";
+    var urlSuffix = "loadtests/"+testName+"?api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
     var createData = map.createTestData();
     let header = await map.createTestHeader();
@@ -68,7 +66,7 @@ async function uploadTestPlan()
 {
     let filepath = map.getTestFile();
     let filename = map.getFileName(filepath);
-    var urlSuffix = "file/"+filename+":validate?resourceId="+resourceId+"&api-version=2021-07-01-preview";
+    var urlSuffix = "file/"+filename+":validate?api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
@@ -76,7 +74,7 @@ async function uploadTestPlan()
     if(validateresult.message.statusCode != 200)
         throw "Invalid TestPlan";
     else {
-        urlSuffix = "loadtests/"+testName+"/files/"+filename+"?resourceId="+resourceId+"&api-version=2021-07-01-preview";
+        urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2021-07-01-preview";
         urlSuffix = baseURL + urlSuffix;
         var uploadData = map.uploadFileData(filepath);
         let headers = await map.UploadAndValidateHeader(uploadData)
@@ -97,7 +95,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (const filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?resourceId="+resourceId+"&api-version=2021-07-01-preview";
+            var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2021-07-01-preview";
             urlSuffix = baseURL+urlSuffix;
             var uploadData = map.uploadFileData(filepath);
             let headers = await map.UploadAndValidateHeader(uploadData);
@@ -113,7 +111,7 @@ async function uploadConfigFile()
 async function createTestRun() {
     const tenantId = map.getTenantId();
     const testRunId = util.getUniqueId();
-    var urlSuffix = "testruns/"+testRunId+"?tenantId="+tenantId+"&resourceId="+resourceId+"&api-version=2021-07-01-preview";
+    var urlSuffix = "testruns/"+testRunId+"?tenantId="+tenantId+"&api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
     try {
         var startData = map.startTestData(testRunId);
@@ -140,7 +138,7 @@ async function createTestRun() {
 }
 async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date) 
 {   
-    var urlSuffix = "testruns/"+testRunId+"?resourceId="+resourceId+"&api-version=2021-07-01-preview";
+    var urlSuffix = "testruns/"+testRunId+"?api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
     while(testStatus != "DONE" && testStatus != "FAILED" && testStatus != "CANCELLED") 
     {
@@ -187,9 +185,11 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         }
     }
 }
-async function getLoadTestResource(id:string)
+async function getLoadTestResource()
 {
     let env = "prod";
+    let id = map.getResourceId();
+
     let armEndpoint = "https://management.azure.com"+id+"?api-version=2021-09-01-preview";
     if(env == "canary") {
         armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2021-09-01-preview";

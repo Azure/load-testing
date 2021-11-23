@@ -9,7 +9,6 @@ import * as util from './util';
 import * as index from './main';
 var testName='';
 var testdesc = 'SampleTest';
-var engineSize='s';
 var engineInstances='1';
 var testPlan='';
 var configFiles: string[]=[];
@@ -65,7 +64,6 @@ export function createTestData() {
         displayName: testName,
         resourceId: resourceId,
         loadTestConfig: {
-            engineSize: engineSize,
             engineInstances: engineInstances
         },
         secrets: secretsYaml,
@@ -163,7 +161,6 @@ export async function getInputParams() {
         throw "Invalid testName. Allowed chararcters are [a-z0-9-_]"
     testdesc = config.description;
     engineInstances = config.engineInstances;
-    engineSize = config.engineSize;
     let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
     testPlan = path + config.testPlan;
     if(!validateName(getFileName(config.testPlan)))
