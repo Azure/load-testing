@@ -1,10 +1,8 @@
 # GitHub Action for Azure Load Testing
 
-[GitHub Actions](https://help.github.com/en/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow. You can automate your workflows to run load tests on Azure.
+[GitHub Actions](https://help.github.com/en/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow. You can automate your workflows to run load tests on Azure. [Azure Load Testing](https://docs.microsoft.com/azure/load-testing) is a fully managed load testing service that enables you to generate high-scale load. The service will simulate traffic for your applications, regardless of where they're hosted. Developers, testers, and quality assurance (QA) engineers can use it to optimize application performance, scalability, or capacity.
 
 Get started today with a [free Azure account](https://azure.com/free/open-source)!
-
-This repository contains [GitHub Action for Azure Load Testing service](/action.yml) to create and run load tests.
 
 The definition of this GitHub Action is in [action.yml](/action.yml).
 
@@ -43,11 +41,25 @@ For using any credentials like Azure Service Principal in your workflow, add the
 1. Paste the json response from above Azure CLI to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_CREDENTIALS**
 1. Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example below)
 
-## Example YAML Snippet
+## Azure Load Testing Action
+
+This section describes the Azure Load Testing GitHub action. You can use this action by referencing `azure/load-testing@v1` action in your workflow. The action runs on Windows, Linux, and Mac runners.
+
+You can use the following parameters to configure the GitHub action.
+
+|Parameter  |Description  |
+|---------|---------|
+|`loadTestConfigFile`    | **Required** Path to the load test YAML configuration file. The path is fully qualified or relative to the default working directory.        |
+|`resourceGroup`     |  **Required** Name of the resource group that contains the Azure Load Testing resource.       |
+|`loadTestResource`     |   **Required** Name of an existing Azure Load Testing resource.      |
+|`secrets`   |   Array of JSON objects that consist of the **name** and **value** for each secret that is required by your Apache JMeter script. The name should match the secret name used in the Apache JMeter test script. |
+|`env`     |   Array of JSON objects that consist of the **name** and **value** for each environment variable that is required by your Apache JMeter script. The name should match the variable name used in the Apache JMeter test script. |
+
+The following YAML code snippet describes how to use the action in a GitHub Actions workflow.
 
 ```yaml
 - name: 'Azure Load Testing'
-  uses: azure/load-testing@main
+  uses: azure/load-testing@v1
   with:
     loadTestConfigFile: '< YAML File path>'
     loadTestResource: '<name of the load test resource>'
@@ -75,6 +87,7 @@ For using any credentials like Azure Service Principal in your workflow, add the
           }
       ]
 ```
+
 The results files are exported to the folder “loadTest\results.zip”
 
 ### Sample workflow to run a load test using Azure Load testing service
@@ -106,7 +119,6 @@ jobs:
           loadTestConfigFile: 'SampleApp.yaml'
           loadTestResource: 'loadTestResourceName'
           resourceGroup: 'loadTestResourceGroup'
-
 ```
 
 ## Contributing
