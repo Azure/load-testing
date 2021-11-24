@@ -1,0 +1,67 @@
+name: pr_check_load_test
+
+on:
+  push:
+    branches:
+      - master
+      - releases/*
+    paths-ignore:
+      - '**.md'
+  pull_request_target:
+    branches:
+      - master
+      - 'releases/*'
+
+# CONFIGURATION
+# For help, go to https://github.com/Azure/Actions
+#
+# 1. Set up the following secrets in your repository:
+#   AZURE_CREDENTIALS
+#
+# 2. Change these variables for your configuration:
+env:
+  LOAD_TEST_RESOURCE: "load-testing-ghaction"
+  LOAD_TEST_RESOURCE_GROUP: "load-testing-ghaction-rg"
+
+jobs:
+  run-integration-test:
+    environment: automation test
+    name: Validate PR
+    strategy:
+      matrix:
+        os: [windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    
+    - uses: actions/checkout@master
+      with:
+        repository: Azure-Samples/nodejs-appsvc-cosmosdb-bottleneck
+        ref: main
+        path: 'sampleapp'
+    
+    - uses: actions/checkout@v2
+      name: Checkout from PR branch
+      with: 
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        path: 'load-testing'
+        ref: ${{ github.event.pull_request.head.ref }}
+
+    - name: Installing dependencies and building latest changes
+      run: |
+        cd load-testing
+        npm install
+        npm run build
+    
+    - name: Azure authentication
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+  
+    - name: 'Azure Load Testing'
+      uses: ./load-testing/
+      with: 
+        loadTestConfigFile: 'D:\a\load-testing\load-testing\sampleapp\SampleApp.yaml'
+        loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
+        resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
