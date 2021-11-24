@@ -61,7 +61,7 @@ jobs:
   
     - name: 'Azure Load Testing'
       uses: ./load-testing/
-      with: 
+      with:
         loadTestConfigFile: 'D:\a\load-testing\load-testing\sampleapp\SampleApp.yaml'
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
