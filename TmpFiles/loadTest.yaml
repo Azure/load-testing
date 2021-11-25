@@ -1,0 +1,12 @@
+version: v0.1
+testName: samplepfgittest2
+testPlan: maltsampleapp.jmx
+configurationFiles:
+  - 'test1.csv'
+  - 'test2.csv'
+description: 'SampleApp Test Run'
+engineInstances: 1
+failureCriteria:
+  - avg(response_time_ms) > 200
+  - percentage(error) > 20
+  - percentage(error) > 10

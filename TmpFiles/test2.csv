@@ -1,0 +1,79 @@
+"Series reference","Description","Period","Previously published","Revised"
+"PPIQ.SQU900000","PPI output index - All industries ","2020.06",1183,1184
+"PPIQ.SQU900001","PPI output index - All industries excl OOD","2020.06",1180,1181
+"PPIQ.SQUC76745","PPI published output commodity - Transport support services","2020.06",1400,1603
+"PPIQ.SQUCC3100","PPI output index level 3 - Wood product manufacturing","2020.06",1169,1170
+"PPIQ.SQUCC3110","PPI output index level 4 - Wood product manufacturing","2020.06",1169,1170
+"PPIQ.SQUFF0000","PPI output index level 1 - Wholesale trade","2020.06",1132,1133
+"PPIQ.SQUFF1000","PPI output index level 2 - Wholesale trade","2020.06",1132,1133
+"PPIQ.SQUFF1100","PPI output index level 3 - Wholesale trade","2020.06",1132,1133
+"PPIQ.SQUFF1110","PPI output index level 4 - Basic material wholesaling","2020.06",1147,1149
+"PPIQ.SQUFF1160","PPI output index level 4 - Commission based wholesaling","2020.06",1106,1112
+"PPIQ.SQUII0000","PPI output index level 1 - Transport, postal and warehousing","2020.06",1231,1249
+"PPIQ.SQUII1000","PPI output index level 2 - Transport, postal and warehousing","2020.06",1231,1249
+"PPIQ.SQUII1100","PPI output index level 3 - Road transport","2020.06",1170,1174
+"PPIQ.SQUII1110","PPI output index level 4 - Road transport","2020.06",1170,1174
+"PPIQ.SQUII1200","PPI output index level 3 - Rail, water, air and other transport","2020.06",1237,1238
+"PPIQ.SQUII1300","PPI output index level 3 - Postal, courier transport support, and warehousing","2020.06",1269,1318
+"PPIQ.SQUMN2000","PPI output index level 2 - Administrative and support services","2020.06",1187,1188
+"PPIQ.SQUMN2100","PPI output index level 3 - Administrative and Support Services","2020.06",1187,1188
+"PPIQ.SQURS2000","PPI output index level 2 - Other services","2020.06",1270,1271
+"PPIQ.SQURS2100","PPI output index level 3 - Other Services","2020.06",1270,1271
+"PPIQ.SQN800000","PPI input index - All industries excl admin, healh, education","2020.06",1152,1153
+"PPIQ.SQN800001","PPI input index - All industries excl admin, healh, education, OOD","2020.06",1152,1153
+"PPIQ.SQN900000","PPI input index - All industries ","2020.06",1153,1154
+"PPIQ.SQN900001","PPI input index - All industries excl OOD","2020.06",1152,1153
+"PPIQ.SQNC76745","PPI published input commodity - Transport support services","2020.06",1415,1568
+"PPIQ.SQNCC0000","PPI input index level 1 - Manufacturing","2020.06",1102,1103
+"PPIQ.SQNCC1000","PPI input index level 2 - Food, beverage and tobacco product manufacturing","2020.06",1165,1166
+"PPIQ.SQNCC1100","PPI input index level 3 - Meat and meat product manufacturing","2020.06",1260,1264
+"PPIQ.SQNCC111X","PPI input index level 4 - Meat and meat product manufacturing","2020.06",1260,1264
+"PPIQ.SQNCC2000","PPI input index level 2 - Textile, leather, clothing and footwear manufacturing","2020.06",956,957
+"PPIQ.SQNCC2100","PPI input index level 3 - Textile, leather, clothing and footwear manufacturing","2020.06",956,957
+"PPIQ.SQNCC211X","PPI input index level 4 - Textile and leather manufacturing","2020.06",903,904
+"PPIQ.SQNCC212X","PPI input index level 4 - Clothing, knitted products and footwear manufacturing","2020.06",1212,1213
+"PPIQ.SQNCC3000","PPI input index level 2 - Wood and paper products manufacturing","2020.06",1143,1144
+"PPIQ.SQNCC3100","PPI input index level 3 - Wood product manufacturing","2020.06",1163,1164
+"PPIQ.SQNCC311X","PPI input index level 4 - Wood product manufacturing","2020.06",1163,1164
+"PPIQ.SQNCC3200","PPI input index level 3 - Pulp, paper and converted paper product manufacturing","2020.06",1114,1115
+"PPIQ.SQNCC321X","PPI input index level 4 - Pulp, paper and converted paper product manufacturing","2020.06",1114,1115
+"PPIQ.SQNCC5300","PPI input index level 3 - Polymer product and rubber product manufacturing","2020.06",1149,1151
+"PPIQ.SQNCC531X","PPI input index level 4 - Polymer product and rubber product manufacturing","2020.06",1149,1151
+"PPIQ.SQNCC6000","PPI input index level 2 - Non-metallic mineral product manufacturing","2020.06",1137,1141
+"PPIQ.SQNCC6100","PPI input index level 3 - Non-metallic mineral product manufacturing","2020.06",1137,1141
+"PPIQ.SQNCC611X","PPI input index level 4 - Non-metallic mineral product manufacturing","2020.06",1137,1141
+"PPIQ.SQNCC9000","PPI input index level 2 - Furniture and other manufacturing","2020.06",1189,1192
+"PPIQ.SQNCC9100","PPI input index level 3 - Furniture and other manufacturing","2020.06",1189,1192
+"PPIQ.SQNCC911X","PPI input index level 4 - Furniture manufacturing","2020.06",1158,1161
+"PPIQ.SQNCC912X","PPI input index level 4 - Other manufacturing","2020.06",1251,1252
+"PPIQ.SQNDD0000","PPI input index level 1 - Electricity, gas, water and waste services","2020.06",1232,1233
+"PPIQ.SQNDD1000","PPI input index level 2 - Electricity, gas, water and waste services","2020.06",1232,1233
+"PPIQ.SQNDD1200","PPI input index level 3 - Water, sewerage, drainage and waste services","2020.06",1282,1283
+"PPIQ.SQNFF0000","PPI input index level 1 - Wholesale trade","2020.06",1139,1142
+"PPIQ.SQNFF1000","PPI input index level 2 - Wholesale trade","2020.06",1139,1142
+"PPIQ.SQNFF1100","PPI input index level 3 - Wholesale trade","2020.06",1139,1142
+"PPIQ.SQNFF111X","PPI input index level 4 - Basic material wholesaling","2020.06",1117,1120
+"PPIQ.SQNFF112X","PPI input index level 4 - Machinery & equipment wholesaling","2020.06",1146,1148
+"PPIQ.SQNFF113X","PPI input index level 4 - Motor vehicle & parts wholesaling","2020.06",1124,1126
+"PPIQ.SQNFF114X","PPI input index level 4 - Grocery, liquor, tobacco wholesaling","2020.06",1151,1155
+"PPIQ.SQNFF115X","PPI input index level 4 - Other goods wholesaling","2020.06",1156,1159
+"PPIQ.SQNFF116X","PPI input index level 4 - Commission based wholesaling","2020.06",1120,1122
+"PPIQ.SQNGH1300","PPI input index level 3 - Other Store-Based Retailing and Non Store Retailing","2020.06",1142,1143
+"PPIQ.SQNII0000","PPI input index level 1 - Transport, postal and warehousing","2020.06",1114,1124
+"PPIQ.SQNII1000","PPI input index level 2 - Transport, postal and warehousing","2020.06",1114,1124
+"PPIQ.SQNII1100","PPI input index level 3 - Road transport","2020.06",1133,1142
+"PPIQ.SQNII111X","PPI input index level 4 - Road transport","2020.06",1133,1142
+"PPIQ.SQNII1200","PPI input index level 3 - Rail, water, air and other transport","2020.06",1031,1033
+"PPIQ.SQNII1300","PPI input index level 3 - Postal, courier transport support, and warehousing","2020.06",1237,1262
+"PPIQ.SQNJJ0000","PPI input index level 1 - Information media and telecommunications","2020.06",997,998
+"PPIQ.SQNJJ1000","PPI input index level 2 - Information media and telecommunications","2020.06",997,998
+"PPIQ.SQNJJ1100","PPI input index level 3 - Information media services","2020.06",1061,1062
+"PPIQ.SQNJJ111X","PPI input index level 4 - Publishing (ex internet & music)","2020.06",1107,1110
+"PPIQ.SQNLL1100","PPI input index level 3 - Rental and hiring services (except real estate)","2020.06",1223,1224
+"PPIQ.SQNMN114X","PPI input index level 4 - Vet & other professional services","2020.06",1212,1213
+"PPIQ.SQNMN2000","PPI input index level 2 - Administrative and support services","2020.06",1194,1195
+"PPIQ.SQNMN2100","PPI input index level 3 - Administrative and support services","2020.06",1194,1195
+"PPIQ.SQNRS211X","PPI input index level 4 - Repair & maintenance","2020.06",1126,1127
+"FPIQ.SEC14","Farm expenses price index - Dairy farms - Freight","2020.06",1102,1120
+"FPIQ.SEC99","Farm expenses price index - Dairy farms - All Inputs Including Livestock","2020.06",1067,1068
+"FPIQ.SEH14","Farm expenses price index - All farms - Freight","2020.06",1102,1110
