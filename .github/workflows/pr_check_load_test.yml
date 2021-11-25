@@ -3,13 +3,11 @@ name: pr_check_load_test
 on:
   push:
     branches:
-      - master
       - releases/*
     paths-ignore:
       - '**.md'
   pull_request_target:
     branches:
-      - master
       - 'releases/*'
 
 # CONFIGURATION
