@@ -3,13 +3,11 @@ name: pr_check_load_test
 on:
   push:
     branches:
-      - master
       - releases/*
     paths-ignore:
       - '**.md'
   pull_request_target:
     branches:
-      - master
       - 'releases/*'
 
 # CONFIGURATION
@@ -35,12 +33,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     
-    - uses: actions/checkout@master
-      with:
-        repository: Azure-Samples/nodejs-appsvc-cosmosdb-bottleneck
-        ref: main
-        path: 'sampleapp'
-    
     - uses: actions/checkout@v2
       name: Checkout from PR branch
       with: 
@@ -61,7 +53,7 @@ jobs:
   
     - name: 'Azure Load Testing'
       uses: ./load-testing/
-      with: 
-        loadTestConfigFile: 'D:\a\load-testing\load-testing\sampleapp\SampleApp.yaml'
+      with:
+        loadTestConfigFile: 'SampleApp.yaml'
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
