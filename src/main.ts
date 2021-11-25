@@ -52,12 +52,14 @@ async function createTestAPI() {
     let createTestresult = await httpClient.request('patch',urlSuffix,JSON.stringify(createData), header);
     if(createTestresult.message.statusCode != 200 && createTestresult.message.statusCode != 201) 
         throw "Error in creating test" + testName;
+    const ltres: string = core.getInput('loadTestResource');
+    const subName = await map.getSubName();
     if(createTestresult.message.statusCode == 201) {
-        console.log("Creating a new load test "+testName);
+        console.log("Creating a new load test '"+testName+"' in '"+ ltres+"' in subscription '"+ subName +"'");
         console.log("Successfully created load test "+testName);
     }
     else 
-        console.log("Test already exists");
+        console.log("Test '"+ testName +"' already exists in '"+ ltres+"' in subscription '"+ subName +"'");
 
     await uploadTestPlan();
 }

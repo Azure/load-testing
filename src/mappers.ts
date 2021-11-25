@@ -192,6 +192,20 @@ export async function getInputParams() {
     }
 }
 
+export async function getSubName() {
+    try {
+        const cmdArguments = ["account", "show"];
+        var result: any = await execAz(cmdArguments);
+        let name = result.name;
+        return name;
+    } 
+    catch (err:any) {
+      const message =
+        `An error occurred while getting credentials from ` + `Azure CLI: ${err.stack}`;
+      throw new Error(message);
+    }
+  }
+
 async function getAccessToken(aud:string) {
     try {
         const cmdArguments = ["account", "get-access-token", "--resource"];
