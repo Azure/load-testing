@@ -35,12 +35,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     
-    - uses: actions/checkout@master
-      with:
-        repository: Azure-Samples/nodejs-appsvc-cosmosdb-bottleneck
-        ref: main
-        path: 'sampleapp'
-    
     - uses: actions/checkout@v2
       name: Checkout from PR branch
       with: 
@@ -62,6 +56,6 @@ jobs:
     - name: 'Azure Load Testing'
       uses: ./load-testing/
       with:
-        loadTestConfigFile: 'D:\a\load-testing\load-testing\sampleapp\SampleApp.yaml'
+        loadTestConfigFile: 'SampleApp.yaml'
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
