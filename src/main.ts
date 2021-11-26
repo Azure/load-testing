@@ -55,11 +55,11 @@ async function createTestAPI() {
     const ltres: string = core.getInput('loadTestResource');
     const subName = await map.getSubName();
     if(createTestresult.message.statusCode == 201) {
-        console.log("Creating a new load test '"+testName+"' in '"+ ltres+"' in subscription '"+ subName +"'");
+        console.log("Creating a new load test '"+testName+"'");
         console.log("Successfully created load test "+testName);
     }
     else 
-        console.log("Test '"+ testName +"' already exists in '"+ ltres+"' in subscription '"+ subName +"'");
+        console.log("Test '"+ testName +"' already exists");
 
     await uploadTestPlan();
 }
@@ -115,6 +115,8 @@ async function createTestRun() {
     const testRunId = util.getUniqueId();
     var urlSuffix = "testruns/"+testRunId+"?tenantId="+tenantId+"&api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
+    const ltres: string = core.getInput('loadTestResource');
+    const subName = await map.getSubName();
     try {
         var startData = map.startTestData(testRunId);
         console.log("Creating and running a testRun for the test");
@@ -126,10 +128,13 @@ async function createTestRun() {
         let startTime = new Date();
         let startResp: string = await startTestresult.readBody(); 
         let testRunDao:any = JSON.parse(startResp);
-        let portalUrl = testRunDao.portalUrl;
+        let testRunName = testRunDao.displayName;
         let status = testRunDao.status;
         if(status == "ACCEPTED") {
-            console.log("View the load test run in progress at: "+ portalUrl)
+            console.log("\nView the load test run in Azure portal by following the steps:")
+            console.log("1. Go to your Azure Load Testing resource '"+ltres+"' in subscription '"+subName+"'")
+            console.log("2. On the Tests page, go to test '"+testName+"'")
+            console.log("3. Go to test run '"+testRunName+"'\n");
             await getTestRunAPI(testRunId, status, startTime);
         }
     }
