@@ -64,7 +64,6 @@ export function createTestData() {
         displayName: testName,
         resourceId: resourceId,
         loadTestConfig: {
-            engineSize: 'M',
             engineInstances: engineInstances
         },
         secrets: secretsYaml,
