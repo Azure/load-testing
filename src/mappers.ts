@@ -78,6 +78,7 @@ export function createTestData() {
 export async function createTestHeader() {
     let headers: IHeaders = {
         'content-type': 'application/merge-patch+json',
+        'user-agent': 'MALT-GHACTION',
         'Authorization': 'Bearer '+ token
     };
     return headers;
@@ -95,6 +96,7 @@ export function uploadFileData(filepath: string) {
 export async function UploadAndValidateHeader(formData:any) {
     let headers: IHeaders = {
         'Authorization': 'Bearer '+ token , 
+        'user-agent': 'MALT-GHACTION',
         'content-type':`multipart/form-data; boundary=${formData.getBoundary()}`
     };
     return headers;
@@ -123,6 +125,7 @@ export async function getTestRunHeader() {
     }
     let headers: IHeaders = {
         'content-type': 'application/json',
+        'user-agent': 'MALT-GHACTION',
         'Authorization': 'Bearer '+ token
     };
     return headers;
@@ -137,6 +140,7 @@ export async function getTestHeader() {
     await getAccessToken("https://loadtest.azure-dev.com");
     let headers: IHeaders = {
         'content-type': 'application/json',
+        'user-agent': 'MALT-GHACTION',
         'Authorization': 'Bearer '+ token
     };
     return headers;
