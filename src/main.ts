@@ -6,7 +6,7 @@ import * as fs from 'fs';
 
 const resultFolder = 'loadTest';
 let baseURL = '';
-const httpClient: httpc.HttpClient = new httpc.HttpClient('user-agent');
+const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 let testName = '';
 let existingCriteria: { [name: string]: map.criteriaObj|null } = {};
 let existingParams: { [name: string]: map.paramObj|null } = {};
