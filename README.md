@@ -15,11 +15,11 @@ For using any credentials like Azure Service Principal in your workflow, add the
 1. Run Azure CLI command to create an [Azure Service Principal for RBAC](https://docs.microsoft.com/en-us/azure/role-based-access-control/overview):
     ```bash
 
-        az ad sp create-for-rbac --name "myApp" --role contributor \
-                                 --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
-                                 --sdk-auth
+        az ad sp create-for-rbac --name "my-load-test-cicd" --role contributor \
+                             --scopes /subscriptions/<subscription-id> \
+                             --sdk-auth
 
-        # Replace {subscription-id}, {resource-group} with the subscription, resource group details of the WebApp
+        # Replace {subscription-id}, {resource-group} with the subscription, resource group details of the Azure Load Testing resource
         # The command should output a JSON object similar to this:
 
       {
@@ -30,17 +30,31 @@ For using any credentials like Azure Service Principal in your workflow, add the
         (...)
       }
     ```
-      * You can further scope down the Azure Credentials to the Web App using scope attribute. For example, 
-      ```
-       az ad sp create-for-rbac --name "myApp" --role contributor \
-                                --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Web/sites/{app-name} \
-                                --sdk-auth
-
-      # Replace {subscription-id}, {resource-group}, and {app-name} with the names of your subscription, resource group, and Azure Web App.
-      ```
 1. Paste the json response from above Azure CLI to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_CREDENTIALS**
+
+1. To authorize the service principal to access the Azure Load Testing service, assign the Load Test Contributor role to the service principal.
+    
+    First, retrieve the service principal object ID by running this Azure CLI command:
+    ```azurecli
+    az ad sp list --filter "displayname eq 'my-load-test-cicd'" -o table
+    ```
+    
+    Next, assign the **Load Test Contributor** role to the service principal. Replace the placeholder text *`<sp-object-id>`* with the **ObjectId** value from the previous Azure CLI command. Also, replace the *`<subscription-name-or-id>`* with your Azure subscription ID.
+
+    ```azurecli
+    az role assignment create --assignee "<sp-object-id>" \
+        --role "Load Test Contributor" \
+        --subscription "<subscription-name-or-id>"
+    ```
+
 1. Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example below)
 
+    ```yaml
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    ```
+    
 ## Azure Load Testing Action
 
 This section describes the Azure Load Testing GitHub action. You can use this action by referencing `azure/load-testing@v1` action in your workflow. The action runs on Windows, Linux, and Mac runners.
@@ -114,7 +128,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
         
       - name: 'Azure Load Testing'
-        uses: azure/load-testing@main
+        uses: azure/load-testing@v1
         with:
           loadTestConfigFile: 'SampleApp.yaml'
           loadTestResource: 'loadTestResourceName'
