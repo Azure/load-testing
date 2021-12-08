@@ -195,12 +195,12 @@ async function getLoadTestResource()
     let env = "prod";
     let id = map.getResourceId();
 
-    let armEndpoint = "https://management.azure.com"+id+"?api-version=2021-09-01-preview";
+    let armEndpoint = "https://management.azure.com"+id+"?api-version=2021-12-01-preview";
     if(env == "canary") {
-        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2021-09-01-preview";
+        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2021-12-01-preview";
     }
     if(env == "dogfood") {
-        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2021-09-01-preview";  
+        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2021-12-01-preview";  
     }
     var header = map.dataPlaneHeader();
     let response = await httpClient.get(armEndpoint, header);
