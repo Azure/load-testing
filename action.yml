@@ -1,5 +1,5 @@
-name: 'AzureLoadTest'
-description: 'Automation workflow for azure load test'
+name: 'Azure Load Testing'
+description: 'Automate continous regression testing with Azure Load Testing'
 inputs:
   loadtestConfigFile:
     description: 'Path of the YAML file. Should be fully qualified path or relative to the default working directory'
