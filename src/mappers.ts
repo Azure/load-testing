@@ -113,7 +113,6 @@ export function startTestData(testRunName:string) {
         displayName: getDefaultTestRunName(),
         testId: testName,
         resourceId: resourceId,
-        description: "Sample testRun",
         secrets: secretsRun,
         environmentVariables: envRun
     };
@@ -159,6 +158,8 @@ function validateName(value:string)
 export async function getInputParams() {
     await getAccessToken("https://management.core.windows.net");
     YamlPath = core.getInput('loadTestConfigFile');
+    if(!(YamlPath.includes(".yaml") || YamlPath.includes(".yml")))
+        throw "Valid Yaml filePath is required in loadTestConfigFile";
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
     testName = (config.testName).toLowerCase();
     if(!validateName(getFileName(testName)))

@@ -154,9 +154,9 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         testStatus = testRunObj.status;
         if(testStatus == "DONE") {
             util.printTestDuration(testRunObj.vusers, startTime);
-            if(testRunObj.passFailCriteria != null && testRunObj.passFailCriteria.passFailMetrics != null)
+            if(testRunObj.passFailCriteria.passFailMetrics != null && testRunObj.passFailCriteria.passFailMetrics != undefined)
                 util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
-            if(testRunObj.testRunStatistics != null)
+            if(testRunObj.testRunStatistics != null && testRunObj.testRunStatistics != undefined)
                 util.printClientMetrics(testRunObj.testRunStatistics);
             var testResultUrl = util.getResultFolder(testRunObj.testArtifacts);
             if(testResultUrl != null) {
