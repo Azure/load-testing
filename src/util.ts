@@ -64,7 +64,7 @@ export async function getResultsFile(response:any)
     }
     catch(err:any) {
         err.message = "Error in fetching the results of the testRun";
-        throw err;
+        throw new Error(err);
     }
 }
 export async function printClientMetrics(obj:any) {
@@ -96,7 +96,7 @@ export async function getStatisticsFile(obj:any) {
     } 
     catch(err:any) {
         err.message = "Error in fetching the client-side metrics of the testRun";
-        throw err;
+        throw new Error(err);
     }
 }
 
