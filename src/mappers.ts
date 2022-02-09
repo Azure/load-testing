@@ -149,28 +149,31 @@ export function getResourceId() {
 }
 function validateName(value:string) 
 {
-    var r = new RegExp(/[a-z0-9_-]+/);
+    var r = new RegExp(/[^a-zA-Z0-9_-]/);
     return r.test(value);
 }
 export async function getInputParams() {
     await getAccessToken("https://management.core.windows.net");
     YamlPath = core.getInput('loadTestConfigFile');
+    if(!(YamlPath.includes(".yaml") || YamlPath.includes(".yml")))
+        throw new Error("The Load Test configuration file should be of type .yaml or .yml");
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
     testName = (config.testName).toLowerCase();
-    if(!validateName(getFileName(testName)))
-        throw "Invalid testName. Allowed chararcters are [a-z0-9-_]"
+    if(validateName(testName))
+        throw new Error("Invalid testName. Allowed chararcters are [a-zA-Z0-9-_]");
     testdesc = config.description;
     engineInstances = config.engineInstances;
     let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
     testPlan = path + config.testPlan;
-    if(!validateName(getFileName(config.testPlan)))
-        throw "Invalid testPlan name. Allowed chararcters are [a-z0-9-_]"
+    if(validateName(getFileName(config.testPlan))) {
+        throw new Error("Invalid testPlan name. Allowed chararcters are [a-zA-Z0-9-_]");
+    }
     if(config.configurationFiles != null) {
         var tempconfigFiles: string[]=[];
         tempconfigFiles = config.configurationFiles;
         tempconfigFiles.forEach(file => {
-            if(!validateName(getFileName(file)))
-                throw "Invalid configuration filename. Allowed chararcters are [a-z0-9-_]";
+            if(validateName(getFileName(file)))
+                throw new Error("Invalid configuration filename. Allowed chararcters are [a-z0-9-_]");
             file = path + file;
             configFiles.push(file);
         });
@@ -187,7 +190,7 @@ export async function getInputParams() {
     }
     getRunTimeParams();
     if(testName === '' || testPlan === '') {
-        throw "Missing required fields ";
+        throw new Error("The required fields testName/testPlan are missing in "+YamlPath+".");
     }
 }
 
@@ -260,8 +263,9 @@ function getParameters(obj:any, type:string) {
     if(type == "secrets") {
         for (var index in obj) {
             var val = obj[index];
-            if(!validateUrl(val.value))
-                throw "Invalid secret URI";
+            if(!validateUrl(val.value)) {
+                throw new Error("Invalid secret URI");
+            }
             secretsYaml[val.name] = {type: 'AKV_SECRET_URI',value: val.value};
         }
     }
@@ -279,7 +283,7 @@ function validateUrl(url:string)
 }
 function validateValue(value:string) 
 {
-    var r = new RegExp(/[a-zA-Z0-9-_]+/);
+    var r = new RegExp(/[^a-zA-Z0-9-_]/);
     return r.test(value);
 }
 function getRunTimeParams() {
@@ -289,8 +293,9 @@ function getRunTimeParams() {
             var obj = JSON.parse(secretRun);
             for (var index in obj) {
                 var val = obj[index];
-                if(!validateValue(val.value))
-                    throw "Invalid secret value"; 
+                if(validateValue(val.value)) {
+                    throw new Error("Invalid secret value"); 
+                }
                 secretsRun[val.name] = {type: 'SECRET_VALUE',value: val.value};
             }
         }
@@ -389,7 +394,7 @@ function ValidateAndAddCriteria(data:any) {
         data.action = "continue"
     data.value = util.removeUnits(data.value);
     if(!util.validCriteria(data)) 
-        throw "Invalid Criteria";
+        throw new Error("Invalid Failure Criteria");
     var key = data.clientmetric+' '+data.aggregate+' '+data.condition+' '+data.action;
     var minVal = data.value;
     var currVal=minVal;
