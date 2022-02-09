@@ -193,7 +193,7 @@ export async function getInputParams() {
     }
     getRunTimeParams();
     if(testName === '' || testPlan === '') {
-        throw new Error("The required field(s)- testName/testPlan are missing in "+YamlPath+".");
+        throw new Error("The required fields testName/testPlan are missing in "+YamlPath+".");
     }
 }
 

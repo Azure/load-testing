@@ -134,7 +134,6 @@ async function createTestRun() {
         let startTestresult = await httpClient.patch(urlSuffix,JSON.stringify(startData),header);
         let startResp: string = await startTestresult.readBody(); 
         let testRunDao:any = JSON.parse(startResp);
-        console.log(startTestresult.message.statusCode);
         if(startTestresult.message.statusCode != 200) {
             console.log(testRunDao);
             throw new Error("Error in running the test");
@@ -167,7 +166,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         let testRunObj:any = JSON.parse(testRunResp);
         testStatus = testRunObj.status;
         if(testStatus == "DONE") {
-            await util.sleep(15000);
+            await util.sleep(30000);
             let header = await map.getTestRunHeader();
             let testRunResult = await httpClient.get(urlSuffix, header);
             let testRunResp: string = await testRunResult.readBody(); 
