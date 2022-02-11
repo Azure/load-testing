@@ -222,12 +222,16 @@ async function getLoadTestResource()
     }
     var header = map.dataPlaneHeader();
     let response = await httpClient.get(armEndpoint, header);
+    if(response.message.statusCode != 200) {
+        var resource_name: string = core.getInput('loadTestResource');
+        var message = "Either Service Principal does not have sufficient permissions. Please assign " 
+        +"the Load Test Contributor role to the service principal. Follow the steps listed at "
+        +"https://docs.microsoft.com/azure/load-testing/tutorial-cicd-github-actions#configure-the-github-actions-workflow-to-run-a-load-test "
+        +"or The Azure Load Testing resource "+ resource_name +" does not exist. Please provide an existing resource.";
+        throw new Error(message);
+    }
     let result: string = await response.readBody();
     let respObj:any = JSON.parse(result);
-    if(response.message.statusCode != 200) {
-        console.log(respObj.error.message);
-        throw new Error();
-    }
     let dataPlaneUrl = respObj.properties.dataPlaneURI;
     baseURL = 'https://'+dataPlaneUrl+'/';
 }
