@@ -84,12 +84,19 @@ export async function createTestHeader() {
 }
 
 export function uploadFileData(filepath: string) {
-    const formData = new FormData();
-    let filedata = fs.readFileSync(filepath);
-    var index = filepath.lastIndexOf('/');
-    var filename = filepath.substring(index+1);
-    formData.append('file',filedata,filename);
-    return formData;
+    try
+    {
+        const formData = new FormData(); 
+        let filedata = fs.readFileSync(filepath);
+        var index = filepath.lastIndexOf('/');
+        var filename = filepath.substring(index+1);
+        formData.append('file',filedata,filename);
+        return formData;
+    }
+    catch(err:any) {
+        err.message = "File not found "+ filepath;
+        throw new Error(err.message);
+    }
 }
 
 export async function UploadAndValidateHeader(formData:any) {
@@ -158,12 +165,16 @@ export async function getInputParams() {
     if(!(YamlPath.includes(".yaml") || YamlPath.includes(".yml")))
         throw new Error("The Load Test configuration file should be of type .yaml or .yml");
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
+    if(config.testName == null || config.testName == undefined)
+        throw new Error("The required field testName is missing in "+YamlPath+".");
     testName = (config.testName).toLowerCase();
     if(validateName(testName))
         throw new Error("Invalid testName. Allowed chararcters are [a-zA-Z0-9-_]");
     testdesc = config.description;
     engineInstances = config.engineInstances;
     let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
+    if(config.testPlan == null || config.testPlan == undefined)
+        throw new Error("The required field testPlan is missing in "+YamlPath+".");
     testPlan = path + config.testPlan;
     if(validateName(getFileName(config.testPlan))) {
         throw new Error("Invalid testPlan name. Allowed chararcters are [a-zA-Z0-9-_]");
