@@ -33,6 +33,12 @@ async function getTestAPI() {
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let testResult = await httpClient.get(urlSuffix, header); 
+    if(testResult.message.statusCode == 401 || testResult.message.statusCode == 403){
+        var message = "Service Principal does not have sufficient permissions. Please assign " 
+        +"the Load Test Contributor role to the service principal. Follow the steps listed at "
+        +"https://docs.microsoft.com/azure/load-testing/tutorial-cicd-github-actions#configure-the-github-actions-workflow-to-run-a-load-test ";
+        throw new Error(message);
+    }
     if(testResult.message.statusCode == 200) {
         let testResp: string = await testResult.readBody(); 
         let testObj:any = JSON.parse(testResp);  
@@ -224,10 +230,7 @@ async function getLoadTestResource()
     let response = await httpClient.get(armEndpoint, header);
     if(response.message.statusCode != 200) {
         var resource_name: string = core.getInput('loadTestResource');
-        var message = "Either Service Principal does not have sufficient permissions. Please assign " 
-        +"the Load Test Contributor role to the service principal. Follow the steps listed at "
-        +"https://docs.microsoft.com/azure/load-testing/tutorial-cicd-github-actions#configure-the-github-actions-workflow-to-run-a-load-test "
-        +"or The Azure Load Testing resource "+ resource_name +" does not exist. Please provide an existing resource.";
+        var message = "The Azure Load Testing resource "+ resource_name +" does not exist. Please provide an existing resource.";
         throw new Error(message);
     }
     let result: string = await response.readBody();
