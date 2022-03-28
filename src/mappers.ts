@@ -17,7 +17,9 @@ var resourceId='';
 var subscriptionID='';
 var tenantId='';
 var YamlPath='';
-var passFailCriteria: any[] = []
+var passFailCriteria: any[] = [];
+var kvRefId: string|null =null;
+var kvRefType: string|null=null;
 
 export interface criteriaObj {
     aggregate: string;
@@ -70,7 +72,9 @@ export function createTestData() {
         environmentVariables: envYaml,
         passFailCriteria:{
             passFailMetrics: failCriteria
-        }
+        },
+        keyvaultReferenceIdentityType: kvRefType,
+        keyvaultReferenceIdentityId: kvRefId
     };
     return data;
 }
@@ -194,10 +198,15 @@ export async function getInputParams() {
         getPassFailCriteria();
     }
     if(config.secrets != undefined) {
+        kvRefType='SystemAssigned';
         getParameters(config.secrets, "secrets");
     }
     if(config.env != undefined) {
         getParameters(config.env, "env");
+    }
+    if(config.keyVaultReferenceIdentity != undefined) {
+        kvRefType='UserAssigned';
+        kvRefId = config.keyVaultReferenceIdentity;
     }
     getRunTimeParams();
     if(testName === '' || testPlan === '') {
@@ -289,7 +298,9 @@ function getParameters(obj:any, type:string) {
 }
 function validateUrl(url:string) 
 {
-    var r = new RegExp(/(http|https):\/\/.*\/secrets\/[/a-zA-Z0-9]+$/);
+    //var r = new RegExp(/(http|https):\/\/.*\/secrets\/[/a-zA-Z0-9]+$/);
+    var pattern: any = /https:\/\/+[a-zA-Z0-9_-]+\.+(?:vault|vault-int)+\.+(?:azure|azure-int|usgovcloudapi|microsoftazure)+\.+(?:net|cn|de)+\/+(?:secrets|certificates|keys|storage)+\/+[a-zA-Z0-9_-]+\/+|[a-zA-Z0-9]+$/;
+    var r = new RegExp(pattern);
     return r.test(url);
 }
 function validateValue(value:string) 
