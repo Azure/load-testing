@@ -17,7 +17,7 @@ async function run() {
         await map.getInputParams();
         await getLoadTestResource();
         testName = map.getTestName();
-        await getTestAPI();
+        await getTestAPI(false);
         if (fs.existsSync(resultFolder)){
             util.deleteFile(resultFolder);
         }
@@ -28,7 +28,7 @@ async function run() {
         core.setFailed(err.message);
     }
 }
-async function getTestAPI() {
+async function getTestAPI(validate:boolean) {
     var urlSuffix = "loadtests/"+testName+"?api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
@@ -41,14 +41,33 @@ async function getTestAPI() {
     }
     if(testResult.message.statusCode == 200) {
         let testResp: string = await testResult.readBody(); 
-        let testObj:any = JSON.parse(testResp);  
-        if(testObj.passFailCriteria != null && testObj.passFailCriteria.passFailMetrics)
-            existingCriteria = testObj.passFailCriteria.passFailMetrics;
-        if(testObj.secrets != null)
-            existingParams = testObj.secrets;
-        if(testObj.environmentVariables != null)
-            existingEnv = testObj.environmentVariables;
+        let testObj:any = JSON.parse(testResp);
+        var testFile = testObj.inputArtifacts.testScriptUrl;  
+        if(validate)
+            return testFile.validationStatus;
+        else
+        {
+            if(testObj.passFailCriteria != null && testObj.passFailCriteria.passFailMetrics)
+                existingCriteria = testObj.passFailCriteria.passFailMetrics;
+            if(testObj.secrets != null)
+                existingParams = testObj.secrets;
+            if(testObj.environmentVariables != null)
+                existingEnv = testObj.environmentVariables;
+            if(testFile != null)
+                await deleteFileAPI(testFile.fileId)
+        }
     }   
+}
+async function deleteFileAPI(fileId:string) {
+    var urlSuffix = "loadtests/"+testName+"/files/"+fileId+"?api-version=2021-07-01-preview";
+    urlSuffix = baseURL+urlSuffix;
+    let header = await map.getTestHeader();
+    let delFileResult = await httpClient.del(urlSuffix, header); 
+    if(delFileResult.message.statusCode != 204){
+        let delFileResp: string = await delFileResult.readBody(); 
+        let delFileObj:any = JSON.parse(delFileResp);
+        throw new Error(delFileObj.message);
+    }
 }
 async function createTestAPI() {
     var urlSuffix = "loadtests/"+testName+"?api-version=2021-07-01-preview";
@@ -75,16 +94,17 @@ async function createTestAPI() {
 async function uploadTestPlan() 
 {
     let filepath = map.getTestFile();
-    let filename = map.getFileName(filepath);
-    var urlSuffix = "file/"+filename+":validate?api-version=2021-07-01-preview";
+    //let filename = map.getFileName(filepath);
+    let filename = util.getUniqueId();
+    /*var urlSuffix = "file/"+filename+":validate?api-version=2021-07-01-preview";
     urlSuffix = baseURL+urlSuffix;
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
     let validateresult = await httpClient.post(urlSuffix, uploadData, headers);
     if(validateresult.message.statusCode != 200)
         throw new Error("Invalid TestPlan");
-    else {
-        urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2021-07-01-preview";
+    else {*/
+        var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-04-15-preview";
         urlSuffix = baseURL + urlSuffix;
         var uploadData = map.uploadFileData(filepath);
         let headers = await map.UploadAndValidateHeader(uploadData)
@@ -98,10 +118,22 @@ async function uploadTestPlan()
         else {
             console.log("Uploaded test plan for the test");
             var statuscode = await uploadConfigFile();
-            if(statuscode == 201)
-                await createTestRun();
+            if(statuscode == 201){
+                var minutesToAdd=10;
+                var startTime = new Date();
+                var maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
+                var validationStatus = "VALIDATION_INITIATED";
+                while(maxAllowedTime>(new Date()) && validationStatus== "VALIDATION_INITIATED" || validationStatus== "NOT_VALIDATED") {
+                    validationStatus = await getTestAPI(true);
+                    await util.sleep(1000);
+                }
+                if(validationStatus==null || validationStatus == "VALIDATION_SUCCESS" )
+                    await createTestRun();
+                else if(validationStatus == "VALIDATION_FAILURE")
+                    throw new Error("TestPlan validation Failed");
+            }
         }
-    }
+   // }
 }
 async function uploadConfigFile() 
 {
@@ -109,7 +141,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (const filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2021-07-01-preview";
+            var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-04-15-preview";
             urlSuffix = baseURL+urlSuffix;
             var uploadData = map.uploadFileData(filepath);
             let headers = await map.UploadAndValidateHeader(uploadData);
@@ -129,7 +161,7 @@ async function uploadConfigFile()
 async function createTestRun() {
     const tenantId = map.getTenantId();
     const testRunId = util.getUniqueId();
-    var urlSuffix = "testruns/"+testRunId+"?tenantId="+tenantId+"&api-version=2021-07-01-preview";
+    var urlSuffix = "testruns/"+testRunId+"?tenantId="+tenantId+"&api-version=2022-04-15-preview";
     urlSuffix = baseURL+urlSuffix;
     const ltres: string = core.getInput('loadTestResource');
     const subName = await map.getSubName();
@@ -219,9 +251,9 @@ async function getLoadTestResource()
     let env = "prod";
     let id = map.getResourceId();
 
-    let armEndpoint = "https://management.azure.com"+id+"?api-version=2021-12-01-preview";
+    let armEndpoint = "https://management.azure.com"+id+"?api-version=2022-04-01-preview";
     if(env == "canary") {
-        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2021-12-01-preview";
+        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2022-04-01-preview";
     }
     if(env == "dogfood") {
         armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2021-12-01-preview";  

@@ -20,6 +20,7 @@ var YamlPath='';
 var passFailCriteria: any[] = []
 var kvRefId: string|null=null;
 var kvRefType: string|null=null;
+var subnetId: string|null=null;
 
 export interface criteriaObj {
     aggregate: string;
@@ -148,6 +149,7 @@ function isExpired() {
 }
 export async function getTestHeader() {
     await getAccessToken("https://loadtest.azure-dev.com");
+    //console.log("token = "+token);
     let headers: IHeaders = {
         'content-type': 'application/json',
         'user-agent': 'MALT-GHACTION',
@@ -199,6 +201,9 @@ export async function getInputParams() {
     if(config.failureCriteria != undefined) {
         passFailCriteria = config.failureCriteria;
         getPassFailCriteria();
+    }
+    if(config.subnetId != undefined) {
+        subnetId = (config.subnetId)
     }
     if(config.secrets != undefined) {
         kvRefType='SystemAssigned';
