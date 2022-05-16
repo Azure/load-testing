@@ -42,7 +42,7 @@ async function getTestAPI(validate:boolean) {
     if(testResult.message.statusCode == 200) {
         let testResp: string = await testResult.readBody(); 
         let testObj:any = JSON.parse(testResp);
-        var testFile = testObj.inputArtifacts.testScriptUrl;  
+        var testFile = testObj.inputArtifacts;  
         if(validate)
             return testFile.validationStatus;
         else
@@ -53,8 +53,10 @@ async function getTestAPI(validate:boolean) {
                 existingParams = testObj.secrets;
             if(testObj.environmentVariables != null)
                 existingEnv = testObj.environmentVariables;
-            if(testFile != null)
-                await deleteFileAPI(testFile.fileId)
+            if(testFile.testScriptUrl != null)
+                await deleteFileAPI(testFile.testScriptUrl.fileId)
+            if(testFile.userPropUrl != null)
+                await deleteFileAPI(testFile.userPropUrl.fileId);
         }
     }   
 }
@@ -117,8 +119,8 @@ async function uploadTestPlan()
         }
         else {
             console.log("Uploaded test plan for the test");
-            var statuscode = await uploadConfigFile();
-            if(statuscode == 201){
+            var statuscode:number =await uploadConfigFile()
+            if(statuscode === 201){
                 var minutesToAdd=10;
                 var startTime = new Date();
                 var maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
@@ -153,6 +155,28 @@ async function uploadConfigFile()
                 console.log(uploadObj);
                 throw new Error("Error in uploading config file for the created test");
             }
+        }
+    }
+    var statuscode = await uploadPropertyFile();
+    return statuscode;
+}
+async function uploadPropertyFile() 
+{
+    let propertyFile = map.getPropertyFile();
+    if(propertyFile != undefined) {
+        let filename = util.getUniqueId();
+        console.log(propertyFile);
+        var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-04-15-preview&fileType=1";
+        urlSuffix = baseURL + urlSuffix;
+        var uploadData = map.uploadFileData(propertyFile);
+        let headers = await map.UploadAndValidateHeader(uploadData)
+        let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
+        let uploadResultResp: string = await uploadresult.readBody(); 
+        let uploadObj:any = JSON.parse(uploadResultResp);
+        console.log(uploadObj);
+        if(uploadresult.message.statusCode != 201){
+            //console.log(uploadObj);
+            throw new Error("Error in uploading TestPlan for the created test");
         }
     }
     return 201;

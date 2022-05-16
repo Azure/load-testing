@@ -11,6 +11,7 @@ var testName='';
 var testdesc = 'SampleTest';
 var engineInstances='1';
 var testPlan='';
+var propertyFile: string|null=null;
 var configFiles: string[]=[];
 var token='';
 var resourceId='';
@@ -74,6 +75,7 @@ export function createTestData() {
         passFailCriteria:{
             passFailMetrics: failCriteria
         },
+        subnetId: subnetId,
         keyvaultReferenceIdentityType: kvRefType,
         keyvaultReferenceIdentityId: kvRefId
     };
@@ -147,7 +149,6 @@ function isExpired() {
 }
 export async function getTestHeader() {
     await getAccessToken("https://loadtest.azure-dev.com");
-    //console.log("token = "+token);
     let headers: IHeaders = {
         'content-type': 'application/json',
         'Authorization': 'Bearer '+ token
@@ -200,7 +201,12 @@ export async function getInputParams() {
         getPassFailCriteria();
     }
     if(config.subnetId != undefined) {
-        subnetId = (config.subnetId)
+        subnetId = config.subnetId
+    }
+    if(config.properties != undefined)
+    {
+        var propFile = config.properties.userPropertyFile;
+        propertyFile = path + propFile;
     }
     if(config.secrets != undefined) {
         kvRefType='SystemAssigned';
@@ -350,7 +356,9 @@ export function getYamlPath() {
 export function getTestFile() {
     return testPlan;
 }
-
+export function getPropertyFile() {
+    return propertyFile;
+}
 export function getConfigFiles() {
     return configFiles;
 }
