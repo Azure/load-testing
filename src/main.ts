@@ -44,7 +44,7 @@ async function getTestAPI(validate:boolean) {
         let testObj:any = JSON.parse(testResp);
         var testFile = testObj.inputArtifacts;  
         if(validate)
-            return testFile.validationStatus;
+            return testFile.testScriptUrl.validationStatus;
         else
         {
             if(testObj.passFailCriteria != null && testObj.passFailCriteria.passFailMetrics)
