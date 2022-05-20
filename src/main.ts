@@ -90,52 +90,39 @@ async function createTestAPI() {
     else 
         console.log("Test '"+ testName +"' already exists");
 
-    await uploadTestPlan();
+    await uploadConfigFile()
 }
 
 async function uploadTestPlan() 
 {
     let filepath = map.getTestFile();
-    //let filename = map.getFileName(filepath);
     let filename = util.getUniqueId();
-    /*var urlSuffix = "file/"+filename+":validate?api-version=2021-07-01-preview";
-    urlSuffix = baseURL+urlSuffix;
+    var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-04-15-preview";
+    urlSuffix = baseURL + urlSuffix;
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
-    let validateresult = await httpClient.post(urlSuffix, uploadData, headers);
-    if(validateresult.message.statusCode != 200)
-        throw new Error("Invalid TestPlan");
-    else {*/
-        var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-04-15-preview";
-        urlSuffix = baseURL + urlSuffix;
-        var uploadData = map.uploadFileData(filepath);
-        let headers = await map.UploadAndValidateHeader(uploadData)
-        let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
-        let uploadResultResp: string = await uploadresult.readBody(); 
-        let uploadObj:any = JSON.parse(uploadResultResp);
-        if(uploadresult.message.statusCode != 201){
-            console.log(uploadObj);
-            throw new Error("Error in uploading TestPlan for the created test");
+    let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
+    let uploadResultResp: string = await uploadresult.readBody(); 
+    let uploadObj:any = JSON.parse(uploadResultResp);
+    if(uploadresult.message.statusCode != 201){
+        console.log(uploadObj);
+        throw new Error("Error in uploading TestPlan for the created test");
+    }
+    else {
+        console.log("Uploaded test plan for the test");
+        var minutesToAdd=10;
+        var startTime = new Date();
+        var maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
+        var validationStatus = "VALIDATION_INITIATED";
+        while(maxAllowedTime>(new Date()) && validationStatus== "VALIDATION_INITIATED" || validationStatus== "NOT_VALIDATED") {
+            validationStatus = await getTestAPI(true);
+            await util.sleep(1000);
         }
-        else {
-            console.log("Uploaded test plan for the test");
-            var statuscode:number =await uploadConfigFile()
-            if(statuscode === 201){
-                var minutesToAdd=10;
-                var startTime = new Date();
-                var maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
-                var validationStatus = "VALIDATION_INITIATED";
-                while(maxAllowedTime>(new Date()) && validationStatus== "VALIDATION_INITIATED" || validationStatus== "NOT_VALIDATED") {
-                    validationStatus = await getTestAPI(true);
-                    await util.sleep(1000);
-                }
-                if(validationStatus==null || validationStatus == "VALIDATION_SUCCESS" )
-                    await createTestRun();
-                else if(validationStatus == "VALIDATION_FAILURE")
-                    throw new Error("TestPlan validation Failed");
-            }
-        }
-   // }
+        if(validationStatus==null || validationStatus == "VALIDATION_SUCCESS" )
+            await createTestRun();
+        else if(validationStatus == "VALIDATION_FAILURE")
+            throw new Error("TestPlan validation Failed");
+    }
 }
 async function uploadConfigFile() 
 {
@@ -158,7 +145,9 @@ async function uploadConfigFile()
         }
     }
     var statuscode = await uploadPropertyFile();
-    return statuscode;
+    if(statuscode === 201){
+        await uploadTestPlan();
+    }
 }
 async function uploadPropertyFile() 
 {
@@ -173,9 +162,8 @@ async function uploadPropertyFile()
         let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
         let uploadResultResp: string = await uploadresult.readBody(); 
         let uploadObj:any = JSON.parse(uploadResultResp);
-        console.log(uploadObj);
         if(uploadresult.message.statusCode != 201){
-            //console.log(uploadObj);
+            console.log(uploadObj);
             throw new Error("Error in uploading TestPlan for the created test");
         }
     }
