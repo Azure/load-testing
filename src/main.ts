@@ -29,7 +29,7 @@ async function run() {
     }
 }
 async function getTestAPI(validate:boolean) {
-    var urlSuffix = "loadtests/"+testName+"?api-version=2021-07-01-preview";
+    var urlSuffix = "loadtests/"+testName+"?api-version=2022-06-01-preview";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let testResult = await httpClient.get(urlSuffix, header); 
@@ -61,7 +61,7 @@ async function getTestAPI(validate:boolean) {
     }   
 }
 async function deleteFileAPI(fileId:string) {
-    var urlSuffix = "loadtests/"+testName+"/files/"+fileId+"?api-version=2021-07-01-preview";
+    var urlSuffix = "loadtests/"+testName+"/files/"+fileId+"?api-version=2022-06-01-preview";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let delFileResult = await httpClient.del(urlSuffix, header); 
@@ -72,7 +72,7 @@ async function deleteFileAPI(fileId:string) {
     }
 }
 async function createTestAPI() {
-    var urlSuffix = "loadtests/"+testName+"?api-version=2021-07-01-preview";
+    var urlSuffix = "loadtests/"+testName+"?api-version=2022-06-01-preview";
     urlSuffix = baseURL+urlSuffix;
     var createData = map.createTestData();
     let header = await map.createTestHeader();
@@ -97,7 +97,7 @@ async function uploadTestPlan()
 {
     let filepath = map.getTestFile();
     let filename = util.getUniqueId();
-    var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-04-15-preview";
+    var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-06-01-preview";
     urlSuffix = baseURL + urlSuffix;
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
@@ -130,7 +130,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (const filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-04-15-preview";
+            var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-06-01-preview";
             urlSuffix = baseURL+urlSuffix;
             var uploadData = map.uploadFileData(filepath);
             let headers = await map.UploadAndValidateHeader(uploadData);
@@ -155,7 +155,7 @@ async function uploadPropertyFile()
     if(propertyFile != undefined) {
         let filename = util.getUniqueId();
         console.log(propertyFile);
-        var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-04-15-preview&fileType=1";
+        var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-06-01-preview&fileType=1";
         urlSuffix = baseURL + urlSuffix;
         var uploadData = map.uploadFileData(propertyFile);
         let headers = await map.UploadAndValidateHeader(uploadData)
@@ -173,7 +173,7 @@ async function uploadPropertyFile()
 async function createTestRun() {
     const tenantId = map.getTenantId();
     const testRunId = util.getUniqueId();
-    var urlSuffix = "testruns/"+testRunId+"?tenantId="+tenantId+"&api-version=2022-04-15-preview";
+    var urlSuffix = "testruns/"+testRunId+"?tenantId="+tenantId+"&api-version=2022-06-01-preview";
     urlSuffix = baseURL+urlSuffix;
     const ltres: string = core.getInput('loadTestResource');
     const subName = await map.getSubName();
@@ -268,7 +268,7 @@ async function getLoadTestResource()
         armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2022-04-01-preview";
     }
     if(env == "dogfood") {
-        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2021-12-01-preview";  
+        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2022-04-01-preview";  
     }
     var header = map.dataPlaneHeader();
     let response = await httpClient.get(armEndpoint, header);

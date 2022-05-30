@@ -22,6 +22,7 @@ var passFailCriteria: any[] = []
 var kvRefId: string|null=null;
 var kvRefType: string|null=null;
 var subnetId: string|null=null;
+var splitCSVs: boolean|null=null;
 
 export interface criteriaObj {
     aggregate: string;
@@ -68,7 +69,8 @@ export function createTestData() {
         displayName: testName,
         resourceId: resourceId,
         loadTestConfig: {
-            engineInstances: engineInstances
+            engineInstances: engineInstances,
+            splitAllCSVs: splitCSVs
         },
         secrets: secretsYaml,
         environmentVariables: envYaml,
@@ -198,6 +200,9 @@ export async function getInputParams() {
             file = path + file;
             configFiles.push(file);
         });
+    }
+    if(config.splitAllCSVs !=undefined){
+        splitCSVs = config.splitAllCSVs;
     }
     if(config.failureCriteria != undefined) {
         passFailCriteria = config.failureCriteria;
