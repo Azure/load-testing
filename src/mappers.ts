@@ -331,9 +331,9 @@ function getRunTimeParams() {
             var obj = JSON.parse(secretRun);
             for (var index in obj) {
                 var val = obj[index];
-                if(validateValue(val.value)) {
+                /*if(validateValue(val.value)) {
                     throw new Error("Invalid secret value"); 
-                }
+                }*/
                 secretsRun[val.name] = {type: 'SECRET_VALUE',value: val.value};
             }
         }
