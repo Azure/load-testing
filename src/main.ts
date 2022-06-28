@@ -217,10 +217,16 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         testStatus = testRunObj.status;
         if(testStatus == "DONE") {
             await util.sleep(30000);
-            let header = await map.getTestRunHeader();
-            let testRunResult = await httpClient.get(urlSuffix, header);
-            let testRunResp: string = await testRunResult.readBody(); 
-            let testRunObj:any = JSON.parse(testRunResp);
+            let vusers = null;
+            let count = 0;
+            while(vusers == null && count < 4){
+                let header = await map.getTestRunHeader();
+                let testRunResult = await httpClient.get(urlSuffix, header);
+                let testRunResp: string = await testRunResult.readBody(); 
+                testRunObj = JSON.parse(testRunResp);
+                vusers = testRunObj.vusers;
+                count++;
+            }
             util.printTestDuration(testRunObj.vusers, startTime);
             if(testRunObj.passFailCriteria.passFailMetrics != null && testRunObj.passFailCriteria.passFailMetrics != undefined)
                 util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
