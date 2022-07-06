@@ -3,6 +3,22 @@ var path = require('path');
 var AdmZip = require("adm-zip");
 const { v4: uuidv4 } = require('uuid');
 
+const validAggregateList = {
+    'response_time_ms': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
+    'requests_per_sec': ['avg'],
+    'requests': ['count'],
+    'latency': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
+    'error': ['percentage']
+}
+
+const validConditionList = {
+    'response_time_ms': ['>', '<'],
+    'requests_per_sec': ['>', '<'],
+    'requests': ['>', '<'],
+    'latency': ['>', '<'],
+    'error': ['>']
+}
+
 export async function printTestDuration(vusers:string, startTime:Date) 
 {
     let endTime = new Date();
@@ -22,9 +38,14 @@ export function printCriteria(criteria:any) {
     for(var key in criteria) {
         var metric = criteria[key];
         var str = metric.aggregate+"("+metric.clientmetric+") "+ metric.condition+ ' '+metric.value;
+        if(metric.requestName != null){
+            str = metric.requestName + ": " + str;
+        }
         var spaceCount = 50 - str.length;
-        while(spaceCount--)
+        while(spaceCount > 0){
             str+=' ';
+            spaceCount--;
+        }
         var actualValue = metric.actualValue.toString();
         spaceCount = 10 - (actualValue).length;
         while(spaceCount--)
@@ -159,20 +180,40 @@ export function removeUnits(input:string)
     return i == input.length ? input : input.substring(0,i);
 }
 export function validCriteria(data:any) {
-    if(data.clientmetric == "error") {
-        return validErrorCriteria(data);
+    switch(data.clientmetric) {
+        case "response_time_ms":
+            return validResponseTimeCriteria(data);
+        case "requests_per_sec":
+            return validRequestsPerSecondCriteria(data);
+        case "requests":
+            return validRequestsCriteria(data);
+        case "latency":
+            return validLatencyCriteria(data);
+        case "error":
+            return validErrorCriteria(data);
+        default:
+            return false;
     }
-    else if(data.clientmetric == "response_time_ms" || data.clientmetric == "latency")
-        return validClientMetricCriteria(data);
-    return false;
 }
 
-function validErrorCriteria(data:any)  {
-    return !(data.aggregate != "percentage" || data.condition != '>' 
-        || Number(data.value)<0 || Number(data.value)>100 || data.action!= "continue");
-}
-
-function validClientMetricCriteria(data:any)  {
-    return !(data.aggregate != "avg" || data.condition != '>' 
+function validResponseTimeCriteria(data:any)  {
+    return !(!validAggregateList['response_time_ms'].includes(data.aggregate) || !validConditionList['response_time_ms'].includes(data.condition)
         || (data.value).indexOf('.')!=-1 || data.action!= "continue");
+}
+
+function validRequestsPerSecondCriteria(data:any)  {
+    return !(!validAggregateList['requests_per_sec'].includes(data.aggregate) || !validConditionList['requests_per_sec'].includes(data.condition)
+        || data.action!= "continue");
+}
+function validRequestsCriteria(data:any)  {
+    return !(!validAggregateList['requests'].includes(data.aggregate) || !validConditionList['requests'].includes(data.condition)
+        || (data.value).indexOf('.')!=-1 || data.action!= "continue");
+}
+function validLatencyCriteria(data:any)  {
+    return !(!validAggregateList['latency'].includes(data.aggregate) || !validConditionList['latency'].includes(data.condition)
+        || (data.value).indexOf('.')!=-1 || data.action!= "continue");
+}
+function validErrorCriteria(data:any)  {
+    return !(!validAggregateList['error'].includes(data.aggregate) || !validConditionList['error'].includes(data.condition)
+        || Number(data.value)<0 || Number(data.value)>100 || data.action!= "continue");
 }

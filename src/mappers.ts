@@ -28,6 +28,7 @@ export interface criteriaObj {
     aggregate: string;
     clientmetric: string;
     condition: string;
+    requestName: string | null;
     value: number;
     action: string;
     actualValue: number;
@@ -43,7 +44,7 @@ let secretsYaml: { [name: string]: paramObj|null } = {};
 let secretsRun: { [name: string]: paramObj } = {};
 let envYaml: { [name: string]: string|null } = {};
 let envRun: { [name: string]: string } = {};
-let minValue: { [name: string]: number } = {};
+let failureCriteriaValue: { [name: string]: number } = {}
 
 function getExistingData() {
     var existingCriteria:any = index.getExistingCriteria();
@@ -391,12 +392,14 @@ function getPassFailCriteria() {
             clientmetric: "",
             condition: "",
             value: "",
+            requestName: "",
             action: "",
             actualValue: 0,
             result: null
         }
         if(typeof criteria !== "string"){
             var request = Object.keys(criteria)[0]
+            data.requestName = request;
             criteria = criteria[request]
         }
         let tempStr: string = "";
@@ -435,24 +438,33 @@ function ValidateAndAddCriteria(data:any) {
     data.value = util.removeUnits(data.value);
     if(!util.validCriteria(data)) 
         throw new Error("Invalid Failure Criteria");
-    var key = data.clientmetric+' '+data.aggregate+' '+data.condition+' '+data.action;
-    var minVal = data.value;
-    var currVal=minVal;
-    if(minValue.hasOwnProperty(key))
-        currVal = minValue[key];
-    minValue[key] = (minVal<currVal)? minVal: currVal;
+    var key: string = data.clientmetric+' '+data.aggregate+' '+data.condition+' '+data.action;
+    if(data.requestName != ""){
+        key = key + ' ' + data.requestName;
+    }
+    var val: number = parseInt(data.value);
+    var currVal = val;
+    if(failureCriteriaValue.hasOwnProperty(key))
+        currVal = failureCriteriaValue[key];
+    if(data.condition == '>'){
+        failureCriteriaValue[key] = (val<currVal) ? val : currVal;
+    }
+    else{
+        failureCriteriaValue[key] = (val>currVal) ? val : currVal;
+    }
 }
 function getFailureCriteria() {
-    for(var key in minValue) {
+    for(var key in failureCriteriaValue) {
         var splitted = key.split(" "); 
         failCriteria[util.getUniqueId()] = {
             clientmetric: splitted[0],
             aggregate: splitted[1],
             condition: splitted[2],
-            value: minValue[key],
+            value: failureCriteriaValue[key],
             action: splitted[3],
             actualValue: 0,
             result: null,
+            requestName: splitted.length > 4 ? splitted[4] : null
         };
     }
 }
