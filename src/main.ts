@@ -200,7 +200,8 @@ async function createTestRun() {
         }
     }
     catch(err:any) {
-        err.message = "Error in running the test";
+        if(!err.message)
+            err.message = "Error in running the test";
         throw new Error(err.message);
     }
 }

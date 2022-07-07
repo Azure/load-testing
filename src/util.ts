@@ -46,11 +46,11 @@ export function printCriteria(criteria:any) {
             str+=' ';
             spaceCount--;
         }
-        var actualValue = metric.actualValue.toString();
+        var actualValue = metric.actualValue ? metric.actualValue.toString() : '';
         spaceCount = 10 - (actualValue).length;
         while(spaceCount--)
             actualValue = actualValue + ' ';
-        metric.result = metric.result.toUpperCase();
+        metric.result = metric.result ? metric.result.toUpperCase() : '';
         console.log(str + actualValue+"            "+ metric.result);
     }
     console.log("\n");
