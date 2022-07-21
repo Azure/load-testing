@@ -114,14 +114,16 @@ async function uploadTestPlan()
         var startTime = new Date();
         var maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
         var validationStatus = "VALIDATION_INITIATED";
-        while(maxAllowedTime>(new Date()) && validationStatus== "VALIDATION_INITIATED" || validationStatus== "NOT_VALIDATED") {
+        while(maxAllowedTime>(new Date()) && (validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED")) {
             validationStatus = await getTestAPI(true);
-            await util.sleep(1000);
+            await util.sleep(3000);
         }
-        if(validationStatus==null || validationStatus == "VALIDATION_SUCCESS" )
+        if(validationStatus == null || validationStatus == "VALIDATION_SUCCESS" )
             await createTestRun();
-        else if(validationStatus == "VALIDATION_FAILURE")
-            throw new Error("TestPlan validation Failed");
+        else if(validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED")
+            throw new Error("TestPlan validation timeout. Please try again.")
+        else
+            throw new Error("TestPlan validation Failed.");
     }
 }
 async function uploadConfigFile() 
