@@ -272,12 +272,12 @@ async function getLoadTestResource()
     let env = "prod";
     let id = map.getResourceId();
 
-    let armEndpoint = "https://management.azure.com"+id+"?api-version=2022-04-01-preview";
+    let armEndpoint = "https://management.azure.com"+id+"?api-version=2022-04-15-preview";
     if(env == "canary") {
-        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2022-04-01-preview";
+        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2022-04-15-preview";
     }
     if(env == "dogfood") {
-        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2022-04-01-preview";  
+        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2022-04-15-preview";  
     }
     var header = map.dataPlaneHeader();
     let response = await httpClient.get(armEndpoint, header);
