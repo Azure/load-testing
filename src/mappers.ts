@@ -40,8 +40,6 @@ export interface criteriaObj {
     actualValue: number;
     result: null;
 };
-
-
 export interface paramObj {
     type: string;
     value: string;
