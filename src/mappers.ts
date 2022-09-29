@@ -23,7 +23,13 @@ var kvRefId: string|null=null;
 var kvRefType: string|null=null;
 var subnetId: string|null=null;
 var splitCSVs: boolean|null=null;
+var certificates : certObj|null = null;
 
+export interface certObj {
+    type: string;
+    value: string;
+    name: string;
+};
 export interface criteriaObj {
     aggregate: string;
     clientmetric: string;
@@ -74,6 +80,7 @@ export function createTestData() {
             splitAllCSVs: splitCSVs
         },
         secrets: secretsYaml,
+        certificate:certificates,
         environmentVariables: envYaml,
         passFailCriteria:{
             passFailMetrics: failCriteria
@@ -224,6 +231,9 @@ export async function getInputParams() {
     if(config.env != undefined) {
         getParameters(config.env, "env");
     }
+    if(config.certificates != undefined){
+        getParameters(config.certificates,"certificates");
+    }
     if(config.keyVaultReferenceIdentity != undefined) {
         kvRefType='UserAssigned';
         kvRefId = config.keyVaultReferenceIdentity;
@@ -313,6 +323,15 @@ function getParameters(obj:any, type:string) {
         for(var index in obj) {
             var val = obj[index];
             envYaml[val.name] = val.value;
+        }
+    }
+    else if(type == "certificates"){
+        for (var index in obj) {
+            var val = obj[index];
+            if(!validateUrl(val.value))
+                throw new Error("Invalid certificate url");
+            certificates = {name: val.name, type: 'AKV_CERT_URI',value: val.value};
+            break;
         }
     }
 }
