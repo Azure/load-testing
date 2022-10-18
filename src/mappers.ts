@@ -53,10 +53,10 @@ let envRun: { [name: string]: string } = {};
 let failureCriteriaValue: { [name: string]: number } = {}
 
 function getExistingData() {
-    var existingCriteria:any = index.getExistingCriteria();
-    for(var key in existingCriteria) {
-        failCriteria[key] = null;
-    }
+    var existingCriteria: { [name: string]: criteriaObj|null } = index.getExistingCriteria();
+    var existingCriteriaIds: string[] = Object.keys(existingCriteria);
+    getFailureCriteria(existingCriteriaIds);
+
     var existingParams:any = index.getExistingParams();
     for(var key in existingParams) {
         if(!secretsYaml.hasOwnProperty(key))
@@ -452,7 +452,6 @@ function getPassFailCriteria() {
         } 
         ValidateAndAddCriteria(data);
     });
-    getFailureCriteria();
 }
 function ValidateAndAddCriteria(data:any) {
     if(data.action == "")
@@ -475,10 +474,13 @@ function ValidateAndAddCriteria(data:any) {
         failureCriteriaValue[key] = (val>currVal) ? val : currVal;
     }
 }
-function getFailureCriteria() {
+function getFailureCriteria(existingCriteriaIds: string[]) {
+    var numberOfExistingCriteria = existingCriteriaIds.length;
+    var index = 0;
     for(var key in failureCriteriaValue) {
         var splitted = key.split(" "); 
-        failCriteria[util.getUniqueId()] = {
+        var criteriaId = index < numberOfExistingCriteria ? existingCriteriaIds[index++] : util.getUniqueId();
+        failCriteria[criteriaId] = {
             clientmetric: splitted[0],
             aggregate: splitted[1],
             condition: splitted[2],
@@ -488,5 +490,8 @@ function getFailureCriteria() {
             result: null,
             requestName: splitted.length > 4 ? splitted[4] : null
         };
+    }
+    for(; index < numberOfExistingCriteria; index++){
+        failCriteria[existingCriteriaIds[index]] = null;
     }
 }
