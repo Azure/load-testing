@@ -180,7 +180,7 @@ export function removeUnits(input:string)
     return i == input.length ? input : input.substring(0,i);
 }
 export function validCriteria(data:any) {
-    switch(data.clientmetric) {
+    switch(data.clientMetric) {
         case "response_time_ms":
             return validResponseTimeCriteria(data);
         case "requests_per_sec":
