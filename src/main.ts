@@ -45,6 +45,7 @@ async function getTestAPI(validate:boolean) {
     }
     if(testResult.message.statusCode == 200) {
         let testResp: string = await testResult.readBody();
+        console.log(testResp);
         let testObj:any = JSON.parse(testResp);
         var testFile = testObj.inputArtifacts;
         if(validate){
@@ -293,6 +294,7 @@ async function getLoadTestResource()
     let respObj:any = JSON.parse(result);
     let dataPlaneUrl = respObj.properties.dataPlaneURI;
     baseURL = 'https://'+dataPlaneUrl+'/';
+    console.log("dpUrl:",dataPlaneUrl);
 }
 export function getExistingCriteria()
 {

@@ -36,6 +36,7 @@ export interface criteriaObj {
     condition: string;
     requestName: string | null;
     value: number;
+    action : string;
 };
 export interface paramObj {
     type: string;
@@ -127,7 +128,7 @@ export function startTestData(testRunName:string) {
         displayName: getDefaultTestRunName(),
         testId: testName,
         secrets: secretsRun,
-        environmentVariables: envRun
+        environmentVariables: envRun,
     };
     return data;
 }
@@ -191,7 +192,7 @@ export async function getInputParams() {
         tempconfigFiles = config.configurationFiles;
         tempconfigFiles.forEach(file => {
             if(validateName(getFileName(file)))
-                throw new Error("Invalid configuration filename. Allowed chararcters are [a-z0-9-_]");
+                throw new Error("Invalid configuration filename. Allowed chararcters are [a-z0-9-._]");
             file = path + file;
             configFiles.push(file);
         });
@@ -384,7 +385,9 @@ export function getTestName() {
 
 export function getFileName(filepath:string) {
     var index = filepath.lastIndexOf('/');
-    var filename = filepath.substring(index+1);
+    var filename = filepath;
+    if(index!=-1)
+        filename = filepath.substring(index+1);
     // var extIndex = filename.indexOf('.');
     // if(extIndex != -1)
         // filename = filename.substring(0,extIndex);
@@ -466,14 +469,16 @@ function getFailureCriteria(existingCriteriaIds: string[]) {
         var splitted = key.split(" "); 
         var criteriaId = index < numberOfExistingCriteria ? existingCriteriaIds[index++] : util.getUniqueId();
         failCriteria[criteriaId] = {
-            clientmetric: splitted[0],
+            clientMetric: splitted[0],
             aggregate: splitted[1],
             condition: splitted[2],
+            action : splitted[3],
             value: failureCriteriaValue[key],
-            requestName: splitted.length > 4 ? splitted[4] : null
+            requestName: splitted.length > 4 ? splitted[4] : null,
         };
     }
     for(; index < numberOfExistingCriteria; index++){
         failCriteria[existingCriteriaIds[index]] = null;
     }
+    console.log(failCriteria);
 }
