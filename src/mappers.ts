@@ -23,20 +23,13 @@ var kvRefId: string|null =null;
 var kvRefType: string|null=null;
 var subnetId: string|null=null;
 var splitCSVs: boolean|null=null;
-var certificates : certObj|null = null;
 
-export interface certObj {
-    type: string;
-    value: string;
-    name: string;
-};
 export interface criteriaObj {
     aggregate: string;
     clientMetric: string;
     condition: string;
     requestName: string | null;
     value: number;
-    action: string;
 };
 export interface paramObj {
     type: string;
@@ -51,10 +44,10 @@ let envRun: { [name: string]: string } = {};
 let failureCriteriaValue: { [name: string]: number } = {}
 
 function getExistingData() {
-    var existingCriteria: { [name: string]: criteriaObj|null } = index.getExistingCriteria();
-    var existingCriteriaIds: string[] = Object.keys(existingCriteria);
-    getFailureCriteria(existingCriteriaIds);
-
+    var existingCriteria:any = index.getExistingCriteria();
+    for(var key in existingCriteria) {
+        failCriteria[key] = null;
+    }
     var existingParams:any = index.getExistingParams();
     for(var key in existingParams) {
         if(!secretsYaml.hasOwnProperty(key))
@@ -77,7 +70,6 @@ export function createTestData() {
             splitAllCSVs: splitCSVs
         },
         secrets: secretsYaml,
-        certificate:certificates,
         environmentVariables: envYaml,
         passFailCriteria:{
             passFailMetrics: failCriteria
@@ -127,7 +119,6 @@ export function startTestData(testRunName:string) {
         testRunId: testRunName,
         displayName: getDefaultTestRunName(),
         testId: testName,
-        description: "Sample testRun",
         secrets: secretsRun,
         environmentVariables: envRun
     };
@@ -165,7 +156,7 @@ export function getResourceId() {
 }
 function validateName(value:string) 
 {
-    var r = new RegExp(/[^a-zA-Z0-9_.-]/);
+    var r = new RegExp(/[^a-zA-Z0-9_. -]/);
     return r.test(value);
 }
 export async function getInputParams() {
@@ -219,9 +210,6 @@ export async function getInputParams() {
     }
     if(config.env != undefined) {
         getParameters(config.env, "env");
-    }
-    if(config.certificates != undefined){
-        getParameters(config.certificates,"certificates");
     }
     if(config.keyVaultReferenceIdentity != undefined) {
         kvRefType='UserAssigned';
@@ -314,15 +302,6 @@ function getParameters(obj:any, type:string) {
             envYaml[val.name] = val.value;
         }
     }
-    else if(type == "certificates"){
-        for (var index in obj) {
-            var val = obj[index];
-            if(!validateUrl(val.value))
-                throw new Error("Invalid certificate url");
-            certificates = {name: val.name, type: 'AKV_CERT_URI',value: val.value};
-            break;
-        }
-    }
 }
 function validateUrl(url:string) 
 {
@@ -333,7 +312,7 @@ function validateUrl(url:string)
 }
 function validateValue(value:string) 
 {
-    var r = new RegExp(/[^a-zA-Z0-9-._]/);
+    var r = new RegExp(/[^a-zA-Z0-9-_]/);
     return r.test(value);
 }
 function getRunTimeParams() {
@@ -389,7 +368,7 @@ export function getFileName(filepath:string) {
     var filename = filepath.substring(index+1);
     // var extIndex = filename.indexOf('.');
     // if(extIndex != -1)
-    //     filename = filename.substring(0,extIndex);
+        // filename = filename.substring(0,extIndex);
     return filename;
 }
 
@@ -439,6 +418,7 @@ function getPassFailCriteria() {
         } 
         ValidateAndAddCriteria(data);
     });
+    getFailureCriteria();
 }
 function ValidateAndAddCriteria(data:any) {
     if(data.action == "")
@@ -461,22 +441,15 @@ function ValidateAndAddCriteria(data:any) {
         failureCriteriaValue[key] = (val>currVal) ? val : currVal;
     }
 }
-function getFailureCriteria(existingCriteriaIds: string[]) {
-    var numberOfExistingCriteria = existingCriteriaIds.length;
-    var index = 0;
+function getFailureCriteria() {
     for(var key in failureCriteriaValue) {
         var splitted = key.split(" "); 
-        var criteriaId = index < numberOfExistingCriteria ? existingCriteriaIds[index++] : util.getUniqueId();
-        failCriteria[criteriaId] = {
+        failCriteria[util.getUniqueId()] = {
             clientMetric: splitted[0],
             aggregate: splitted[1],
             condition: splitted[2],
             value: failureCriteriaValue[key],
-            action: splitted[3],
             requestName: splitted.length > 4 ? splitted[4] : null
         };
-    }
-    for(; index < numberOfExistingCriteria; index++){
-        failCriteria[existingCriteriaIds[index]] = null;
     }
 }

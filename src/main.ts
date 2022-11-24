@@ -11,7 +11,6 @@ let testName = '';
 let existingCriteria: { [name: string]: map.criteriaObj|null } = {};
 let existingParams: { [name: string]: map.paramObj|null } = {};
 let existingEnv: { [name: string]: string } = {};
-
 enum file_type{
     JMX_FILE = 'JMX_FILE',
     USER_PROPERTIES = 'USER_PROPERTIES',
@@ -45,11 +44,12 @@ async function getTestAPI(validate:boolean) {
         throw new Error(message);
     }
     if(testResult.message.statusCode == 200) {
-        let testResp: string = await testResult.readBody(); 
+        let testResp: string = await testResult.readBody();
         let testObj:any = JSON.parse(testResp);
-        var testFile = testObj.inputArtifacts;  
-        if(validate)
+        var testFile = testObj.inputArtifacts;
+        if(validate){
             return testFile.testScriptFileInfo.validationStatus;
+        }
         else
         {
             if(testObj.passFailCriteria != null && testObj.passFailCriteria.passFailMetrics)
@@ -191,7 +191,6 @@ async function createTestRun() {
         let startResp: string = await startTestresult.readBody(); 
         let testRunDao:any = JSON.parse(startResp);
         if(startTestresult.message.statusCode != 200 && startTestresult.message.statusCode != 201) {
-            console.log(testRunDao);
             throw new Error("Error in running the test");
         }   
         let startTime = new Date();
@@ -273,7 +272,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
 }
 async function getLoadTestResource()
 {
-    let env = "prod";
+    let env = "dogfood";
     let id = map.getResourceId();
 
     let armEndpoint = "https://management.azure.com"+id+"?api-version=2022-12-01";
