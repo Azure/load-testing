@@ -36,7 +36,6 @@ export interface criteriaObj {
     condition: string;
     requestName: string | null;
     value: number;
-    action : string;
 };
 export interface paramObj {
     type: string;
@@ -128,7 +127,7 @@ export function startTestData(testRunName:string) {
         displayName: getDefaultTestRunName(),
         testId: testName,
         secrets: secretsRun,
-        environmentVariables: envRun,
+        environmentVariables: envRun
     };
     return data;
 }
@@ -164,7 +163,7 @@ export function getResourceId() {
 }
 function validateName(value:string) 
 {
-    var r = new RegExp(/[^a-zA-Z0-9_. -]/);
+    var r = new RegExp(/[^a-zA-Z0-9_-]/);
     return r.test(value);
 }
 export async function getInputParams() {
@@ -177,22 +176,22 @@ export async function getInputParams() {
         throw new Error("The required field testName is missing in "+YamlPath+".");
     testName = (config.testName).toLowerCase();
     if(validateName(testName))
-        throw new Error("Invalid testName. Allowed chararcters are [a-zA-Z0-9-._]");
+        throw new Error("Invalid testName. Allowed chararcters are [a-zA-Z0-9-_]");
     testdesc = config.description;
     engineInstances = config.engineInstances;
     let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
     if(config.testPlan == null || config.testPlan == undefined)
         throw new Error("The required field testPlan is missing in "+YamlPath+".");
     testPlan = path + config.testPlan;
-    if(validateName(getFileName(config.testPlan))) {
-        throw new Error("Invalid testPlan name. Allowed chararcters are [a-zA-Z0-9-._]");
-    }
+    // if(validateName(getFileName(config.testPlan))) {
+    //     throw new Error("Invalid testPlan name. Allowed chararcters are [a-zA-Z0-9-._]");
+    // }
     if(config.configurationFiles != null) {
         var tempconfigFiles: string[]=[];
         tempconfigFiles = config.configurationFiles;
         tempconfigFiles.forEach(file => {
-            if(validateName(getFileName(file)))
-                throw new Error("Invalid configuration filename. Allowed chararcters are [a-z0-9-._]");
+            // if(validateName(getFileName(file)))
+            //     throw new Error("Invalid configuration filename. Allowed chararcters are [a-z0-9-_]");
             file = path + file;
             configFiles.push(file);
         });
@@ -209,7 +208,7 @@ export async function getInputParams() {
     }
     if(config.properties != undefined)
     {
-        var propFile = config.properties[0].userPropertyFile;
+        var propFile = config.properties.userPropertyFile;
         propertyFile = path + propFile;
     }
     if(config.secrets != undefined) {
@@ -468,17 +467,15 @@ function getFailureCriteria(existingCriteriaIds: string[]) {
     for(var key in failureCriteriaValue) {
         var splitted = key.split(" "); 
         var criteriaId = index < numberOfExistingCriteria ? existingCriteriaIds[index++] : util.getUniqueId();
-        failCriteria[criteriaId] = {
+        failCriteria[criteriaId] = {            
             clientMetric: splitted[0],
             aggregate: splitted[1],
             condition: splitted[2],
-            action : splitted[3],
             value: failureCriteriaValue[key],
-            requestName: splitted.length > 4 ? splitted[4] : null,
+            requestName: splitted.length > 4 ? splitted[4] : null
         };
     }
     for(; index < numberOfExistingCriteria; index++){
         failCriteria[existingCriteriaIds[index]] = null;
     }
-    console.log(failCriteria);
 }
