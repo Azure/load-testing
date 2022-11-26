@@ -34,7 +34,6 @@ export function printCriteria(criteria:any) {
     if(Object.keys(criteria).length == 0)
         return;
     printTestResult(criteria);
-    console.log("utils:",criteria);
     console.log("Criteria\t\t\t\t\t :Actual Value\t        Result");
     for(var key in criteria) {
         var metric = criteria[key];
