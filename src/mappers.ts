@@ -329,7 +329,7 @@ function validateUrl(url:string)
     var r = new RegExp(pattern);
     return r.test(url);
 }
-function validateValue(value:string) 
+function validateValue(value:string)
 {
     var r = new RegExp(/[^a-zA-Z0-9-_]/);
     return r.test(value);
@@ -467,7 +467,7 @@ function getFailureCriteria(existingCriteriaIds: string[]) {
     for(var key in failureCriteriaValue) {
         var splitted = key.split(" "); 
         var criteriaId = index < numberOfExistingCriteria ? existingCriteriaIds[index++] : util.getUniqueId();
-        failCriteria[criteriaId] = {            
+        failCriteria[criteriaId] = {     
             clientMetric: splitted[0],
             aggregate: splitted[1],
             condition: splitted[2],
