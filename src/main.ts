@@ -59,14 +59,14 @@ async function getTestAPI(validate:boolean) {
             if(testObj.environmentVariables != null)
                 existingEnv = testObj.environmentVariables;
             if(testFile.testScriptUrl != null)
-                await deleteFileAPI(testFile.testScriptFileInfo.fileId)
+                await deleteFileAPI(testFile.testScriptFileInfo.filename)
             if(testFile.userPropUrl != null)
-                await deleteFileAPI(testFile.userPropFileInfo.fileId);
+                await deleteFileAPI(testFile.userPropFileInfo.filename);
         }
     }   
 }
-async function deleteFileAPI(fileId:string) {
-    var urlSuffix = "tests/"+testName+"/files/"+fileId+"?api-version=2022-11-01";
+async function deleteFileAPI(filename:string) {
+    var urlSuffix = "tests/"+testName+"/files/"+filename+"?api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let delFileResult = await httpClient.del(urlSuffix, header); 
