@@ -52,7 +52,7 @@ async function getTestAPI(validate:boolean) {
         }
         else
         {
-            if(testObj.passFailCriteria != null && testObj.passFailCriteria.passFailMetrics)
+            if(testObj.passFailCriteria != null && testObj.passFailCriteria.passFailMetrics != null && testObj.passFailCriteria != undefined && testObj.passFailCriteria.passFailMetrics != undefined)
                 existingCriteria = testObj.passFailCriteria.passFailMetrics;
             if(testObj.secrets != null)
                 existingParams = testObj.secrets;
@@ -234,7 +234,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 count++;
             }
             util.printTestDuration(testRunObj.virtualUsers, startTime);
-            if(testRunObj.passFailCriteria != null && testRunObj.passFailCriteria.passFailMetrics != null && testRunObj.passFailCriteria.passFailMetrics != undefined)
+            if(testRunObj.passFailCriteria != null && testRunObj.passFailCriteria.passFailMetrics != null && testRunObj.passFailCriteria != undefined && testRunObj.passFailCriteria.passFailMetrics != undefined)
                 util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
             if(testRunObj.testRunStatistics != null)
                 util.printClientMetrics(testRunObj.testRunStatistics);
