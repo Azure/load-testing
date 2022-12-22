@@ -189,7 +189,7 @@ export async function getInputParams() {
     if(config.displayName != null && config.displayName != undefined)
         displayName = config.displayName;
     if(validateName(testId))
-        throw new Error("Invalid testId. Allowed chararcters are [a-z0-9-_]");
+        throw new Error("Invalid testId. Allowed chararcters are [a-zA-Z0-9-_]");
     if(validatedisplayName(displayName))
         throw new Error("Invalid display name.Display name cannot contain special characters @!`~+^, or begin or end with '_' or '-'.");
     testdesc = config.description;
