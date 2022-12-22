@@ -7,7 +7,7 @@ import * as fs from 'fs';
 const resultFolder = 'loadTest';
 let baseURL = '';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
-let testName = '';
+let testId = '';
 let existingCriteria: { [name: string]: map.criteriaObj|null } = {};
 let existingParams: { [name: string]: map.paramObj|null } = {};
 let existingEnv: { [name: string]: string } = {};
@@ -20,7 +20,7 @@ async function run() {
     try {  
         await map.getInputParams();
         await getLoadTestResource();
-        testName = map.getTestName();
+        testId = map.getTestId();
         await getTestAPI(false);
         if (fs.existsSync(resultFolder)){
             util.deleteFile(resultFolder);
@@ -33,7 +33,7 @@ async function run() {
     }
 }
 async function getTestAPI(validate:boolean) {
-    var urlSuffix = "tests/"+testName+"?api-version=2022-11-01";
+    var urlSuffix = "tests/"+testId+"?api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let testResult = await httpClient.get(urlSuffix, header); 
@@ -66,7 +66,7 @@ async function getTestAPI(validate:boolean) {
     }   
 }
 async function deleteFileAPI(filename:string) {
-    var urlSuffix = "tests/"+testName+"/files/"+filename+"?api-version=2022-11-01";
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let delFileResult = await httpClient.del(urlSuffix, header); 
@@ -77,7 +77,7 @@ async function deleteFileAPI(filename:string) {
     }
 }
 async function createTestAPI() {
-    var urlSuffix = "tests/"+testName+"?api-version=2022-11-01";
+    var urlSuffix = "tests/"+testId+"?api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
     var createData = map.createTestData();
     let header = await map.createTestHeader();
@@ -86,14 +86,14 @@ async function createTestAPI() {
     let testRunObj:any = JSON.parse(testRunResp);
     if(createTestresult.message.statusCode != 200 && createTestresult.message.statusCode != 201) {
         console.log(testRunObj);
-        throw new Error("Error in creating test: " + testName);
+        throw new Error("Error in creating test: " + testId);
     }
     if(createTestresult.message.statusCode == 201) {
-        console.log("Creating a new load test '"+testName+"' ");
-        console.log("Successfully created load test "+testName);
+        console.log("Creating a new load test '"+testId+"' ");
+        console.log("Successfully created load test "+testId);
     }
     else 
-        console.log("Test '"+ testName +"' already exists");
+        console.log("Test '"+ testId +"' already exists");
 
     await uploadConfigFile()
 }
@@ -102,7 +102,7 @@ async function uploadTestPlan()
 {
     let filepath = map.getTestFile();
     let filename = map.getFileName(filepath);
-    var urlSuffix = "tests/"+testName+"/files/"+filename+"?api-version=2022-11-01";
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
     urlSuffix = baseURL + urlSuffix;
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
@@ -137,7 +137,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (const filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "tests/"+testName+"/files/"+filename+"?api-version=2022-11-01";
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
             urlSuffix = baseURL+urlSuffix;
             var uploadData = map.uploadFileData(filepath);
             let headers = await map.UploadAndValidateHeader(uploadData);
@@ -161,7 +161,7 @@ async function uploadPropertyFile()
     let propertyFile = map.getPropertyFile();
     if(propertyFile != undefined) {
         let filename = map.getFileName(propertyFile);
-        var urlSuffix = "tests/"+testName+"/files/"+filename+"?api-version=2022-11-01&fileType="+file_type.USER_PROPERTIES;
+        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01&fileType="+file_type.USER_PROPERTIES;
         urlSuffix = baseURL + urlSuffix;
         var uploadData = map.uploadFileData(propertyFile);
         let headers = await map.UploadAndValidateHeader(uploadData)
@@ -199,7 +199,7 @@ async function createTestRun() {
         if(status == "ACCEPTED") {
             console.log("\nView the load test run in Azure portal by following the steps:")
             console.log("1. Go to your Azure Load Testing resource '"+ltres+"' in subscription '"+subName+"'")
-            console.log("2. On the Tests page, go to test '"+testName+"'")
+            console.log("2. On the Tests page, go to test '"+testId+"'")
             console.log("3. Go to test run '"+testRunName+"'\n");
             await getTestRunAPI(testRunId, status, startTime);
         }

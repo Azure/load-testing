@@ -7,7 +7,8 @@ var FormData = require('form-data');
 import { execFile } from "child_process";
 import * as util from './util';
 import * as index from './main';
-var testName='';
+var testId='';
+var displayName = '';
 var testdesc = 'SampleTest';
 var engineInstances='1';
 var testPlan='';
@@ -68,9 +69,9 @@ function getExistingData() {
 export function createTestData() {
     getExistingData();
     var data = {
-        testId: testName,
+        testId: testId,
         description: testdesc,
-        displayName: testName,
+        displayName: displayName,
         loadTestConfiguration: {
             engineInstances: engineInstances,
             splitAllCSVs: splitCSVs
@@ -125,7 +126,7 @@ export function startTestData(testRunName:string) {
     var data = {
         testRunId: testRunName,
         displayName: getDefaultTestRunName(),
-        testId: testName,
+        testId: testId,
         secrets: secretsRun,
         environmentVariables: envRun
     };
@@ -166,17 +167,31 @@ function validateName(value:string)
     var r = new RegExp(/[^a-zA-Z0-9_-]/);
     return r.test(value);
 }
+function validatedisplayName(value : string){
+    if(value.length < 2 || value.length > 50) return true;
+    return false;
+ }
 export async function getInputParams() {
     await getAccessToken("https://management.core.windows.net");
     YamlPath = core.getInput('loadTestConfigFile');
     if(!(YamlPath.includes(".yaml") || YamlPath.includes(".yml")))
         throw new Error("The Load Test configuration file should be of type .yaml or .yml");
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
-    if(config.testName == null || config.testName == undefined)
-        throw new Error("The required field testName is missing in "+YamlPath+".");
-    testName = (config.testName).toLowerCase();
-    if(validateName(testName))
-        throw new Error("Invalid testName. Allowed chararcters are [a-zA-Z0-9-_]");
+    if((config.testName == null || config.testName == undefined) && (config.testId == null || config.testId == undefined))
+        throw new Error("The required field testId is missing in "+YamlPath+".");
+    if(config.testName != null && config.testName != undefined){
+        testId = (config.testName).toLowerCase();
+    }
+    if(config.testId != null && config.testId != undefined){
+        testId = (config.testId).toLowerCase();
+    }
+    displayName = testId;
+    if(config.displayName != null && config.displayName != undefined)
+        displayName = config.displayName;
+    if(validateName(testId))
+        throw new Error("Invalid testId. Allowed chararcters are [a-z0-9-_]");
+    if(validatedisplayName(displayName))
+        throw new Error("Invalid display name.Display name cannot contain special characters @!`~+^, or begin or end with '_' or '-'.");
     testdesc = config.description;
     engineInstances = config.engineInstances;
     let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
@@ -226,7 +241,7 @@ export async function getInputParams() {
         kvRefId = config.keyVaultReferenceIdentity;
     }
     getRunTimeParams();
-    if(testName === '' || testPlan === '') {
+    if(testId === '' || testPlan === '') {
         throw new Error("The required fields testName/testPlan are missing in "+YamlPath+".");
     }
 }
@@ -378,8 +393,8 @@ export function getConfigFiles() {
     return configFiles;
 }
 
-export function getTestName() {
-    return testName;
+export function getTestId() {
+    return testId;
 }
 
 export function getFileName(filepath:string) {
