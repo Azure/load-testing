@@ -7,6 +7,8 @@ var FormData = require('form-data');
 import { execFile } from "child_process";
 import * as util from './util';
 import * as index from './main';
+import { isNullOrUndefined } from 'util';
+import { type } from 'os';
 var testId='';
 var displayName = '';
 var testdesc = 'SampleTest';
@@ -36,6 +38,7 @@ export interface criteriaObj {
     clientMetric: string;
     condition: string;
     requestName: string | null;
+    action : string | null;
     value: number;
 };
 export interface paramObj {
@@ -162,12 +165,13 @@ export function getResourceId() {
     resourceId = "/subscriptions/"+subscriptionID+"/resourcegroups/"+rg+"/providers/microsoft.loadtestservice/loadtests/"+ltres;
     return resourceId;
 }
-function validateName(value:string) 
+function invalidName(value:string) 
 {
-    var r = new RegExp(/[^a-zA-Z0-9_-]/);
+    if(value.length < 2 || value.length > 50) return true;
+    var r = new RegExp(/[^a-z0-9_-]+/);
     return r.test(value);
 }
-function validatedisplayName(value : string){
+function invalidDisplayName(value : string){
     if(value.length < 2 || value.length > 50) return true;
     return false;
  }
@@ -177,36 +181,35 @@ export async function getInputParams() {
     if(!(YamlPath.includes(".yaml") || YamlPath.includes(".yml")))
         throw new Error("The Load Test configuration file should be of type .yaml or .yml");
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
-    if((config.testName == null || config.testName == undefined) && (config.testId == null || config.testId == undefined))
+    if(isNullOrUndefined(config.testName) && isNullOrUndefined(config.testId))
         throw new Error("The required field testId is missing in "+YamlPath+".");
-    if(config.testName != null && config.testName != undefined){
-        testId = (config.testName).toLowerCase();
+    if(!isNullOrUndefined(config.testName)){
+        testId=config.testName;
     }
-    if(config.testId != null && config.testId != undefined){
-        testId = (config.testId).toLowerCase();
+    if(!isNullOrUndefined(config.testId)){
+        testId=config.testId;
     }
+    if(typeof(testId) != "string"){
+        throw new Error("TestId should be a string not a number.");
+    }
+    testId = testId.toLowerCase();
     displayName = testId;
-    if(config.displayName != null && config.displayName != undefined)
+    if(!isNullOrUndefined(config.displayName))
         displayName = config.displayName;
-    if(validateName(testId))
-        throw new Error("Invalid testId. Allowed chararcters are [a-zA-Z0-9-_]");
-    if(validatedisplayName(displayName))
-        throw new Error("Invalid display name.Display name must be between 2 to 50 characters");
+    if(invalidName(testId))
+        throw new Error("Invalid testId. Allowed chararcters are [a-zA-Z0-9-_] and must be between 2 to 50 characters.");
+    if(invalidDisplayName(displayName))
+        throw new Error("Invalid display name.Display name must be between 2 to 50 characters.");
     testdesc = config.description;
     engineInstances = config.engineInstances;
     let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
-    if(config.testPlan == null || config.testPlan == undefined)
+    if(isNullOrUndefined(config.testPlan))
         throw new Error("The required field testPlan is missing in "+YamlPath+".");
     testPlan = path + config.testPlan;
-    // if(validateName(getFileName(config.testPlan))) {
-    //     throw new Error("Invalid testPlan name. Allowed chararcters are [a-zA-Z0-9-._]");
-    // }
     if(config.configurationFiles != null) {
         var tempconfigFiles: string[]=[];
         tempconfigFiles = config.configurationFiles;
         tempconfigFiles.forEach(file => {
-            // if(validateName(getFileName(file)))
-            //     throw new Error("Invalid configuration filename. Allowed chararcters are [a-z0-9-_]");
             file = path + file;
             configFiles.push(file);
         });
@@ -241,7 +244,7 @@ export async function getInputParams() {
         kvRefId = config.keyVaultReferenceIdentity;
     }
     getRunTimeParams();
-    if(testId === '' || testPlan === '') {
+    if(testId === '' || isNullOrUndefined(testId) || testPlan === '' || isNullOrUndefined(testPlan)) {
         throw new Error("The required fields testName/testPlan are missing in "+YamlPath+".");
     }
 }
@@ -402,9 +405,6 @@ export function getFileName(filepath:string) {
     var filename = filepath;
     if(index!=-1)
         filename = filepath.substring(index+1);
-    // var extIndex = filename.indexOf('.');
-    // if(extIndex != -1)
-        // filename = filename.substring(0,extIndex);
     return filename;
 }
 
@@ -486,6 +486,7 @@ function getFailureCriteria(existingCriteriaIds: string[]) {
             clientMetric: splitted[0],
             aggregate: splitted[1],
             condition: splitted[2],
+            action: splitted[3],
             value: failureCriteriaValue[key],
             requestName: splitted.length > 4 ? splitted[4] : null
         };
