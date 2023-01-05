@@ -3,6 +3,7 @@ import httpc = require('typed-rest-client/HttpClient');
 import * as map from "./mappers"
 import * as util from './util';
 import * as fs from 'fs';
+import { isNullOrUndefined } from 'util';
 
 const resultFolder = 'loadTest';
 let baseURL = '';
@@ -52,7 +53,7 @@ async function getTestAPI(validate:boolean) {
         }
         else
         {
-            if(testObj.passFailCriteria != undefined && testObj.passFailCriteria.passFailMetrics != null)
+            if(!isNullOrUndefined(testObj.passFailCriteria) && !isNullOrUndefined(testObj.passFailCriteria.passFailMetrics))
                 existingCriteria = testObj.passFailCriteria.passFailMetrics;
             if(testObj.secrets != null)
                 existingParams = testObj.secrets;
@@ -234,7 +235,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 count++;
             }
             util.printTestDuration(testRunObj.virtualUsers, startTime);
-            if(testRunObj.passFailCriteria != undefined && testRunObj.passFailCriteria.passFailMetrics != null)
+            if(isNullOrUndefined(testRunObj.passFailCriteria) && isNullOrUndefined(testRunObj.passFailCriteria.passFailMetrics))
                 util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
             if(testRunObj.testRunStatistics != null)
                 util.printClientMetrics(testRunObj.testRunStatistics);
