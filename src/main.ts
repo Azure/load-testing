@@ -235,7 +235,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 count++;
             }
             util.printTestDuration(testRunObj.virtualUsers, startTime);
-            if(isNullOrUndefined(testRunObj.passFailCriteria) && isNullOrUndefined(testRunObj.passFailCriteria.passFailMetrics))
+            if(!isNullOrUndefined(testRunObj.passFailCriteria) && !isNullOrUndefined(testRunObj.passFailCriteria.passFailMetrics))
                 util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
             if(testRunObj.testRunStatistics != null)
                 util.printClientMetrics(testRunObj.testRunStatistics);
