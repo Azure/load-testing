@@ -151,7 +151,7 @@ export function getResultFolder(testArtifacts:any) {
     if(testArtifacts == null || testArtifacts.outputArtifacts == null)
         return null;
     var outputurl = testArtifacts.outputArtifacts;
-    return (outputurl.resultUrl != null)? outputurl.resultUrl.url: null;
+    return (outputurl.resultFileInfo != null)? outputurl.resultFileInfo.url: null;
 }
 export function deleteFile(foldername:string) 
 {
