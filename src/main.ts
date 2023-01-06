@@ -215,14 +215,14 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
 {   
     var urlSuffix = "test-runs/"+testRunId+"?api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
-    while(testStatus != "DONE" && testStatus != "FAILED" && testStatus != "CANCELLED") 
+    while(!util.isTerminalTestStatus(testStatus)) 
     {
         let header = await map.getTestRunHeader();
         let testRunResult = await httpClient.get(urlSuffix, header);
         let testRunResp: string = await testRunResult.readBody(); 
         let testRunObj:any = JSON.parse(testRunResp);
         testStatus = testRunObj.status;
-        if(testStatus == "DONE") {
+        if(util.isTerminalTestStatus(testStatus)) {
             await util.sleep(30000);
             let vusers = null;
             let count = 0;
@@ -249,19 +249,15 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                     await util.getResultsFile(response);
                 }
             }
-            if(testRunObj.testResult != null && testRunObj.testResult === "FAILED") {
+            if(testRunObj.testResult === "FAILED" || testRunObj.testResult === "CANCELLED") {
                 core.setFailed("TestResult: "+ testRunObj.testResult);
                 return;
             }
             return;
         }
-        else if(testStatus === "FAILED" || testStatus === "CANCELLED") {
-            core.setFailed("TestStatus: "+ testStatus);
-            return;
-        }
         else 
         {
-            if(testStatus != "DONE" && testStatus != "FAILED" && testStatus != "CANCELLED")
+            if(!util.isTerminalTestStatus(testStatus))
             {
                 if(testStatus === "DEPROVISIONING" || testStatus === "DEPROVISIONED" || testStatus != "EXECUTED" )
                     await util.sleep(5000);

@@ -179,6 +179,12 @@ export function removeUnits(input:string)
     for (; input[i] >= '0' && input[i] <= '9'; i++);
     return i == input.length ? input : input.substring(0,i);
 }
+export function isTerminalTestStatus(testStatus: string){
+    if(testStatus === "DONE" || testStatus === "FAILED" || testStatus === "CANCELLED"){
+        return true;
+    }
+    return false;
+}
 export function validCriteria(data:any) {
     switch(data.clientMetric) {
         case "response_time_ms":
