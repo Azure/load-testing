@@ -8,6 +8,7 @@ import { execFile } from "child_process";
 import * as util from './util';
 import * as index from './main';
 import { isNullOrUndefined } from 'util';
+const pathLib = require('path');
 import { type } from 'os';
 var testId='';
 var displayName = '';
@@ -178,7 +179,7 @@ function invalidDisplayName(value : string){
 export async function getInputParams() {
     await getAccessToken("https://management.core.windows.net");
     YamlPath = core.getInput('loadTestConfigFile');
-    if(!(YamlPath.includes(".yaml") || YamlPath.includes(".yml")))
+    if(!(pathLib.extname(YamlPath) === ".yaml" || pathLib.extname(YamlPath) === ".yml"))
         throw new Error("The Load Test configuration file should be of type .yaml or .yml");
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
     if(isNullOrUndefined(config.testName) && isNullOrUndefined(config.testId))
@@ -202,15 +203,15 @@ export async function getInputParams() {
         throw new Error("Invalid display name.Display name must be between 2 to 50 characters.");
     testdesc = config.description;
     engineInstances = config.engineInstances;
-    let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
+    let path = pathLib.dirname(YamlPath);
     if(isNullOrUndefined(config.testPlan))
         throw new Error("The required field testPlan is missing in "+YamlPath+".");
-    testPlan = path + config.testPlan;
+    testPlan = pathLib.join(path,config.testPlan);
     if(config.configurationFiles != null) {
         var tempconfigFiles: string[]=[];
         tempconfigFiles = config.configurationFiles;
         tempconfigFiles.forEach(file => {
-            file = path + file;
+            file = pathLib.join(path,file);
             configFiles.push(file);
         });
     }
@@ -227,7 +228,7 @@ export async function getInputParams() {
     if(config.properties != undefined)
     {
         var propFile = config.properties.userPropertyFile;
-        propertyFile = path + propFile;
+        propertyFile = pathLib.join(path,propFile);
     }
     if(config.secrets != undefined) {
         kvRefType='SystemAssigned';
@@ -401,10 +402,7 @@ export function getTestId() {
 }
 
 export function getFileName(filepath:string) {
-    var index = filepath.lastIndexOf('/');
-    var filename = filepath;
-    if(index!=-1)
-        filename = filepath.substring(index+1);
+    var filename = pathLib.basename(filepath);
     return filename;
 }
 
