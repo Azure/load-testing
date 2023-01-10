@@ -7,7 +7,11 @@ var FormData = require('form-data');
 import { execFile } from "child_process";
 import * as util from './util';
 import * as index from './main';
-var testName='';
+import { isNullOrUndefined } from 'util';
+const pathLib = require('path');
+import { type } from 'os';
+var testId='';
+var displayName = '';
 var testdesc = 'SampleTest';
 var engineInstances='1';
 var testPlan='';
@@ -32,13 +36,11 @@ export interface certObj {
 };
 export interface criteriaObj {
     aggregate: string;
-    clientmetric: string;
+    clientMetric: string;
     condition: string;
     requestName: string | null;
+    action : string | null;
     value: number;
-    action: string;
-    actualValue: number;
-    result: null;
 };
 export interface paramObj {
     type: string;
@@ -71,11 +73,10 @@ function getExistingData() {
 export function createTestData() {
     getExistingData();
     var data = {
-        testId: testName,
+        testId: testId,
         description: testdesc,
-        displayName: testName,
-        resourceId: resourceId,
-        loadTestConfig: {
+        displayName: displayName,
+        loadTestConfiguration: {
             engineInstances: engineInstances,
             splitAllCSVs: splitCSVs
         },
@@ -103,12 +104,8 @@ export async function createTestHeader() {
 export function uploadFileData(filepath: string) {
     try
     {
-        const formData = new FormData(); 
-        let filedata = fs.readFileSync(filepath);
-        var index = filepath.lastIndexOf('/');
-        var filename = filepath.substring(index+1);
-        formData.append('file',filedata,filename);
-        return formData;
+        let filedata : string = fs.readFileSync(filepath,"binary");
+        return filedata;
     }
     catch(err:any) {
         err.message = "File not found "+ filepath;
@@ -119,7 +116,7 @@ export function uploadFileData(filepath: string) {
 export async function UploadAndValidateHeader(formData:any) {
     let headers: IHeaders = {
         'Authorization': 'Bearer '+ token , 
-        'content-type':`multipart/form-data; boundary=${formData.getBoundary()}`
+        'content-type':'application/octet-stream'
     };
     return headers;
 }
@@ -133,9 +130,7 @@ export function startTestData(testRunName:string) {
     var data = {
         testRunId: testRunName,
         displayName: getDefaultTestRunName(),
-        testId: testName,
-        resourceId: resourceId,
-        description: "Sample testRun",
+        testId: testId,
         secrets: secretsRun,
         environmentVariables: envRun
     };
@@ -171,38 +166,52 @@ export function getResourceId() {
     resourceId = "/subscriptions/"+subscriptionID+"/resourcegroups/"+rg+"/providers/microsoft.loadtestservice/loadtests/"+ltres;
     return resourceId;
 }
-function validateName(value:string) 
+function invalidName(value:string) 
 {
-    var r = new RegExp(/[^a-zA-Z0-9_-]/);
+    if(value.length < 2 || value.length > 50) return true;
+    var r = new RegExp(/[^a-z0-9_-]+/);
     return r.test(value);
 }
+function invalidDisplayName(value : string){
+    if(value.length < 2 || value.length > 50) return true;
+    return false;
+ }
 export async function getInputParams() {
     await getAccessToken("https://management.core.windows.net");
     YamlPath = core.getInput('loadTestConfigFile');
-    if(!(YamlPath.includes(".yaml") || YamlPath.includes(".yml")))
+    if(!(pathLib.extname(YamlPath) === ".yaml" || pathLib.extname(YamlPath) === ".yml"))
         throw new Error("The Load Test configuration file should be of type .yaml or .yml");
     const config = yaml.load(fs.readFileSync(YamlPath, 'utf8'));
-    if(config.testName == null || config.testName == undefined)
-        throw new Error("The required field testName is missing in "+YamlPath+".");
-    testName = (config.testName).toLowerCase();
-    if(validateName(testName))
-        throw new Error("Invalid testName. Allowed chararcters are [a-zA-Z0-9-_]");
+    if(isNullOrUndefined(config.testName) && isNullOrUndefined(config.testId))
+        throw new Error("The required field testId is missing in "+YamlPath+".");
+    if(!isNullOrUndefined(config.testName)){
+        testId=config.testName;
+    }
+    if(!isNullOrUndefined(config.testId)){
+        testId=config.testId;
+    }
+    if(typeof(testId) != "string"){
+        throw new Error("TestId should be a string not a number.");
+    }
+    testId = testId.toLowerCase();
+    displayName = testId;
+    if(!isNullOrUndefined(config.displayName))
+        displayName = config.displayName;
+    if(invalidName(testId))
+        throw new Error("Invalid testId. Allowed chararcters are [a-zA-Z0-9-_] and must be between 2 to 50 characters.");
+    if(invalidDisplayName(displayName))
+        throw new Error("Invalid display name.Display name must be between 2 to 50 characters.");
     testdesc = config.description;
     engineInstances = config.engineInstances;
-    let path = YamlPath.substr(0, YamlPath.lastIndexOf('/')+1);
-    if(config.testPlan == null || config.testPlan == undefined)
+    let path = pathLib.dirname(YamlPath);
+    if(isNullOrUndefined(config.testPlan))
         throw new Error("The required field testPlan is missing in "+YamlPath+".");
-    testPlan = path + config.testPlan;
-    if(validateName(getFileName(config.testPlan))) {
-        throw new Error("Invalid testPlan name. Allowed chararcters are [a-zA-Z0-9-_]");
-    }
+    testPlan = pathLib.join(path,config.testPlan);
     if(config.configurationFiles != null) {
         var tempconfigFiles: string[]=[];
         tempconfigFiles = config.configurationFiles;
         tempconfigFiles.forEach(file => {
-            if(validateName(getFileName(file)))
-                throw new Error("Invalid configuration filename. Allowed chararcters are [a-z0-9-_]");
-            file = path + file;
+            file = pathLib.join(path,file);
             configFiles.push(file);
         });
     }
@@ -219,7 +228,7 @@ export async function getInputParams() {
     if(config.properties != undefined)
     {
         var propFile = config.properties.userPropertyFile;
-        propertyFile = path + propFile;
+        propertyFile = pathLib.join(path,propFile);
     }
     if(config.secrets != undefined) {
         kvRefType='SystemAssigned';
@@ -236,7 +245,7 @@ export async function getInputParams() {
         kvRefId = config.keyVaultReferenceIdentity;
     }
     getRunTimeParams();
-    if(testName === '' || testPlan === '') {
+    if(testId === '' || isNullOrUndefined(testId) || testPlan === '' || isNullOrUndefined(testPlan)) {
         throw new Error("The required fields testName/testPlan are missing in "+YamlPath+".");
     }
 }
@@ -339,7 +348,7 @@ function validateUrl(url:string)
     var r = new RegExp(pattern);
     return r.test(url);
 }
-function validateValue(value:string) 
+function validateValue(value:string)
 {
     var r = new RegExp(/[^a-zA-Z0-9-_]/);
     return r.test(value);
@@ -388,17 +397,13 @@ export function getConfigFiles() {
     return configFiles;
 }
 
-export function getTestName() {
-    return testName;
+export function getTestId() {
+    return testId;
 }
 
 export function getFileName(filepath:string) {
-    var index = filepath.lastIndexOf('/');
-    var filename = filepath.substring(index+1);
-    var extIndex = filename.indexOf('.');
-    if(extIndex != -1)
-        filename = filename.substring(0,extIndex);
-    return filename.toLowerCase();
+    var filename = pathLib.basename(filepath);
+    return filename;
 }
 
 export function getTenantId() {
@@ -408,13 +413,11 @@ function getPassFailCriteria() {
     passFailCriteria.forEach(criteria => {
         let data = {
             aggregate: "",
-            clientmetric: "",
+            clientMetric: "",
             condition: "",
             value: "",
             requestName: "",
             action: "",
-            actualValue: 0,
-            result: null
         }
         if(typeof criteria !== "string"){
             var request = Object.keys(criteria)[0]
@@ -428,7 +431,7 @@ function getPassFailCriteria() {
                 tempStr = "";
             }
             else if(criteria[i] == ')'){
-                data.clientmetric = tempStr;
+                data.clientMetric = tempStr;
                 tempStr = "";
             }
             else if(criteria[i] == ','){
@@ -456,7 +459,7 @@ function ValidateAndAddCriteria(data:any) {
     data.value = util.removeUnits(data.value);
     if(!util.validCriteria(data)) 
         throw new Error("Invalid Failure Criteria");
-    var key: string = data.clientmetric+' '+data.aggregate+' '+data.condition+' '+data.action;
+    var key: string = data.clientMetric+' '+data.aggregate+' '+data.condition+' '+data.action;
     if(data.requestName != ""){
         key = key + ' ' + data.requestName;
     }
@@ -477,14 +480,12 @@ function getFailureCriteria(existingCriteriaIds: string[]) {
     for(var key in failureCriteriaValue) {
         var splitted = key.split(" "); 
         var criteriaId = index < numberOfExistingCriteria ? existingCriteriaIds[index++] : util.getUniqueId();
-        failCriteria[criteriaId] = {
-            clientmetric: splitted[0],
+        failCriteria[criteriaId] = {     
+            clientMetric: splitted[0],
             aggregate: splitted[1],
             condition: splitted[2],
-            value: failureCriteriaValue[key],
             action: splitted[3],
-            actualValue: 0,
-            result: null,
+            value: failureCriteriaValue[key],
             requestName: splitted.length > 4 ? splitted[4] : null
         };
     }

@@ -3,20 +3,25 @@ import httpc = require('typed-rest-client/HttpClient');
 import * as map from "./mappers"
 import * as util from './util';
 import * as fs from 'fs';
+import { isNullOrUndefined } from 'util';
 
 const resultFolder = 'loadTest';
 let baseURL = '';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
-let testName = '';
+let testId = '';
 let existingCriteria: { [name: string]: map.criteriaObj|null } = {};
 let existingParams: { [name: string]: map.paramObj|null } = {};
 let existingEnv: { [name: string]: string } = {};
-
+enum file_type{
+    JMX_FILE = 'JMX_FILE',
+    USER_PROPERTIES = 'USER_PROPERTIES',
+    ADDITIONAL_ARTIFACTS = 'ADDITIONAL_ARTIFACTS'
+}
 async function run() {
     try {  
         await map.getInputParams();
         await getLoadTestResource();
-        testName = map.getTestName();
+        testId = map.getTestId();
         await getTestAPI(false);
         if (fs.existsSync(resultFolder)){
             util.deleteFile(resultFolder);
@@ -29,7 +34,7 @@ async function run() {
     }
 }
 async function getTestAPI(validate:boolean) {
-    var urlSuffix = "loadtests/"+testName+"?api-version=2022-06-01-preview";
+    var urlSuffix = "tests/"+testId+"?api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let testResult = await httpClient.get(urlSuffix, header); 
@@ -40,28 +45,29 @@ async function getTestAPI(validate:boolean) {
         throw new Error(message);
     }
     if(testResult.message.statusCode == 200) {
-        let testResp: string = await testResult.readBody(); 
+        let testResp: string = await testResult.readBody();
         let testObj:any = JSON.parse(testResp);
-        var testFile = testObj.inputArtifacts;  
-        if(validate)
-            return testFile.testScriptUrl.validationStatus;
+        var testFile = testObj.inputArtifacts;
+        if(validate){
+            return testFile.testScriptFileInfo.validationStatus;
+        }
         else
         {
-            if(testObj.passFailCriteria != null && testObj.passFailCriteria.passFailMetrics)
+            if(!isNullOrUndefined(testObj.passFailCriteria) && !isNullOrUndefined(testObj.passFailCriteria.passFailMetrics))
                 existingCriteria = testObj.passFailCriteria.passFailMetrics;
             if(testObj.secrets != null)
                 existingParams = testObj.secrets;
             if(testObj.environmentVariables != null)
                 existingEnv = testObj.environmentVariables;
             if(testFile.testScriptUrl != null)
-                await deleteFileAPI(testFile.testScriptUrl.fileId)
+                await deleteFileAPI(testFile.testScriptFileInfo.filename)
             if(testFile.userPropUrl != null)
-                await deleteFileAPI(testFile.userPropUrl.fileId);
+                await deleteFileAPI(testFile.userPropFileInfo.filename);
         }
     }   
 }
-async function deleteFileAPI(fileId:string) {
-    var urlSuffix = "loadtests/"+testName+"/files/"+fileId+"?api-version=2022-06-01-preview";
+async function deleteFileAPI(filename:string) {
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let delFileResult = await httpClient.del(urlSuffix, header); 
@@ -72,7 +78,7 @@ async function deleteFileAPI(fileId:string) {
     }
 }
 async function createTestAPI() {
-    var urlSuffix = "loadtests/"+testName+"?api-version=2022-06-01-preview";
+    var urlSuffix = "tests/"+testId+"?api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
     var createData = map.createTestData();
     let header = await map.createTestHeader();
@@ -81,14 +87,14 @@ async function createTestAPI() {
     let testRunObj:any = JSON.parse(testRunResp);
     if(createTestresult.message.statusCode != 200 && createTestresult.message.statusCode != 201) {
         console.log(testRunObj);
-        throw new Error("Error in creating test: " + testName);
+        throw new Error("Error in creating test: " + testId);
     }
     if(createTestresult.message.statusCode == 201) {
-        console.log("Creating a new load test '"+testName+"' ");
-        console.log("Successfully created load test "+testName);
+        console.log("Creating a new load test '"+testId+"' ");
+        console.log("Successfully created load test "+testId);
     }
     else 
-        console.log("Test '"+ testName +"' already exists");
+        console.log("Test '"+ testId +"' already exists");
 
     await uploadConfigFile()
 }
@@ -96,8 +102,8 @@ async function createTestAPI() {
 async function uploadTestPlan() 
 {
     let filepath = map.getTestFile();
-    let filename = util.getUniqueId();
-    var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-06-01-preview";
+    let filename = map.getFileName(filepath);
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
     urlSuffix = baseURL + urlSuffix;
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
@@ -132,7 +138,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (const filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-06-01-preview";
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
             urlSuffix = baseURL+urlSuffix;
             var uploadData = map.uploadFileData(filepath);
             let headers = await map.UploadAndValidateHeader(uploadData);
@@ -155,9 +161,8 @@ async function uploadPropertyFile()
 {
     let propertyFile = map.getPropertyFile();
     if(propertyFile != undefined) {
-        let filename = util.getUniqueId();
-        console.log(propertyFile);
-        var urlSuffix = "loadtests/"+testName+"/files/"+filename+"?api-version=2022-06-01-preview&fileType=1";
+        let filename = map.getFileName(propertyFile);
+        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01&fileType="+file_type.USER_PROPERTIES;
         urlSuffix = baseURL + urlSuffix;
         var uploadData = map.uploadFileData(propertyFile);
         let headers = await map.UploadAndValidateHeader(uploadData)
@@ -175,7 +180,7 @@ async function uploadPropertyFile()
 async function createTestRun() {
     const tenantId = map.getTenantId();
     const testRunId = util.getUniqueId();
-    var urlSuffix = "testruns/"+testRunId+"?tenantId="+tenantId+"&api-version=2022-06-01-preview";
+    var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
     const ltres: string = core.getInput('loadTestResource');
     const subName = await map.getSubName();
@@ -186,8 +191,7 @@ async function createTestRun() {
         let startTestresult = await httpClient.patch(urlSuffix,JSON.stringify(startData),header);
         let startResp: string = await startTestresult.readBody(); 
         let testRunDao:any = JSON.parse(startResp);
-        if(startTestresult.message.statusCode != 200) {
-            console.log(testRunDao);
+        if(startTestresult.message.statusCode != 200 && startTestresult.message.statusCode != 201) {
             throw new Error("Error in running the test");
         }   
         let startTime = new Date();
@@ -196,7 +200,7 @@ async function createTestRun() {
         if(status == "ACCEPTED") {
             console.log("\nView the load test run in Azure portal by following the steps:")
             console.log("1. Go to your Azure Load Testing resource '"+ltres+"' in subscription '"+subName+"'")
-            console.log("2. On the Tests page, go to test '"+testName+"'")
+            console.log("2. On the Tests page, go to test '"+testId+"'")
             console.log("3. Go to test run '"+testRunName+"'\n");
             await getTestRunAPI(testRunId, status, startTime);
         }
@@ -209,16 +213,16 @@ async function createTestRun() {
 }
 async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date) 
 {   
-    var urlSuffix = "testruns/"+testRunId+"?api-version=2021-07-01-preview";
+    var urlSuffix = "test-runs/"+testRunId+"?api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
-    while(testStatus != "DONE" && testStatus != "FAILED" && testStatus != "CANCELLED") 
+    while(!util.isTerminalTestStatus(testStatus)) 
     {
         let header = await map.getTestRunHeader();
         let testRunResult = await httpClient.get(urlSuffix, header);
         let testRunResp: string = await testRunResult.readBody(); 
         let testRunObj:any = JSON.parse(testRunResp);
         testStatus = testRunObj.status;
-        if(testStatus == "DONE") {
+        if(util.isTerminalTestStatus(testStatus)) {
             await util.sleep(30000);
             let vusers = null;
             let count = 0;
@@ -227,11 +231,11 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 let testRunResult = await httpClient.get(urlSuffix, header);
                 let testRunResp: string = await testRunResult.readBody(); 
                 testRunObj = JSON.parse(testRunResp);
-                vusers = testRunObj.vusers;
+                vusers = testRunObj.virtualUsers;
                 count++;
             }
-            util.printTestDuration(testRunObj.vusers, startTime);
-            if(testRunObj.passFailCriteria != null && testRunObj.passFailCriteria.passFailMetrics != null)
+            util.printTestDuration(testRunObj.virtualUsers, startTime);
+            if(!isNullOrUndefined(testRunObj.passFailCriteria) && !isNullOrUndefined(testRunObj.passFailCriteria.passFailMetrics))
                 util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
             if(testRunObj.testRunStatistics != null)
                 util.printClientMetrics(testRunObj.testRunStatistics);
@@ -245,19 +249,15 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                     await util.getResultsFile(response);
                 }
             }
-            if(testRunObj.testResult != null && testRunObj.testResult === "FAILED") {
+            if(testRunObj.testResult === "FAILED" || testRunObj.testResult === "CANCELLED") {
                 core.setFailed("TestResult: "+ testRunObj.testResult);
                 return;
             }
             return;
         }
-        else if(testStatus === "FAILED" || testStatus === "CANCELLED") {
-            core.setFailed("TestStatus: "+ testStatus);
-            return;
-        }
         else 
         {
-            if(testStatus != "DONE" && testStatus != "FAILED" && testStatus != "CANCELLED")
+            if(!util.isTerminalTestStatus(testStatus))
             {
                 if(testStatus === "DEPROVISIONING" || testStatus === "DEPROVISIONED" || testStatus != "EXECUTED" )
                     await util.sleep(5000);
@@ -272,12 +272,12 @@ async function getLoadTestResource()
     let env = "prod";
     let id = map.getResourceId();
 
-    let armEndpoint = "https://management.azure.com"+id+"?api-version=2022-04-15-preview";
+    let armEndpoint = "https://management.azure.com"+id+"?api-version=2022-12-01";
     if(env == "canary") {
-        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2022-04-15-preview";
+        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2022-12-01";
     }
     if(env == "dogfood") {
-        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2022-04-15-preview";  
+        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2022-12-01";  
     }
     var header = map.dataPlaneHeader();
     let response = await httpClient.get(armEndpoint, header);

@@ -37,7 +37,7 @@ export function printCriteria(criteria:any) {
     console.log("Criteria\t\t\t\t\t :Actual Value\t        Result");
     for(var key in criteria) {
         var metric = criteria[key];
-        var str = metric.aggregate+"("+metric.clientmetric+") "+ metric.condition+ ' '+metric.value;
+        var str = metric.aggregate+"("+metric.clientMetric+") "+ metric.condition+ ' '+metric.value;
         if(metric.requestName != null){
             str = metric.requestName + ": " + str;
         }
@@ -151,7 +151,7 @@ export function getResultFolder(testArtifacts:any) {
     if(testArtifacts == null || testArtifacts.outputArtifacts == null)
         return null;
     var outputurl = testArtifacts.outputArtifacts;
-    return (outputurl.resultUrl != null)? outputurl.resultUrl.url: null;
+    return (outputurl.resultFileInfo != null)? outputurl.resultFileInfo.url: null;
 }
 export function deleteFile(foldername:string) 
 {
@@ -179,8 +179,14 @@ export function removeUnits(input:string)
     for (; input[i] >= '0' && input[i] <= '9'; i++);
     return i == input.length ? input : input.substring(0,i);
 }
+export function isTerminalTestStatus(testStatus: string){
+    if(testStatus === "DONE" || testStatus === "FAILED" || testStatus === "CANCELLED"){
+        return true;
+    }
+    return false;
+}
 export function validCriteria(data:any) {
-    switch(data.clientmetric) {
+    switch(data.clientMetric) {
         case "response_time_ms":
             return validResponseTimeCriteria(data);
         case "requests_per_sec":
