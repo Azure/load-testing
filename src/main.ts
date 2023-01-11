@@ -143,7 +143,7 @@ async function uploadConfigFile()
             var uploadData = map.uploadFileData(filepath);
             let headers = await map.UploadAndValidateHeader(uploadData);
 
-            let uploadresult = await httpClient.put(urlSuffix, uploadData, headers);
+            let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
             let uploadResultResp: string = await uploadresult.readBody(); 
             let uploadObj:any = JSON.parse(uploadResultResp);
             if(uploadresult.message.statusCode != 201){

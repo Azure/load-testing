@@ -9,7 +9,7 @@ import * as util from './util';
 import * as index from './main';
 import { isNullOrUndefined } from 'util';
 const pathLib = require('path');
-const { Readable } = require('stream');
+import { Readable } from 'stream';
 
 import { type } from 'os';
 var testId='';
@@ -107,8 +107,11 @@ export function uploadFileData(filepath: string) {
     try
     {
         let filedata : Buffer = fs.readFileSync(filepath);
-        var stream  = Readable.from(filedata);
-        return stream;
+        const readable = new Readable();
+        readable._read = () => {};
+        readable.push(filedata);
+        readable.push(null);
+        return readable;
     }
     catch(err:any) {
         err.message = "File not found "+ filepath;
