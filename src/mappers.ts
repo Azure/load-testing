@@ -9,6 +9,8 @@ import * as util from './util';
 import * as index from './main';
 import { isNullOrUndefined } from 'util';
 const pathLib = require('path');
+const { Readable } = require('stream');
+
 import { type } from 'os';
 var testId='';
 var displayName = '';
@@ -104,8 +106,9 @@ export async function createTestHeader() {
 export function uploadFileData(filepath: string) {
     try
     {
-        let filedata : string = fs.readFileSync(filepath,"binary");
-        return filedata;
+        let filedata : Buffer = fs.readFileSync(filepath);
+        var stream  = Readable.from(filedata);
+        return stream;
     }
     catch(err:any) {
         err.message = "File not found "+ filepath;
