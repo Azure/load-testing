@@ -251,7 +251,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 }
             }
             if(testRunObj.status === "FAILED" || testRunObj.status === "CANCELLED") {
-                core.setFailed("TestResult: "+ testRunObj.status);
+                core.setFailed("TestStatus: "+ testRunObj.status);
                 return;
             }
             if(testRunObj.testResult === "FAILED" || testRunObj.testResult === "CANCELLED") {
