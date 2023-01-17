@@ -492,7 +492,7 @@ function getFailureCriteria(existingCriteriaIds: string[]) {
             condition: splitted[2],
             action: splitted[3],
             value: failureCriteriaValue[key],
-            requestName: splitted.length > 4 ? splitted[4] : null
+            requestName: splitted.length > 4 ? splitted.slice(4).join(' ') : null
         };
     }
     for(; index < numberOfExistingCriteria; index++){
