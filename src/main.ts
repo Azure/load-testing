@@ -224,10 +224,10 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         let testRunObj:any = JSON.parse(testRunResp);
         testStatus = testRunObj.status;
         if(util.isTerminalTestStatus(testStatus)) {
-            await util.sleep(30000);
             let vusers = null;
             let count = 0;
-            while(vusers == null && count < 4){
+            while(isNullOrUndefined(vusers) && count < 4){
+                await util.sleep(30000);
                 let header = await map.getTestRunHeader();
                 let testRunResult = await httpClient.get(urlSuffix, header);
                 let testRunResp: string = await testRunResult.readBody(); 
