@@ -2,6 +2,7 @@ import * as fs from 'fs';
 var path = require('path');
 var AdmZip = require("adm-zip");
 const { v4: uuidv4 } = require('uuid');
+const resultFolder = 'loadTest';
 
 const validAggregateList = {
     'response_time_ms': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
@@ -70,6 +71,10 @@ function printTestResult(criteria:any) {
 export async function getResultsFile(response:any) 
 {
     try {
+        if (fs.existsSync(resultFolder)){
+            deleteFile(resultFolder);
+        }
+        fs.mkdirSync(resultFolder);
         const filePath = path.join('loadTest','results.zip');
         const file: NodeJS.WritableStream = fs.createWriteStream(filePath);
         
