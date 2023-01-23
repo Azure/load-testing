@@ -5,7 +5,6 @@ import * as util from './util';
 import * as fs from 'fs';
 import { isNullOrUndefined } from 'util';
 
-const resultFolder = 'loadTest';
 let baseURL = '';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 let testId = '';
@@ -23,10 +22,6 @@ async function run() {
         await getLoadTestResource();
         testId = map.getTestId();
         await getTestAPI(false);
-        if (fs.existsSync(resultFolder)){
-            util.deleteFile(resultFolder);
-        }
-        fs.mkdirSync(resultFolder);
         await createTestAPI();
     }
     catch (err:any) {
