@@ -93,11 +93,11 @@ The following YAML code snippet describes how to use the action in a GitHub Acti
       [
           {
           "name": "<Name of the variable>",
-          "value": "<Value of the variable>",
+          "value": "<Value of the variable>"
           },
           {
           "name": "<Name of the variable>",
-          "value": "<Value of the variable>",
+          "value": "<Value of the variable>"
           }
       ]
 ```
