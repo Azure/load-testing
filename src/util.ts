@@ -2,7 +2,6 @@ import * as fs from 'fs';
 var path = require('path');
 var AdmZip = require("adm-zip");
 const { v4: uuidv4 } = require('uuid');
-const resultFolder = 'loadTest';
 import httpc = require('typed-rest-client/HttpClient');
 import { IHttpClientResponse } from 'typed-rest-client/Interfaces';
 
