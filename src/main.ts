@@ -40,9 +40,11 @@ async function getTestAPI(validate:boolean) {
         throw new Error(message);
     }
     if(testResult.message.statusCode == 200) {
-        let testResp: string = await testResult.readBody(); 
-        let testObj:any = JSON.parse(testResp);
-        var testFile = testObj.inputArtifacts;  
+        let testObj:any=await util.getResultObj(testResult);
+        if(testObj == null){
+            throw new Error(util.ErrorCorrection(testResult));
+        }
+        var testFile = testObj.inputArtifacts;
         if(validate){
             return testFile.testScriptFileInfo.validationStatus;
         }
@@ -67,9 +69,9 @@ async function deleteFileAPI(filename:string) {
     let header = await map.getTestHeader();
     let delFileResult = await httpClient.del(urlSuffix, header); 
     if(delFileResult.message.statusCode != 204){
-        let delFileResp: string = await delFileResult.readBody(); 
-        let delFileObj:any = JSON.parse(delFileResp);
-        throw new Error(delFileObj.message);
+        let delFileObj:any=await util.getResultObj(delFileResult);
+        let Message: string = delFileObj ? delFileObj.message : util.ErrorCorrection(delFileResult);
+        throw new Error(Message);
     }
 }
 async function createTestAPI() {
@@ -78,10 +80,9 @@ async function createTestAPI() {
     var createData = map.createTestData();
     let header = await map.createTestHeader();
     let createTestresult = await httpClient.request('patch',urlSuffix,JSON.stringify(createData), header);
-    let testRunResp: string = await createTestresult.readBody(); 
-    let testRunObj:any = JSON.parse(testRunResp);
     if(createTestresult.message.statusCode != 200 && createTestresult.message.statusCode != 201) {
-        console.log(testRunObj);
+        let testRunObj:any=await util.getResultObj(createTestresult);
+        console.log(testRunObj ? testRunObj : util.ErrorCorrection(createTestresult));
         throw new Error("Error in creating test: " + testId);
     }
     if(createTestresult.message.statusCode == 201) {
@@ -103,10 +104,9 @@ async function uploadTestPlan()
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
     let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
-    let uploadResultResp: string = await uploadresult.readBody(); 
-    let uploadObj:any = JSON.parse(uploadResultResp);
     if(uploadresult.message.statusCode != 201){
-        console.log(uploadObj);
+        let uploadObj:any = await util.getResultObj(uploadresult);
+        console.log(uploadObj ? uploadObj : util.ErrorCorrection(uploadresult));
         throw new Error("Error in uploading TestPlan for the created test");
     }
     else {
@@ -139,10 +139,9 @@ async function uploadConfigFile()
             let headers = await map.UploadAndValidateHeader(uploadData);
 
             let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
-            let uploadResultResp: string = await uploadresult.readBody(); 
-            let uploadObj:any = JSON.parse(uploadResultResp);
             if(uploadresult.message.statusCode != 201){
-                console.log(uploadObj);
+                let uploadObj:any = await util.getResultObj(uploadresult);
+                console.log(uploadObj ? uploadObj : util.ErrorCorrection(uploadresult));
                 throw new Error("Error in uploading config file for the created test");
             }
         }
@@ -162,10 +161,9 @@ async function uploadPropertyFile()
         var uploadData = map.uploadFileData(propertyFile);
         let headers = await map.UploadAndValidateHeader(uploadData)
         let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
-        let uploadResultResp: string = await uploadresult.readBody(); 
-        let uploadObj:any = JSON.parse(uploadResultResp);
         if(uploadresult.message.statusCode != 201){
-            console.log(uploadObj);
+            let uploadObj:any = await util.getResultObj(uploadresult);
+            console.log(uploadObj ? uploadObj : util.ErrorCorrection(uploadresult));
             throw new Error("Error in uploading TestPlan for the created test");
         }
     }
@@ -184,10 +182,9 @@ async function createTestRun() {
         console.log("Creating and running a testRun for the test");
         let header = await map.createTestHeader();
         let startTestresult = await httpClient.patch(urlSuffix,JSON.stringify(startData),header);
-        let startResp: string = await startTestresult.readBody(); 
-        let testRunDao:any = JSON.parse(startResp);
+        let testRunDao:any=await util.getResultObj(startTestresult);
         if(startTestresult.message.statusCode != 200 && startTestresult.message.statusCode != 201) {
-            console.log(testRunDao);
+            console.log(testRunDao ? testRunDao : util.ErrorCorrection(startTestresult));
             throw new Error("Error in running the test");
         }   
         let startTime = new Date();
@@ -215,8 +212,10 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
     {
         let header = await map.getTestRunHeader();
         let testRunResult = await httpClient.get(urlSuffix, header);
-        let testRunResp: string = await testRunResult.readBody(); 
-        let testRunObj:any = JSON.parse(testRunResp);
+        let testRunObj:any = await util.getResultObj(testRunResult);
+        if(testRunObj == null){
+            throw new Error(util.ErrorCorrection(testRunResult));
+        }
         testStatus = testRunObj.status;
         if(util.isTerminalTestStatus(testStatus)) {
             let vusers = null;
@@ -225,8 +224,10 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 await util.sleep(30000);
                 let header = await map.getTestRunHeader();
                 let testRunResult = await httpClient.get(urlSuffix, header);
-                let testRunResp: string = await testRunResult.readBody(); 
-                testRunObj = JSON.parse(testRunResp);
+                testRunObj = await util.getResultObj(testRunResult);
+                if(testRunObj == null){
+                    throw new Error(util.ErrorCorrection(testRunResult));
+                }
                 vusers = testRunObj.virtualUsers;
                 count++;
             }
@@ -286,8 +287,10 @@ async function getLoadTestResource()
         var message = "The Azure Load Testing resource "+ resource_name +" does not exist. Please provide an existing resource.";
         throw new Error(message);
     }
-    let result: string = await response.readBody();
-    let respObj:any = JSON.parse(result);
+    let respObj:any = await util.getResultObj(response);
+    if(respObj == null){
+        throw new Error(util.ErrorCorrection(response));
+    }    
     let dataPlaneUrl = respObj.properties.dataPlaneURI;
     baseURL = 'https://'+dataPlaneUrl+'/';
 }
