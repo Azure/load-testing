@@ -2,6 +2,8 @@ import * as fs from 'fs';
 var path = require('path');
 var AdmZip = require("adm-zip");
 const { v4: uuidv4 } = require('uuid');
+import httpc = require('typed-rest-client/HttpClient');
+import { IHttpClientResponse } from 'typed-rest-client/Interfaces';
 
 const validAggregateList = {
     'response_time_ms': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
@@ -222,4 +224,19 @@ function validLatencyCriteria(data:any)  {
 function validErrorCriteria(data:any)  {
     return !(!validAggregateList['error'].includes(data.aggregate) || !validConditionList['error'].includes(data.condition)
         || Number(data.value)<0 || Number(data.value)>100 || data.action!= "continue");
+}
+export async function getResultObj(data:any) {
+    var dataString ;
+    var dataJSON ;
+    try{
+        dataString = await data.readBody();
+        dataJSON = JSON.parse(dataString);
+        return dataJSON;
+    }
+    catch{
+        return null;
+    }
+}
+export function ErrorCorrection(result : IHttpClientResponse){
+    return "Unable to fetch the response. Please re-run or contact support if the issue persists. " + "Status code: " + result.message.statusCode ;
 }
