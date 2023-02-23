@@ -2,11 +2,11 @@
   "name": "automate-loadtest-action",
   "version": "0.0.1",
   "private": true,
-  "description": "GitHub Action to automate loadtest",
+  "description": "GitHub Action to automate Azure Load Testing",
   "main": "lib/main.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kusweta/AzloadTest.git"
+    "url": "git+https://github.com/azure/load-testing.git"
   },
   "keywords": [
     "actions",
@@ -18,8 +18,11 @@
     "Azloadtest"
   ],
   "author": "Sweta Kumari",
-  "homepage": "https://github.com/kusweta/AzloadTest/blob/main/README.md",
+  "homepage": "https://github.com/azure/load-testing/blob/main/README.md",
   "license": "MIT",
+  "scripts": {
+    "compile": "tsc"
+  },
   "dependencies": {
     "@actions/core": "^1.5.0",
     "@types/q": "^1.5.5",
