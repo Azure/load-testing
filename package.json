@@ -24,7 +24,7 @@
     "compile": "tsc"
   },
   "dependencies": {
-    "@actions/core": "^1.5.0",
+    "@actions/core": "^1.9.1",
     "@types/q": "^1.5.5",
     "adal-node": "^0.2.2",
     "adm-zip": "^0.5.6",
