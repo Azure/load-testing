@@ -287,15 +287,16 @@ async function getLoadTestResource()
     }
     var header = map.dataPlaneHeader();
     let response = await httpClient.get(armEndpoint, header);
+    var resource_name: string = core.getInput('loadTestResource');
     if(response.message.statusCode == 404) {
-        var resource_name: string = core.getInput('loadTestResource');
         var message = "The Azure Load Testing resource "+ resource_name +" does not exist. Please provide an existing resource.";
         throw new Error(message);
     }
     let respObj:any = await util.getResultObj(response);
     if(response.message.statusCode != 200){
-        throw new Error(respObj ? respObj : util.ErrorCorrection(response));
-    }  
+        console.log(respObj ? respObj : util.ErrorCorrection(response));
+        throw new Error("Error fetching resource " + resource_name);
+    }
     let dataPlaneUrl = respObj.properties.dataPlaneURI;
     baseURL = 'https://'+dataPlaneUrl+'/';
 }
