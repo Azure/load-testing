@@ -132,10 +132,10 @@ export function dataPlaneHeader() {
     };
     return headers;
 }
-export function startTestData(testRunName:string) {
+export function startTestData(testRunName:string, runDisplayName: string) {
     var data = {
         testRunId: testRunName,
-        displayName: getDefaultTestRunName(),
+        displayName: runDisplayName ? runDisplayName : getDefaultTestRunName(),
         testId: testId,
         secrets: secretsRun,
         environmentVariables: envRun
