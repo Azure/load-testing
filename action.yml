@@ -10,6 +10,9 @@ inputs:
   loadTestRunDisplayName:
     description: 'Custom name for the load test run'
     required: false
+  loadTestRunDescription:
+    description: 'Custom description for the load test run'
+    required: false
   resourceGroup:
     description: 'Enter or Select the Azure Resource Group that contains the Load test resource specified above'
     required: true

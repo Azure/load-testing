@@ -132,10 +132,11 @@ export function dataPlaneHeader() {
     };
     return headers;
 }
-export function startTestData(testRunName:string, runDisplayName: string) {
+export function startTestData(testRunName:string, runDisplayName: string, runDescription: string) {
     var data = {
         testRunId: testRunName,
         displayName: runDisplayName ? runDisplayName : getDefaultTestRunName(),
+        description: runDescription ? runDescription : 'Started using GitHub Actions',
         testId: testId,
         secrets: secretsRun,
         environmentVariables: envRun
