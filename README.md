@@ -66,8 +66,11 @@ You can use the following parameters to configure the GitHub action.
 |`loadTestConfigFile`    | **Required** Path to the load test YAML configuration file. The path is fully qualified or relative to the default working directory.        |
 |`resourceGroup`     |  **Required** Name of the resource group that contains the Azure Load Testing resource.       |
 |`loadTestResource`     |   **Required** Name of an existing Azure Load Testing resource.      |
+|`loadTestRunName` |  **Optional** Name of the load test run. If not specified, the default value is the date and time. |
+|`loadTestRunDescription` | **Optional** Description of the load test run.  |
 |`secrets`   |   Array of JSON objects that consist of the **name** and **value** for each secret that is required by your Apache JMeter script. The name should match the secret name used in the Apache JMeter test script. |
 |`env`     |   Array of JSON objects that consist of the **name** and **value** for each environment variable that is required by your Apache JMeter script. The name should match the variable name used in the Apache JMeter test script. |
+|`
 
 The following YAML code snippet describes how to use the action in a GitHub Actions workflow.
 
