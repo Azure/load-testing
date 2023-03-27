@@ -227,8 +227,9 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         if(util.isTerminalTestStatus(testStatus)) {
             let vusers = null;
             let count = 0;
-            while(isNullOrUndefined(vusers) && count < 4){
-                await util.sleep(30000);
+            // Polling for max 3 min for statistics and pass fail criteria to populate
+            while(isNullOrUndefined(vusers) && count < 18){
+                await util.sleep(10000);
                 let header = await map.getTestRunHeader();
                 let testRunResult = await httpClient.get(urlSuffix, header);
                 testRunObj = await util.getResultObj(testRunResult);
