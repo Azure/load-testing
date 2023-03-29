@@ -181,9 +181,11 @@ async function createTestRun() {
     var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version=2022-11-01";
     urlSuffix = baseURL+urlSuffix;
     const ltres: string = core.getInput('loadTestResource');
+    const runDisplayName: string = core.getInput('loadTestRunName');
+    const runDescription: string = core.getInput('loadTestRunDescription');
     const subName = await map.getSubName();
     try {
-        var startData = map.startTestData(testRunId);
+        var startData = map.startTestData(testRunId, runDisplayName, runDescription);
         console.log("Creating and running a testRun for the test");
         let header = await map.createTestHeader();
         let startTestresult = await httpClient.patch(urlSuffix,JSON.stringify(startData),header);
@@ -225,8 +227,9 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         if(util.isTerminalTestStatus(testStatus)) {
             let vusers = null;
             let count = 0;
-            while(isNullOrUndefined(vusers) && count < 4){
-                await util.sleep(30000);
+            // Polling for max 3 min for statistics and pass fail criteria to populate
+            while(isNullOrUndefined(vusers) && count < 18){
+                await util.sleep(10000);
                 let header = await map.getTestRunHeader();
                 let testRunResult = await httpClient.get(urlSuffix, header);
                 testRunObj = await util.getResultObj(testRunResult);

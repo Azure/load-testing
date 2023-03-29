@@ -132,10 +132,11 @@ export function dataPlaneHeader() {
     };
     return headers;
 }
-export function startTestData(testRunName:string) {
+export function startTestData(testRunName:string, runDisplayName: string, runDescription: string) {
     var data = {
         testRunId: testRunName,
-        displayName: getDefaultTestRunName(),
+        displayName: runDisplayName ? runDisplayName : getDefaultTestRunName(),
+        description: runDescription ? runDescription : 'Started using GitHub Actions',
         testId: testId,
         secrets: secretsRun,
         environmentVariables: envRun
@@ -181,7 +182,11 @@ function invalidName(value:string)
 function invalidDisplayName(value : string){
     if(value.length < 2 || value.length > 50) return true;
     return false;
- }
+}
+function invalidDescription(value : string){
+    if(value.length > 100) return true;
+    return false;
+}
 export async function getInputParams() {
     await getAccessToken("https://management.core.windows.net");
     YamlPath = core.getInput('loadTestConfigFile');
@@ -206,7 +211,7 @@ export async function getInputParams() {
     if(invalidName(testId))
         throw new Error("Invalid testId. Allowed chararcters are [a-zA-Z0-9-_] and must be between 2 to 50 characters.");
     if(invalidDisplayName(displayName))
-        throw new Error("Invalid display name.Display name must be between 2 to 50 characters.");
+        throw new Error("Invalid display name. Display name must be between 2 to 50 characters.");
     testdesc = config.description;
     engineInstances = config.engineInstances;
     let path = pathLib.dirname(YamlPath);
@@ -251,6 +256,7 @@ export async function getInputParams() {
         kvRefId = config.keyVaultReferenceIdentity;
     }
     getRunTimeParams();
+    validateTestRunParams();
     if(testId === '' || isNullOrUndefined(testId) || testPlan === '' || isNullOrUndefined(testPlan)) {
         throw new Error("The required fields testName/testPlan are missing in "+YamlPath+".");
     }
@@ -389,6 +395,14 @@ function getRunTimeParams() {
             throw new Error("Invalid env");
         }
     }    
+}
+function validateTestRunParams(){
+    let runDisplayName: string = core.getInput('loadTestRunName');
+    let runDescription: string = core.getInput('loadTestRunDescription');
+    if(runDisplayName && invalidDisplayName(runDisplayName))
+        throw new Error("Invalid test run name. Test run name must be between 2 to 50 characters.");
+    if(runDescription && invalidDescription(runDescription))
+        throw new Error("Invalid test run description. Test run description must be less than 100 characters.")
 }
 export function getYamlPath() {
     return YamlPath;
