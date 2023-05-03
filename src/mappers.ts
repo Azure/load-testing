@@ -25,6 +25,7 @@ var subscriptionID='';
 var tenantId='';
 var YamlPath='';
 var passFailCriteria: any[] = [];
+var autoStop: autoStopCriteriaObj|null =null;
 var kvRefId: string|null =null;
 var kvRefType: string|null=null;
 var subnetId: string|null=null;
@@ -43,6 +44,11 @@ export interface criteriaObj {
     requestName: string | null;
     action : string | null;
     value: number;
+};
+export interface autoStopCriteriaObj {
+    isAutoAbortEnabled: boolean;
+    errorRate: number;
+    errorRateTimeWindow: number;
 };
 export interface paramObj {
     type: string;
@@ -88,6 +94,7 @@ export function createTestData() {
         passFailCriteria:{
             passFailMetrics: failCriteria
         },
+        autoAbortCriteria: autoStop,
         subnetId: subnetId,
         keyvaultReferenceIdentityType: kvRefType,
         keyvaultReferenceIdentityId: kvRefId
@@ -139,6 +146,7 @@ export function startTestData(testRunName:string, runDisplayName: string, runDes
         description: runDescription ? runDescription : 'Started using GitHub Actions',
         testId: testId,
         secrets: secretsRun,
+        autoStopCriteria: autoStop,
         environmentVariables: envRun
     };
     return data;
@@ -251,6 +259,10 @@ export async function getInputParams() {
     if(config.certificates != undefined){
         getParameters(config.certificates,"certificates");
     }
+    if (config.autoStop != undefined) {
+        autoStop = config.autoStop;
+        getAutoStopCriteria();
+    }
     if(config.keyVaultReferenceIdentity != undefined) {
         kvRefType='UserAssigned';
         kvRefId = config.keyVaultReferenceIdentity;
@@ -341,6 +353,13 @@ function getParameters(obj:any, type:string) {
         for(var index in obj) {
             var val = obj[index];
             envYaml[val.name] = val.value;
+        }
+    }
+    else if(type == "autoStop"){
+        for (var index in obj) {
+            var val = obj[index];
+            autoStop = {isAutoAbortEnabled: true, errorRate: val.errorRate, errorRateTimeWindow: val.errorRateTimeWindow};
+            break;
         }
     }
     else if(type == "certificates"){
@@ -511,5 +530,25 @@ function getFailureCriteria(existingCriteriaIds: string[]) {
     }
     for(; index < numberOfExistingCriteria; index++){
         failCriteria[existingCriteriaIds[index]] = null;
+    }
+}
+function getAutoStopCriteria() {
+    if (autoStop == null) {
+        let autoStop = {
+            isAutoAbortEnabled: true,
+            errorRate: 90,
+            errorRateTimeWindow: 60
+        }
+        return;
+    }
+    
+    if (typeof autoStop == "string") {
+        let data: autoStopCriteriaObj = {
+            isAutoAbortEnabled: false,
+            errorRate: 0,
+            errorRateTimeWindow: 0
+        }
+        autoStop = data;
+        return;
     }
 }

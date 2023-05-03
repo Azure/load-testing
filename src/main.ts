@@ -6,10 +6,11 @@ import * as fs from 'fs';
 import { isNullOrUndefined } from 'util';
 
 const resultFolder = 'loadTest';
-let baseURL = '';
+let baseURL = '2631075d-e908-4f0c-8f75-0f247b540ef4.centraluseuap.cnt-canary.loadtesting.azure.com';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 let testId = '';
-let existingCriteria: { [name: string]: map.criteriaObj|null } = {};
+let existingCriteria: { [name: string]: map.criteriaObj | null } = {};
+let existingAutoAbortCriteria: { [name: string]: map.autoStopCriteriaObj | null } = {};
 let existingParams: { [name: string]: map.paramObj|null } = {};
 let existingEnv: { [name: string]: string } = {};
 enum file_type{
@@ -102,7 +103,7 @@ async function createTestAPI() {
 
 async function uploadTestPlan() 
 {
-    let filepath = map.getTestFile();
+ /*   let filepath = map.getTestFile();
     let filename = map.getFileName(filepath);
     var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
     urlSuffix = baseURL + urlSuffix;
@@ -130,7 +131,7 @@ async function uploadTestPlan()
             throw new Error("TestPlan validation timeout. Please try again.")
         else
             throw new Error("TestPlan validation Failed.");
-    }
+    }*/
 }
 async function uploadConfigFile() 
 {
@@ -306,6 +307,10 @@ async function getLoadTestResource()
 export function getExistingCriteria()
 {
     return existingCriteria;
+}
+export function getExistingAutoAbortCriteria()
+{
+    return existingAutoAbortCriteria;
 }
 export function getExistingParams()
 {
