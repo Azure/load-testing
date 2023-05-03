@@ -10,7 +10,6 @@ let baseURL = '';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 let testId = '';
 let existingCriteria: { [name: string]: map.criteriaObj | null } = {};
-let existingAutoAbortCriteria: { [name: string]: map.autoStopCriteriaObj | null } = {};
 let existingParams: { [name: string]: map.paramObj|null } = {};
 let existingEnv: { [name: string]: string } = {};
 enum file_type{
@@ -307,10 +306,6 @@ async function getLoadTestResource()
 export function getExistingCriteria()
 {
     return existingCriteria;
-}
-export function getExistingAutoAbortCriteria()
-{
-    return existingAutoAbortCriteria;
 }
 export function getExistingParams()
 {
