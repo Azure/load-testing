@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import { isNullOrUndefined } from 'util';
 
 const resultFolder = 'loadTest';
-let baseURL = '2631075d-e908-4f0c-8f75-0f247b540ef4.centraluseuap.cnt-canary.loadtesting.azure.com';
+let baseURL = '';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 let testId = '';
 let existingCriteria: { [name: string]: map.criteriaObj | null } = {};
@@ -35,7 +35,7 @@ async function run() {
     }
 }
 async function getTestAPI(validate:boolean) {
-    var urlSuffix = "tests/"+testId+"?api-version=2022-11-01";
+    var urlSuffix = "tests/"+testId+"?api-version=2023-04-01-preview";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let testResult = await httpClient.get(urlSuffix, header); 
@@ -70,7 +70,7 @@ async function getTestAPI(validate:boolean) {
     }   
 }
 async function deleteFileAPI(filename:string) {
-    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2023-04-01-preview";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let delFileResult = await httpClient.del(urlSuffix, header); 
@@ -81,7 +81,7 @@ async function deleteFileAPI(filename:string) {
     }
 }
 async function createTestAPI() {
-    var urlSuffix = "tests/"+testId+"?api-version=2022-11-01";
+    var urlSuffix = "tests/"+testId+"?api-version=2023-04-01-preview";
     urlSuffix = baseURL+urlSuffix;
     var createData = map.createTestData();
     let header = await map.createTestHeader();
@@ -103,9 +103,9 @@ async function createTestAPI() {
 
 async function uploadTestPlan() 
 {
- /*   let filepath = map.getTestFile();
+    let filepath = map.getTestFile();
     let filename = map.getFileName(filepath);
-    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2023-04-01-preview";
     urlSuffix = baseURL + urlSuffix;
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
@@ -131,7 +131,7 @@ async function uploadTestPlan()
             throw new Error("TestPlan validation timeout. Please try again.")
         else
             throw new Error("TestPlan validation Failed.");
-    }*/
+    }
 }
 async function uploadConfigFile() 
 {
@@ -139,7 +139,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (const filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01";
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2023-04-01-preview";
             urlSuffix = baseURL+urlSuffix;
             var uploadData = map.uploadFileData(filepath);
             let headers = await map.UploadAndValidateHeader(uploadData);
@@ -162,7 +162,7 @@ async function uploadPropertyFile()
     let propertyFile = map.getPropertyFile();
     if(propertyFile != undefined) {
         let filename = map.getFileName(propertyFile);
-        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2022-11-01&fileType="+file_type.USER_PROPERTIES;
+        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2023-04-01-preview&fileType="+file_type.USER_PROPERTIES;
         urlSuffix = baseURL + urlSuffix;
         var uploadData = map.uploadFileData(propertyFile);
         let headers = await map.UploadAndValidateHeader(uploadData)
@@ -179,7 +179,7 @@ async function uploadPropertyFile()
 async function createTestRun() {
     const tenantId = map.getTenantId();
     const testRunId = util.getUniqueId();
-    var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version=2022-11-01";
+    var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version=2023-04-01-preview";
     urlSuffix = baseURL+urlSuffix;
     const ltres: string = core.getInput('loadTestResource');
     const runDisplayName: string = core.getInput('loadTestRunName');
@@ -214,7 +214,7 @@ async function createTestRun() {
 }
 async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date) 
 {   
-    var urlSuffix = "test-runs/"+testRunId+"?api-version=2022-11-01";
+    var urlSuffix = "test-runs/"+testRunId+"?api-version=2023-04-01-preview";
     urlSuffix = baseURL+urlSuffix;
     while(!util.isTerminalTestStatus(testStatus)) 
     {
