@@ -46,7 +46,7 @@ export interface criteriaObj {
   value: number;
 }
 export interface autoStopCriteriaObj {
-  isAutoAbortEnabled: boolean;
+  isAutoStopEnabled: boolean;
   errorRate: number;
   errorRateTimeWindow: number;
 }
@@ -93,7 +93,7 @@ export function createTestData() {
     passFailCriteria: {
       passFailMetrics: failCriteria,
     },
-    autoAbortCriteria: autoStop,
+    autoStopCriteria: autoStop,
     subnetId: subnetId,
     keyvaultReferenceIdentityType: kvRefType,
     keyvaultReferenceIdentityId: kvRefId,
@@ -149,7 +149,6 @@ export function startTestData(
       : "Started using GitHub Actions",
     testId: testId,
     secrets: secretsRun,
-    autoStopCriteria: autoStop,
     environmentVariables: envRun,
   };
   return data;
@@ -280,10 +279,13 @@ export async function getInputParams() {
   if (config.certificates != undefined) {
     getParameters(config.certificates, "certificates");
   }
-
+  if (config.autoStop != undefined) {
+    autoStop = config.autoStop;
+    getAutoStopCriteria();
+  }
   autoStop = config.autoStop;
   getAutoStopCriteria();
-  
+
   if (config.keyVaultReferenceIdentity != undefined) {
     kvRefType = "UserAssigned";
     kvRefId = config.keyVaultReferenceIdentity;
@@ -561,25 +563,26 @@ function getFailureCriteria(existingCriteriaIds: string[]) {
   }
 }
 function getAutoStopCriteria() {
-  let data: autoStopCriteriaObj = {
-    isAutoAbortEnabled: true,
-    errorRate: 90,
-    errorRateTimeWindow: 60,
-  };
-
+  if (autoStop == null) return;
   if (typeof autoStop == "string") {
-    data = {
-      isAutoAbortEnabled: false,
-      errorRate: 0,
-      errorRateTimeWindow: 0,
-    };
+    if (autoStop == "disable") {
+      let data = {
+        isAutoStopEnabled: false,
+        errorRate: 0,
+        errorRateTimeWindow: 0,
+      };
+      autoStop = data;
+    } else {
+      throw new Error(
+        "Invalid value, for disabling auto stop use 'autoStop: disable'"
+      );
+    }
   }
-  if (autoStop) {
-    data = {
-      isAutoAbortEnabled: true,
-      errorRate: autoStop.errorRate,
-      errorRateTimeWindow: autoStop.errorRateTimeWindow,
-    };
-  }
+
+  let data = {
+    isAutoStopEnabled: true,
+    errorRate: autoStop.errorRate,
+    errorRateTimeWindow: autoStop.errorRateTimeWindow,
+  };
   autoStop = data;
 }
