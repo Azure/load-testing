@@ -25,7 +25,7 @@ var subscriptionID = "";
 var tenantId = "";
 var YamlPath = "";
 var passFailCriteria: any[] = [];
-var autoStop: autoStopCriteriaObj | null = null;
+var autoStop: autoStopCriteriaObj | string | null = null;
 var kvRefId: string | null = null;
 var kvRefType: string | null = null;
 var subnetId: string | null = null;
@@ -283,8 +283,6 @@ export async function getInputParams() {
     autoStop = config.autoStop;
     getAutoStopCriteria();
   }
-  autoStop = config.autoStop;
-  getAutoStopCriteria();
 
   if (config.keyVaultReferenceIdentity != undefined) {
     kvRefType = "UserAssigned";
@@ -577,12 +575,12 @@ function getAutoStopCriteria() {
         "Invalid value, for disabling auto stop use 'autoStop: disable'"
       );
     }
+  } else {
+    let data = {
+      isAutoStopEnabled: true,
+      errorRate: autoStop.errorRate,
+      errorRateTimeWindow: autoStop.errorRateTimeWindow,
+    };
+    autoStop = data;
   }
-
-  let data = {
-    isAutoStopEnabled: true,
-    errorRate: autoStop.errorRate,
-    errorRateTimeWindow: autoStop.errorRateTimeWindow,
-  };
-  autoStop = data;
 }
