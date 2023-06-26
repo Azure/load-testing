@@ -79,7 +79,7 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
     }
     catch(err:any){
         if(retries){
-            console.log("failed to connect to the server, server timedOut, retrying once again");
+            console.log("failed to connect to the server, server timedOut, retrying once again" + err.message);
             httpClientRetries(urlSuffix,header,method,retries-1,content);
         }
         throw new Error("retried for defined number of times still it didnot get succeded, so pipeline got failed."+ err.message);
