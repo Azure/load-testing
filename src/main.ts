@@ -37,7 +37,7 @@ async function getTestAPI(validate:boolean) {
     var urlSuffix = "tests/"+testId+"?api-version=2023-04-01-preview";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
-    let testResult = await httpClient.get(urlSuffix, header); 
+    let testResult = await await util.httpClientRetries(urlSuffix,header,'get',3,"");//httpClient.get(urlSuffix, header); 
     if(testResult.message.statusCode == 401 || testResult.message.statusCode == 403){
         var message = "Service Principal does not have sufficient permissions. Please assign " 
         +"the Load Test Contributor role to the service principal. Follow the steps listed at "
@@ -72,7 +72,7 @@ async function deleteFileAPI(filename:string) {
     var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version=2023-04-01-preview";
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
-    let delFileResult = await httpClient.del(urlSuffix, header); 
+    let delFileResult = await util.httpClientRetries(urlSuffix,header,'del',3,"");//httpClient.del(urlSuffix, header); 
     if(delFileResult.message.statusCode != 204){
         let delFileObj:any=await util.getResultObj(delFileResult);
         let Message: string = delFileObj ? delFileObj.message : util.ErrorCorrection(delFileResult);
@@ -84,7 +84,7 @@ async function createTestAPI() {
     urlSuffix = baseURL+urlSuffix;
     var createData = map.createTestData();
     let header = await map.createTestHeader();
-    let createTestresult = await httpClient.request('patch',urlSuffix,JSON.stringify(createData), header);
+    let createTestresult = await util.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(createData));//httpClient.request('patch',urlSuffix,JSON.stringify(createData), header);
     if(createTestresult.message.statusCode != 200 && createTestresult.message.statusCode != 201) {
         let testRunObj:any=await util.getResultObj(createTestresult);
         console.log(testRunObj ? testRunObj : util.ErrorCorrection(createTestresult));
@@ -108,7 +108,7 @@ async function uploadTestPlan()
     urlSuffix = baseURL + urlSuffix;
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
-    let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
+    let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',1,uploadData);//httpClient.request('put',urlSuffix, uploadData, headers);
     if(uploadresult.message.statusCode != 201){
         let uploadObj:any = await util.getResultObj(uploadresult);
         console.log(uploadObj ? uploadObj : util.ErrorCorrection(uploadresult));
@@ -143,7 +143,7 @@ async function uploadConfigFile()
             var uploadData = map.uploadFileData(filepath);
             let headers = await map.UploadAndValidateHeader(uploadData);
 
-            let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
+            let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',2,uploadData);//httpClient.request('put',urlSuffix, uploadData, headers);
             if(uploadresult.message.statusCode != 201){
                 let uploadObj:any = await util.getResultObj(uploadresult);
                 console.log(uploadObj ? uploadObj : util.ErrorCorrection(uploadresult));
@@ -165,7 +165,7 @@ async function uploadPropertyFile()
         urlSuffix = baseURL + urlSuffix;
         var uploadData = map.uploadFileData(propertyFile);
         let headers = await map.UploadAndValidateHeader(uploadData)
-        let uploadresult = await httpClient.request('put',urlSuffix, uploadData, headers);
+        let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',2,uploadData);//httpClient.request('put',urlSuffix, uploadData, headers);
         if(uploadresult.message.statusCode != 201){
             let uploadObj:any = await util.getResultObj(uploadresult);
             console.log(uploadObj ? uploadObj : util.ErrorCorrection(uploadresult));
@@ -188,7 +188,7 @@ async function createTestRun() {
         var startData = map.startTestData(testRunId, runDisplayName, runDescription);
         console.log("Creating and running a testRun for the test");
         let header = await map.createTestHeader();
-        let startTestresult = await httpClient.patch(urlSuffix,JSON.stringify(startData),header);
+        let startTestresult = await util.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(startData));//httpClient.patch(urlSuffix,JSON.stringify(startData),header);
         let testRunDao:any=await util.getResultObj(startTestresult);
         if(startTestresult.message.statusCode != 200 && startTestresult.message.statusCode != 201) {
             console.log(testRunDao ? testRunDao : util.ErrorCorrection(startTestresult));
@@ -218,7 +218,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
     while(!util.isTerminalTestStatus(testStatus)) 
     {
         let header = await map.getTestRunHeader();
-        let testRunResult = await httpClient.get(urlSuffix, header);
+        let testRunResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");//httpClient.get(urlSuffix, header);
         let testRunObj:any = await util.getResultObj(testRunResult);
         if(testRunObj == null){
             throw new Error(util.ErrorCorrection(testRunResult));
@@ -231,7 +231,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
             while(isNullOrUndefined(vusers) && count < 18){
                 await util.sleep(10000);
                 let header = await map.getTestRunHeader();
-                let testRunResult = await httpClient.get(urlSuffix, header);
+                let testRunResult = await util.httpClientRetries(urlSuffix,header,'get',3,""); //httpClient.get(urlSuffix, header);
                 testRunObj = await util.getResultObj(testRunResult);
                 if(testRunObj == null){
                     throw new Error(util.ErrorCorrection(testRunResult));
@@ -289,7 +289,7 @@ async function getLoadTestResource()
         armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2022-12-01";  
     }
     var header = map.dataPlaneHeader();
-    let response = await httpClient.get(armEndpoint, header);
+    let response = await util.httpClientRetries(armEndpoint,header,'get',3,"");//httpClient.get(armEndpoint, header);
     var resource_name: string = core.getInput('loadTestResource');
     if(response.message.statusCode == 404) {
         var message = "The Azure Load Testing resource "+ resource_name +" does not exist. Please provide an existing resource.";

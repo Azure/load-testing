@@ -47,6 +47,7 @@ export interface criteriaObj {
 }
 export interface autoStopCriteriaObj {
   isAutoStopEnabled: boolean;
+  autoStopEnabled? : boolean;
   errorRate: number;
   errorRateTimeWindow: number;
 }
@@ -566,6 +567,7 @@ function getAutoStopCriteria() {
     if (autoStop == "disable") {
       let data = {
         isAutoStopEnabled: false,
+        autoStopEnabled : false,
         errorRate: 0,
         errorRateTimeWindow: 0,
       };
@@ -578,6 +580,7 @@ function getAutoStopCriteria() {
   } else {
     let data = {
       isAutoStopEnabled: true,
+      autoStopEnabled : true,
       errorRate: autoStop.errorRate,
       errorRateTimeWindow: autoStop.errorRateTimeWindow,
     };

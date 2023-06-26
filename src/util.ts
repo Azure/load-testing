@@ -3,7 +3,9 @@ var path = require('path');
 var AdmZip = require("adm-zip");
 const { v4: uuidv4 } = require('uuid');
 import httpc = require('typed-rest-client/HttpClient');
-import { IHttpClientResponse } from 'typed-rest-client/Interfaces';
+import { IHttpClientResponse, IHeaders} from 'typed-rest-client/Interfaces';
+import internal = require('stream');
+const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 
 const validAggregateList = {
     'response_time_ms': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
@@ -57,6 +59,33 @@ export function printCriteria(criteria:any) {
     }
     console.log("\n");
 }
+
+export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : string, retries : number = 1,content : string | internal.Readable ) : Promise<IHttpClientResponse>{
+    let testResult : IHttpClientResponse;
+    try {
+        if(method == 'get'){
+            testResult = await httpClient.get(urlSuffix, header);
+        }
+        else if(method == 'del'){
+            testResult = await httpClient.del(urlSuffix, header); 
+        }
+        else if(method == 'patch'){
+            testResult = await httpClient.patch(urlSuffix,content.toString(),header);
+        }
+        else{
+            testResult = await httpClient.request(method,urlSuffix, content, header);
+        }
+        return testResult;
+    }
+    catch(err:any){
+        if(retries){
+            console.log("failed to connect to the server, server timedOut, retrying once again");
+            httpClientRetries(urlSuffix,header,method,retries-1,content);
+        }
+        throw new Error("retried for defined number of times still it didnot get succeded, so pipeline got failed."+ err.message);
+    }
+}
+
 function printTestResult(criteria:any) {
     let pass = 0; 
     let fail = 0;
