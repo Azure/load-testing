@@ -30,7 +30,6 @@ async function run() {
         await createTestAPI();
     }
     catch (err:any) {
-        console.log(err.message);
         core.setFailed(err.message);
     }
 }
@@ -48,7 +47,7 @@ async function getTestAPI(validate:boolean) {
     if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201){
         let testObj:any=await util.getResultObj(testResult);
         console.log(testObj ? testObj : util.ErrorCorrection(testResult));
-        throw new Error("Error in validating the jmx script.");
+        throw new Error("Error in getting the test.");
     }
     if(testResult.message.statusCode == 200) {
         let testObj:any=await util.getResultObj(testResult);
@@ -259,6 +258,8 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
             if(testResultUrl != null) {
                 const response = await util.httpClientRetries(testResultUrl,{'content-type' : 'application/merge-patch+json'},'get',3,"");
                 if (response.message.statusCode != 200) {
+                    let respObj:any = await util.getResultObj(response);
+                    console.log(respObj ? respObj : util.ErrorCorrection(response));
                     throw new Error("Error in fetching results ");
                 }
                 else {
