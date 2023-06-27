@@ -113,7 +113,7 @@ async function uploadTestPlan()
     urlSuffix = baseURL + urlSuffix;
     var uploadData = map.uploadFileData(filepath);
     let headers = await map.UploadAndValidateHeader(uploadData)
-    let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',2,uploadData);
+    let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,uploadData);
     if(uploadresult.message.statusCode != 201){
         let uploadObj:any = await util.getResultObj(uploadresult);
         console.log(uploadObj ? uploadObj : util.ErrorCorrection(uploadresult));
@@ -148,7 +148,7 @@ async function uploadConfigFile()
             var uploadData = map.uploadFileData(filepath);
             let headers = await map.UploadAndValidateHeader(uploadData);
 
-            let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',2,uploadData);
+            let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,uploadData);
             if(uploadresult.message.statusCode != 201){
                 let uploadObj:any = await util.getResultObj(uploadresult);
                 console.log(uploadObj ? uploadObj : util.ErrorCorrection(uploadresult));
@@ -170,7 +170,7 @@ async function uploadPropertyFile()
         urlSuffix = baseURL + urlSuffix;
         var uploadData = map.uploadFileData(propertyFile);
         let headers = await map.UploadAndValidateHeader(uploadData)
-        let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',2,uploadData);
+        let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,uploadData);
         if(uploadresult.message.statusCode != 201){
             let uploadObj:any = await util.getResultObj(uploadresult);
             console.log(uploadObj ? uploadObj : util.ErrorCorrection(uploadresult));

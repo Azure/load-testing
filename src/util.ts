@@ -44,11 +44,11 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
         if(retries){
             let sleeptime = (5-retries)*1000 + Math.floor(Math.random() * 5001);
             await sleep(sleeptime);
-            console.log(`failed to connect to ${urlSuffix} due to ${err.message}, retrying in ${sleeptime/1000} seconds`);
+            console.log(`Failed to connect to ${urlSuffix} due to ${err.message}, retrying in ${sleeptime/1000} seconds`);
             return httpClientRetries(urlSuffix,header,method,retries-1,content);
         }
         else
-            throw new Error(`retried for defined number of times, still it didnot get succeded. so pipeline got failed with ${err.message}`);
+            throw new Error(`Retried for 3 times, still it didnot get succeded. so pipeline got failed with ${err.message}`);
     }
 }
 export async function printTestDuration(vusers:string, startTime:Date) 
