@@ -3,7 +3,9 @@ var path = require('path');
 var AdmZip = require("adm-zip");
 const { v4: uuidv4 } = require('uuid');
 import httpc = require('typed-rest-client/HttpClient');
-import { IHttpClientResponse } from 'typed-rest-client/Interfaces';
+import internal = require('stream');
+const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
+import { IHttpClientResponse, IHeaders } from 'typed-rest-client/Interfaces';
 
 const validAggregateList = {
     'response_time_ms': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
@@ -21,6 +23,34 @@ const validConditionList = {
     'error': ['>']
 }
 
+export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : 'get' | 'del' | 'patch' | 'put', retries : number = 1,content : string | internal.Readable ) : Promise<IHttpClientResponse>{
+    let httpResponse : IHttpClientResponse;
+    try {
+        if(method == 'get'){
+            httpResponse = await httpClient.get(urlSuffix, header);
+        }
+        else if(method == 'del'){
+            httpResponse = await httpClient.del(urlSuffix, header); 
+        }
+        else{
+            httpResponse = await httpClient.request(method,urlSuffix, content, header);
+        }
+        if(httpResponse.message.statusCode!=undefined && [408,404,429,502,503,504].includes(httpResponse.message.statusCode)){
+            throw {message : httpResponse.message.statusMessage}; // throwing as message to catch it as err.message
+        }
+        return httpResponse;
+    }
+    catch(err:any){
+        if(retries){
+            let sleeptime = (5-retries)*1000 + Math.floor(Math.random() * 5001);
+            await sleep(sleeptime);
+            console.log(`failed to connect to ${urlSuffix} due to ${err.message}, retrying in ${sleeptime/1000} seconds`);
+            return httpClientRetries(urlSuffix,header,method,retries-1,content);
+        }
+        else
+            throw new Error(`retried for defined number of times, still it didnot get succeded. so pipeline got failed with ${err.message}`);
+    }
+}
 export async function printTestDuration(vusers:string, startTime:Date) 
 {
     let endTime = new Date();
