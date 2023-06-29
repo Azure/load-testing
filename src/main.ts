@@ -44,7 +44,7 @@ async function getTestAPI(validate:boolean) {
         +"https://docs.microsoft.com/azure/load-testing/tutorial-cicd-github-actions#configure-the-github-actions-workflow-to-run-a-load-test ";
         throw new Error(message);
     }
-    if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201){
+    if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201 && testResult.message.statusCode != 404){
         let testObj:any=await util.getResultObj(testResult);
         console.log(testObj ? testObj : util.ErrorCorrection(testResult));
         throw new Error("Error in getting the test.");
@@ -298,7 +298,7 @@ async function getLoadTestResource()
         armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version=2022-12-01";
     }
     if(env == "dogfood") {
-        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2022-12-01";  
+        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version=2022-12-01";  
     }
     var header = map.dataPlaneHeader();
     let response = await util.httpClientRetries(armEndpoint,header,'get',3,"");
