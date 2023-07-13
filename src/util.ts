@@ -35,8 +35,9 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
         else{
             httpResponse = await httpClient.request(method,urlSuffix, content, header);
         }
-        if(httpResponse.message.statusCode!=undefined && [408,404,429,502,503,504].includes(httpResponse.message.statusCode)){
-            throw {message : httpResponse.message.statusMessage}; // throwing as message to catch it as err.message
+        if(httpResponse.message.statusCode!=undefined && [408,429,502,503,504].includes(httpResponse.message.statusCode)){
+            let err = await getResultObj(httpResponse);
+            throw {message : (err && err.error && err.error.message) ? err.error.message : ErrorCorrection(httpResponse)}; // throwing as message to catch it as err.message
         }
         return httpResponse;
     }
