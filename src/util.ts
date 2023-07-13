@@ -35,8 +35,9 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
         else{
             httpResponse = await httpClient.request(method,urlSuffix, content, header);
         }
-        if(httpResponse.message.statusCode!=undefined && [408,404,429,502,503,504].includes(httpResponse.message.statusCode)){
-            throw {message : httpResponse.message.statusMessage}; // throwing as message to catch it as err.message
+        if(httpResponse.message.statusCode!=undefined && [408,429,502,503,504].includes(httpResponse.message.statusCode)){
+            let err = await getResultObj(httpResponse);
+            throw {message : (err && err.error && err.error.message) ? err.error.message : ErrorCorrection(httpResponse)}; // throwing as message to catch it as err.message
         }
         return httpResponse;
     }
@@ -48,7 +49,7 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
             return httpClientRetries(urlSuffix,header,method,retries-1,content);
         }
         else
-            throw new Error(`Operation did not succeed after 3 retries. Pipeline failed with ${err.message}`);
+            throw new Error(`Operation did not succeed after 3 retries. Pipeline failed with error : ${err.message}`);
     }
 }
 export async function printTestDuration(vusers:string, startTime:Date) 
