@@ -49,7 +49,7 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
             return httpClientRetries(urlSuffix,header,method,retries-1,content);
         }
         else
-            throw new Error(`Operation did not succeed after 3 retries. Pipeline failed with ${err.message}`);
+            throw new Error(`Operation did not succeed after 3 retries. Pipeline failed with error : ${err.message}`);
     }
 }
 export async function printTestDuration(vusers:string, startTime:Date) 
