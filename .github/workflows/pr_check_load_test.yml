@@ -6,10 +6,13 @@ on:
       - releases/*
     paths-ignore:
       - '**.md'
-  pull_request_target:
+  pull_request:
     branches:
       - 'releases/*'
 
+# NOTE: This workflow doesn't run on PRs against forks of this repositories
+# Since they won't have access to the repository secrets. Ref: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+# This will be fixed when testing is fixed for this GitHub Action.
 # CONFIGURATION
 # For help, go to https://github.com/Azure/Actions
 #
@@ -32,13 +35,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    
-    - uses: actions/checkout@v2
-      name: Checkout from PR branch
-      with: 
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-        path: 'load-testing'
-        ref: ${{ github.event.pull_request.head.ref }}
 
     - name: Installing dependencies and building latest changes
       run: |
