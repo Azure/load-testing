@@ -25,7 +25,7 @@ var subscriptionID = "";
 var tenantId = "";
 var YamlPath = "";
 var passFailCriteria: any[] = [];
-var autoStop: autoStopCriteriaObj | string | null = null;
+var autoStop: autoStopCriteriaObjOut | null = null;
 var kvRefId: string | null = null;
 var kvRefType: string | null = null;
 var subnetId: string | null = null;
@@ -45,11 +45,15 @@ export interface criteriaObj {
   action: string | null;
   value: number;
 }
-export interface autoStopCriteriaObj {
-  isAutoStopEnabled: boolean;
-  autoStopEnabled? : boolean
-  errorRate: number;
-  errorRateTimeWindow: number;
+export interface autoStopCriteriaObjIn {
+  autoStopEnabled? : boolean;
+  errorPercentage ?: number;
+  timeWindow ?: number;
+}
+export interface autoStopCriteriaObjOut {
+  autoStopEnabled? : boolean;
+  errorRate ?: number;
+  errorRateTimeWindow ?: number;
 }
 export interface paramObj {
   type: string;
@@ -281,8 +285,7 @@ export async function getInputParams() {
     getParameters(config.certificates, "certificates");
   }
   if (config.autoStop != undefined) {
-    autoStop = config.autoStop;
-    getAutoStopCriteria();
+    getAutoStopCriteria(config.autoStop);
   }
 
   if (config.keyVaultReferenceIdentity != undefined) {
@@ -561,10 +564,10 @@ function getFailureCriteria(existingCriteriaIds: string[]) {
     failCriteria[existingCriteriaIds[index]] = null;
   }
 }
-function getAutoStopCriteria() {
-  if (autoStop == null) return;
-  if (typeof autoStop == "string") {
-    if (autoStop == "disable") {
+function getAutoStopCriteria(autoStopInput : autoStopCriteriaObjIn | string | null) {  
+  if (autoStopInput == null) {autoStop = null; return;}
+  if (typeof autoStopInput == "string") {
+    if (autoStopInput == "disable") {
       let data = {
         isAutoStopEnabled: false,
         autoStopEnabled: false,
@@ -581,8 +584,8 @@ function getAutoStopCriteria() {
     let data = {
       isAutoStopEnabled: true,
       autoStopEnabled: true,
-      errorRate: autoStop.errorRate,
-      errorRateTimeWindow: autoStop.errorRateTimeWindow,
+      errorRate: autoStopInput.errorPercentage,
+      errorRateTimeWindow: autoStopInput.timeWindow,
     };
     autoStop = data;
   }
