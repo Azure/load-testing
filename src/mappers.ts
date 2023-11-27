@@ -97,7 +97,7 @@ export function createTestData() {
     testId: testId,
     description: testdesc,
     displayName: displayName,
-    quickStartTest : false, // always quick test will be false because ado doesnot support it now.
+    quickStartTest : false, // always quick test will be false because gh-actions doesnot support it now.
     loadTestConfiguration: {
       engineInstances: engineInstances,
       splitAllCSVs: splitCSVs,
