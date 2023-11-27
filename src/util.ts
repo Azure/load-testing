@@ -2,11 +2,13 @@ import * as fs from 'fs';
 var path = require('path');
 var AdmZip = require("adm-zip");
 const { v4: uuidv4 } = require('uuid');
+import * as core from '@actions/core'
 import httpc = require('typed-rest-client/HttpClient');
 import internal = require('stream');
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 import { IHttpClientResponse, IHeaders } from 'typed-rest-client/Interfaces';
-
+import * as map from "./mappers";
+import { isNullOrUndefined } from 'util';
 const validAggregateList = {
     'response_time_ms': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
     'requests_per_sec': ['avg'],
@@ -22,18 +24,33 @@ const validConditionList = {
     'latency': ['>', '<'],
     'error': ['>']
 }
+export module apiConstants {
+    export const tm2023Version = '2023-04-01-preview';
+    export const tm2022Version = '2022-11-01';
+    export const cp2022Version = '2022-12-01'
+}
 
-export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : 'get' | 'del' | 'patch' | 'put', retries : number = 1,content : string | internal.Readable ) : Promise<IHttpClientResponse>{
+const correlationHeader = 'x-ms-correlation-request-id'
+export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : 'get' | 'del' | 'patch' | 'put', retries : number = 1,data : string, isUploadCall : boolean = true ) : Promise<IHttpClientResponse>{
     let httpResponse : IHttpClientResponse;
     try {
+        let correlationId = `gh-actions-${getUniqueId()}`;
+        header[correlationHeader] = correlationId; // even if we put console.debug its printing along with the logs, so lets just go ahead with the differentiation with gh-actions, so we can search the timeframe for gh-actions in correlationid and resource filter.
         if(method == 'get'){
             httpResponse = await httpClient.get(urlSuffix, header);
         }
         else if(method == 'del'){
             httpResponse = await httpClient.del(urlSuffix, header); 
         }
+        else if(method == 'put' && isUploadCall){
+            let fileContent = map.uploadFileData(data);
+            httpResponse = await httpClient.request(method,urlSuffix, fileContent, header);
+        }
         else{
-            httpResponse = await httpClient.request(method,urlSuffix, content, header);
+            httpResponse = await httpClient.request(method,urlSuffix, data, header);
+        }
+        if(httpResponse.message.statusCode!= undefined && httpResponse.message.statusCode >= 300){
+            core.debug(`correlation id : ${correlationId}`);
         }
         if(httpResponse.message.statusCode!=undefined && [408,429,502,503,504].includes(httpResponse.message.statusCode)){
             let err = await getResultObj(httpResponse);
@@ -46,21 +63,27 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
             let sleeptime = (5-retries)*1000 + Math.floor(Math.random() * 5001);
             await sleep(sleeptime);
             console.log(`Failed to connect to ${urlSuffix} due to ${err.message}, retrying in ${sleeptime/1000} seconds`);
-            return httpClientRetries(urlSuffix,header,method,retries-1,content);
+            return httpClientRetries(urlSuffix,header,method,retries-1,data);
         }
         else
             throw new Error(`Operation did not succeed after 3 retries. Pipeline failed with error : ${err.message}`);
     }
 }
-export async function printTestDuration(vusers:string, startTime:Date) 
+export function checkFileType(filePath: string, fileExtToValidate: string): boolean{
+    if(isNullOrUndefined(filePath)){
+        return false;
+    }
+    let split = filePath.split('.');
+    return split[split.length-1].toLowerCase() == fileExtToValidate.toLowerCase();
+}
+export async function printTestDuration(vusers:string, startTime:Date, endTime : Date, testStatus : string) 
 {
-    let endTime = new Date();
     console.log("TestRun completed\n");
     console.log("-------------------Summary ---------------");
     console.log("TestRun start time: "+ startTime);
     console.log("TestRun end time: "+ endTime);
     console.log("Virtual Users: "+ vusers);
-    console.log("TestStatus: DONE \n");
+    console.log(`TestStatus: ${testStatus} \n`);
     return;
 }
 export function printCriteria(criteria:any) {
