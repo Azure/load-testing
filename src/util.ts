@@ -74,7 +74,7 @@ export function checkFileType(filePath: string, fileExtToValidate: string): bool
         return false;
     }
     let split = filePath.split('.');
-    return split[split.length-1] == fileExtToValidate;
+    return split[split.length-1].toLowerCase() == fileExtToValidate.toLowerCase();
 }
 export async function printTestDuration(vusers:string, startTime:Date, endTime : Date, testStatus : string) 
 {

@@ -114,24 +114,24 @@ async function createTestAPI() {
             for(file of testFiles.additionalFileInfo){
                 existingFiles.push(file.fileName);
             }
-            map.getConfigFiles().forEach((file)=>{
+            for(file of map.getConfigFiles()){
                 let indexOfFile = existingFiles.indexOf(file)
                 if(indexOfFile != -1){
                     existingFiles.splice(indexOfFile, 1);
                 }
-            })
-            map.getZipFiles().forEach((file)=>{
+            }
+            for(file of map.getZipFiles()){
                 let indexOfFile = existingFiles.indexOf(file)
                 if(indexOfFile != -1){
                     existingFiles.splice(indexOfFile, 1);
                 }
-            })
+            }
             if(existingFiles.length > 0){
                 console.log(`Deleting the ${existingFiles.length} existing test files which are not in the configuration yaml file.`);
             }
-            existingFiles.forEach(async (file)=>{
+            for(file of existingFiles){
                 await deleteFileAPI(file);
-            })
+            }
         }
     }
 
