@@ -35,7 +35,7 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
     let httpResponse : IHttpClientResponse;
     try {
         let correlationId = `gh-actions-${getUniqueId()}`;
-        header[correlationHeader] = correlationId; // even if we put console.debug its printing along with the logs, so lets just go ahead with the differentiation with GH-actions, so we can search the timeframe for azdo in correlationid and resource filter.
+        header[correlationHeader] = correlationId; // even if we put console.debug its printing along with the logs, so lets just go ahead with the differentiation with GH-actions, so we can search the timeframe for GH-actions in correlationid and resource filter.
         if(method == 'get'){
             httpResponse = await httpClient.get(urlSuffix, header);
         }
