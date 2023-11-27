@@ -31,11 +31,11 @@ export module apiConstants {
 }
 
 const correlationHeader = 'x-ms-correlation-request-id'
-export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : 'get' | 'del' | 'patch' | 'put', retries : number = 1,data : string, isUploadCall : boolean = true ) : Promise<IHttpClientResponse>{
+export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : 'get' | 'del' | 'patch' | 'put', retries : number = 1, data : string, isUploadCall : boolean = true) : Promise<IHttpClientResponse>{
     let httpResponse : IHttpClientResponse;
     try {
-        let correlationId = `gh-action-${getUniqueId()}`;
-        header[correlationHeader] = correlationId; // even if we put console.debug its printing along with the logs, so lets just go ahead with the differentiation with azdo, so we can search the timeframe for azdo in correlationid and resource filter.
+        let correlationId = `gh-actions-${getUniqueId()}`;
+        header[correlationHeader] = correlationId; // even if we put console.debug its printing along with the logs, so lets just go ahead with the differentiation with GH-actions, so we can search the timeframe for GH-actions in correlationid and resource filter.
         if(method == 'get'){
             httpResponse = await httpClient.get(urlSuffix, header);
         }
@@ -76,8 +76,7 @@ export function checkFileType(filePath: string, fileExtToValidate: string): bool
     let split = filePath.split('.');
     return split[split.length-1].toLowerCase() == fileExtToValidate.toLowerCase();
 }
-export async function printTestDuration(vusers:string, startTime:Date, endTime : Date, testStatus : string) 
-{
+export async function printTestDuration(vusers:string, startTime:Date, endTime : Date, testStatus : string) {
     console.log("TestRun completed\n");
     console.log("-------------------Summary ---------------");
     console.log("TestRun start time: "+ startTime);
@@ -123,8 +122,7 @@ function printTestResult(criteria:any) {
     console.log("-------------------Test Criteria ---------------");
     console.log("Results\t\t\t :"+pass+" Pass  "+fail+" Fail\n");
 }
-export async function getResultsFile(response:any) 
-{
+export async function getResultsFile(response:any) {
     try {
         const filePath = path.join('loadTest','results.zip');
         const file: NodeJS.WritableStream = fs.createWriteStream(filePath);
