@@ -19,6 +19,7 @@ var engineInstances = "1";
 var testPlan = "";
 var propertyFile: string | null = null;
 var configFiles: string[] = [];
+var zipFiles : string[]=[];
 var token = "";
 var resourceId = "";
 var subscriptionID = "";
@@ -30,8 +31,8 @@ var kvRefId: string | null = null;
 var kvRefType: string | null = null;
 var subnetId: string | null = null;
 var splitCSVs: boolean | null = null;
-var certificates: certObj | null = null;
-
+var certificate: certObj | null = null;
+let testType : TestType;
 export interface certObj {
   type: string;
   value: string;
@@ -59,7 +60,15 @@ export interface paramObj {
   type: string;
   value: string;
 }
-
+export enum TestType {
+  URL = "URL",
+  JMX = "JMX" // default
+}
+enum paramType {
+  env = "env",
+  secrets = "secrets", 
+  cert = "cert"
+}
 let failCriteria: { [name: string]: criteriaObj | null } = {};
 let secretsYaml: { [name: string]: paramObj | null } = {};
 let secretsRun: { [name: string]: paramObj } = {};
@@ -88,12 +97,15 @@ export function createTestData() {
     testId: testId,
     description: testdesc,
     displayName: displayName,
+    quickStartTest : false, // always quick test will be false because ado doesnot support it now.
     loadTestConfiguration: {
       engineInstances: engineInstances,
       splitAllCSVs: splitCSVs,
+      optionalLoadTestConfig : null
     },
     secrets: secretsYaml,
-    certificate: certificates,
+    testType : testType,
+    certificate: certificate,
     environmentVariables: envYaml,
     passFailCriteria: {
       passFailMetrics: failCriteria,
@@ -128,7 +140,7 @@ export function uploadFileData(filepath: string) {
   }
 }
 
-export async function UploadAndValidateHeader(formData: any) {
+export async function UploadAndValidateHeader() {
   let headers: IHeaders = {
     Authorization: "Bearer " + token,
     "content-type": "application/octet-stream",
@@ -252,13 +264,40 @@ export async function getInputParams() {
       "The required field testPlan is missing in " + YamlPath + "."
     );
   testPlan = pathLib.join(path, config.testPlan);
+  testType = config.testType ?? TestType.JMX;
+  if(!isValidTestType(testType)){
+      throw new Error("testType field given is invalid, valid testType are URL and JMX only.");
+  }
+  if(config.testType as TestType == TestType.URL){
+      testType = TestType.URL;
+      if(!util.checkFileType(testPlan,'json')) {
+          throw new Error("A test plan of JSON file type is required for a URL test. Please upload a JSON file to run the test.")
+      }
+  }
+  else if(!util.checkFileType(testPlan,'jmx')) {
+      throw new Error("A test plan of JMX file type is required for a JMX test. Please upload a JMX file to run the test.")
+  }
   if (config.configurationFiles != null) {
-    var tempconfigFiles: string[] = [];
+    let tempconfigFiles: string[] = [];
     tempconfigFiles = config.configurationFiles;
-    tempconfigFiles.forEach((file) => {
+    for(let file of tempconfigFiles){
+      if(testType == TestType.URL && !util.checkFileType(file,'csv')){
+        throw new Error("Only CSV files are allowed as configuration files for a URL-based test.");
+      }
       file = pathLib.join(path, file);
       configFiles.push(file);
-    });
+    }
+  }
+  if(config.zipArtifacts != undefined){
+    let tempZipFiles: string[]=[];
+    tempZipFiles = config.zipArtifacts;
+    if(testType == TestType.URL && tempZipFiles.length > 0){
+        throw new Error("Zip artifacts are not supported for the URL-based test.");
+    }
+    for(let file of tempZipFiles){
+        file = pathLib.join(path,file);
+        zipFiles.push(file);
+    };
   }
   if (config.splitAllCSVs != undefined) {
     splitCSVs = config.splitAllCSVs;
@@ -270,19 +309,26 @@ export async function getInputParams() {
   if (config.subnetId != undefined) {
     subnetId = config.subnetId;
   }
-  if (config.properties != undefined) {
-    var propFile = config.properties.userPropertyFile;
-    propertyFile = pathLib.join(path, propFile);
+  if(config.properties != undefined && config.properties.userPropertyFile != undefined)
+  {
+      if(!util.checkFileType(config.properties.userPropertyFile, 'properties')){
+        throw new Error("User property file with extension other than '.properties' is not permitted.");
+      }
+      if(testType == TestType.URL){
+          throw new Error("User property file is not supported for the URL-based test.");
+      }
+      var propFile = config.properties.userPropertyFile;
+      propertyFile = pathLib.join(path,propFile);
   }
   if (config.secrets != undefined) {
     kvRefType = "SystemAssigned";
-    getParameters(config.secrets, "secrets");
+    getParameters(config.secrets, paramType.secrets);
   }
   if (config.env != undefined) {
-    getParameters(config.env, "env");
+    getParameters(config.env, paramType.env);
   }
   if (config.certificates != undefined) {
-    getParameters(config.certificates, "certificates");
+    getParameters(config.certificates, paramType.cert);
   }
   if (config.autoStop != undefined) {
     getAutoStopCriteria(config.autoStop);
@@ -319,7 +365,9 @@ export async function getSubName() {
     throw new Error(message);
   }
 }
-
+function isValidTestType(value: string): value is TestType {
+  return Object.values(TestType).includes(value as TestType);
+}
 async function getAccessToken(aud: string) {
   try {
     const cmdArguments = ["account", "get-access-token", "--resource"];
@@ -373,8 +421,8 @@ export function getDefaultTestRunName() {
   const c = a.split(" ");
   return "TestRun_" + b[0] + "_" + c[1] + c[2];
 }
-function getParameters(obj: any, type: string) {
-  if (type == "secrets") {
+function getParameters(obj: any, type: paramType) {
+  if (type == paramType.secrets) {
     for (var index in obj) {
       var val = obj[index];
       if (!validateUrl(val.value)) {
@@ -382,16 +430,16 @@ function getParameters(obj: any, type: string) {
       }
       secretsYaml[val.name] = { type: "AKV_SECRET_URI", value: val.value };
     }
-  } else if (type == "env") {
+  } else if (type == paramType.env) {
     for (var index in obj) {
       var val = obj[index];
       envYaml[val.name] = val.value;
     }
-  } else if (type == "certificates") {
+  } else if (type == paramType.cert) {
     for (var index in obj) {
       var val = obj[index];
       if (!validateUrl(val.value)) throw new Error("Invalid certificate url");
-      certificates = { name: val.name, type: "AKV_CERT_URI", value: val.value };
+      certificate = { name: val.name, type: "AKV_CERT_URI", value: val.value };
       break;
     }
   }
@@ -402,10 +450,6 @@ function validateUrl(url: string) {
     /https:\/\/+[a-zA-Z0-9_-]+\.+(?:vault|vault-int)+\.+(?:azure|azure-int|usgovcloudapi|microsoftazure)+\.+(?:net|cn|de)+\/+(?:secrets|certificates|keys|storage)+\/+[a-zA-Z0-9_-]+\/+|[a-zA-Z0-9]+$/;
   var r = new RegExp(pattern);
   return r.test(url);
-}
-function validateValue(value: string) {
-  var r = new RegExp(/[^a-zA-Z0-9-_]/);
-  return r.test(value);
 }
 function getRunTimeParams() {
   var secretRun = core.getInput("secrets");
@@ -448,6 +492,9 @@ function validateTestRunParams() {
       "Invalid test run description. Test run description must be less than 100 characters."
     );
 }
+export function getTestType(){
+  return testType;
+}
 export function getYamlPath() {
   return YamlPath;
 }
@@ -460,7 +507,9 @@ export function getPropertyFile() {
 export function getConfigFiles() {
   return configFiles;
 }
-
+export function getZipFiles() {
+  return zipFiles;
+}
 export function getTestId() {
   return testId;
 }
