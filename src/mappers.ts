@@ -32,7 +32,6 @@ var kvRefType: string | null = null;
 var subnetId: string | null = null;
 var splitCSVs: boolean | null = null;
 var certificate: certObj | null = null;
-let testType : TestKind;
 let kind : TestKind;
 export interface certObj {
   type: string;
@@ -107,7 +106,7 @@ export function createTestData() {
       optionalLoadTestConfig : null
     },
     secrets: secretsYaml,
-    testType : testType,
+    testType : kind,
     kind : kind,
     certificate: certificate,
     environmentVariables: envYaml,
@@ -268,13 +267,11 @@ export async function getInputParams() {
       "The required field testPlan is missing in " + YamlPath + "."
     );
   testPlan = pathLib.join(path, config.testPlan);
-  testType = config.testType ?? TestKind.JMX;
-  kind = config.testType ?? TestKind.JMX;
-  if(!isValidTestKind(testType)){
-      throw new Error("testType field given is invalid, valid testType are URL and JMX only.");
+  kind = config.kind ?? config.testType ?? TestKind.JMX;
+  if(!isValidTestKind(kind)){
+      throw new Error("kind field given is invalid, valid kind are URL and JMX only.");
   }
   if(config.testType as TestKind == TestKind.URL){
-      testType = TestKind.URL;
       kind = TestKind.URL;
       if(!util.checkFileType(testPlan,'json')) {
           throw new Error("A test plan of JSON file type is required for a URL test. Please upload a JSON file to run the test.")
@@ -499,8 +496,6 @@ function validateTestRunParams() {
     );
 }
 export function getTestKind(){
-  if (kind == null)
-    return testType;
   return kind;
 }
 export function getYamlPath() {
