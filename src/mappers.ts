@@ -267,9 +267,9 @@ export async function getInputParams() {
       "The required field testPlan is missing in " + YamlPath + "."
     );
   testPlan = pathLib.join(path, config.testPlan);
-  kind = config.kind ?? config.testType ?? TestKind.JMX;
+  kind = config.testType ?? TestKind.JMX;
   if(!isValidTestKind(kind)){
-      throw new Error("kind field given is invalid, valid kind are URL and JMX only.");
+      throw new Error("testType field given is invalid, valid testType are URL and JMX only.");
   }
   if(config.testType as TestKind == TestKind.URL){
       kind = TestKind.URL;
