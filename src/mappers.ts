@@ -32,7 +32,7 @@ var kvRefType: string | null = null;
 var subnetId: string | null = null;
 var splitCSVs: boolean | null = null;
 var certificate: certObj | null = null;
-let testType : TestType;
+let kind : TestKind;
 export interface certObj {
   type: string;
   value: string;
@@ -53,14 +53,16 @@ export interface autoStopCriteriaObjIn {
 }
 export interface autoStopCriteriaObjOut {
   autoStopEnabled? : boolean;
+  autoStopDisabled? : boolean;
   errorRate ?: number;
   errorRateTimeWindow ?: number;
+  errorRateTimeWindowInSeconds ?: number;
 }
 export interface paramObj {
   type: string;
   value: string;
 }
-export enum TestType {
+export enum TestKind {
   URL = "URL",
   JMX = "JMX" // default
 }
@@ -104,7 +106,8 @@ export function createTestData() {
       optionalLoadTestConfig : null
     },
     secrets: secretsYaml,
-    testType : testType,
+    testType : kind,
+    kind : kind,
     certificate: certificate,
     environmentVariables: envYaml,
     passFailCriteria: {
@@ -264,12 +267,12 @@ export async function getInputParams() {
       "The required field testPlan is missing in " + YamlPath + "."
     );
   testPlan = pathLib.join(path, config.testPlan);
-  testType = config.testType ?? TestType.JMX;
-  if(!isValidTestType(testType)){
+  kind = config.testType ?? TestKind.JMX;
+  if(!isValidTestKind(kind)){
       throw new Error("testType field given is invalid, valid testType are URL and JMX only.");
   }
-  if(config.testType as TestType == TestType.URL){
-      testType = TestType.URL;
+  if(config.testType as TestKind == TestKind.URL){
+      kind = TestKind.URL;
       if(!util.checkFileType(testPlan,'json')) {
           throw new Error("A test plan of JSON file type is required for a URL test. Please upload a JSON file to run the test.")
       }
@@ -281,7 +284,7 @@ export async function getInputParams() {
     let tempconfigFiles: string[] = [];
     tempconfigFiles = config.configurationFiles;
     for(let file of tempconfigFiles){
-      if(testType == TestType.URL && !util.checkFileType(file,'csv')){
+      if(kind == TestKind.URL && !util.checkFileType(file,'csv')){
         throw new Error("Only CSV files are allowed as configuration files for a URL-based test.");
       }
       file = pathLib.join(path, file);
@@ -291,7 +294,7 @@ export async function getInputParams() {
   if(config.zipArtifacts != undefined){
     let tempZipFiles: string[]=[];
     tempZipFiles = config.zipArtifacts;
-    if(testType == TestType.URL && tempZipFiles.length > 0){
+    if(kind == TestKind.URL && tempZipFiles.length > 0){
         throw new Error("Zip artifacts are not supported for the URL-based test.");
     }
     for(let file of tempZipFiles){
@@ -314,7 +317,7 @@ export async function getInputParams() {
       if(!util.checkFileType(config.properties.userPropertyFile, 'properties')){
         throw new Error("User property file with extension other than '.properties' is not permitted.");
       }
-      if(testType == TestType.URL){
+      if(kind == TestKind.URL){
           throw new Error("User property file is not supported for the URL-based test.");
       }
       var propFile = config.properties.userPropertyFile;
@@ -365,8 +368,8 @@ export async function getSubName() {
     throw new Error(message);
   }
 }
-function isValidTestType(value: string): value is TestType {
-  return Object.values(TestType).includes(value as TestType);
+function isValidTestKind(value: string): value is TestKind {
+  return Object.values(TestKind).includes(value as TestKind);
 }
 async function getAccessToken(aud: string) {
   try {
@@ -492,8 +495,8 @@ function validateTestRunParams() {
       "Invalid test run description. Test run description must be less than 100 characters."
     );
 }
-export function getTestType(){
-  return testType;
+export function getTestKind(){
+  return kind;
 }
 export function getYamlPath() {
   return YamlPath;
@@ -618,10 +621,11 @@ function getAutoStopCriteria(autoStopInput : autoStopCriteriaObjIn | string | nu
   if (typeof autoStopInput == "string") {
     if (autoStopInput == "disable") {
       let data = {
-        isAutoStopEnabled: false,
         autoStopEnabled: false,
+        autoStopDisabled : true,
         errorRate: 0,
         errorRateTimeWindow: 0,
+        errorRateTimeWindowInSeconds: 60,
       };
       autoStop = data;
     } else {
@@ -631,10 +635,11 @@ function getAutoStopCriteria(autoStopInput : autoStopCriteriaObjIn | string | nu
     }
   } else {
     let data = {
-      isAutoStopEnabled: true,
-      autoStopEnabled: true,
+      autoStopEnabled : true,
+      autoStopDisabled : false,
       errorRate: autoStopInput.errorPercentage,
       errorRateTimeWindow: autoStopInput.timeWindow,
+      errorRateTimeWindowInSeconds: autoStopInput.timeWindow,
     };
     autoStop = data;
   }

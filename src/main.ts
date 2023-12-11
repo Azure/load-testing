@@ -4,7 +4,7 @@ import * as map from "./mappers"
 import * as util from './util';
 import * as fs from 'fs';
 import { isNullOrUndefined } from 'util';
-import {TestType} from "./mappers";
+import {TestKind} from "./mappers";
 
 const resultFolder = 'loadTest';
 let baseURL = '';
@@ -57,7 +57,12 @@ async function getTestAPI(validate:boolean) {
         if(testObj == null){
             throw new Error(util.ErrorCorrection(testResult));
         }
-        var inputScriptFileInfo = testObj.testType == TestType.URL ? testObj.inputArtifacts.urlTestsConfigFileInfo :testObj.inputArtifacts.testScriptFileInfo;
+        if (testObj.kind == null){
+            testObj.kind = testObj.testType;
+        }
+        if (testObj.inputArtifacts.urlTestConfigFileInfo == null)
+            testObj.inputArtifacts.urlTestConfigFileInfo = testObj.inputArtifacts.urlTestsConfigFileInfo;
+        var inputScriptFileInfo = testObj.kind == TestKind.URL ? testObj.inputArtifacts.urlTestConfigFileInfo :testObj.inputArtifacts.testScriptFileInfo;
         if(validate){
             return inputScriptFileInfo.validationStatus;
         }
@@ -144,7 +149,7 @@ async function uploadTestPlan()
     let filepath = map.getTestFile();
     let filename = map.getFileName(filepath);
     var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm2023Version;
-    if(map.getTestType() == TestType.URL){
+    if(map.getTestKind() == TestKind.URL){
         urlSuffix = urlSuffix + ("&fileType="+FileType.URL_TEST_CONFIG);
     }
     urlSuffix = baseURL + urlSuffix;
