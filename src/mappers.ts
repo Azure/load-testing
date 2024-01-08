@@ -23,6 +23,10 @@ var zipFiles : string[]=[];
 var token = "";
 var resourceId = "";
 var subscriptionID = "";
+var environment="AzureCloud";
+var armTokenScope="https://management.core.windows.net";
+var dataPlaneTokenScope="https://loadtest.azure-dev.com";
+var armEndpoint="https://management.azure.com";
 var tenantId = "";
 var YamlPath = "";
 var passFailCriteria: any[] = [];
@@ -150,7 +154,7 @@ export async function UploadAndValidateHeader() {
   };
   return headers;
 }
-export function dataPlaneHeader() {
+export function armTokenHeader() {
   let headers: IHeaders = {
     Authorization: "Bearer " + token,
   };
@@ -175,7 +179,7 @@ export function startTestData(
 }
 export async function getTestRunHeader() {
   if (!isExpired()) {
-    await getAccessToken("https://loadtest.azure-dev.com");
+    await getAccessToken(dataPlaneTokenScope);
   }
   let headers: IHeaders = {
     "content-type": "application/json",
@@ -190,7 +194,7 @@ function isExpired() {
   return header && header.exp > now;
 }
 export async function getTestHeader() {
-  await getAccessToken("https://loadtest.azure-dev.com");
+  await getAccessToken(dataPlaneTokenScope);
   let headers: IHeaders = {
     "content-type": "application/json",
     Authorization: "Bearer " + token,
@@ -223,7 +227,8 @@ function invalidDescription(value: string) {
   return false;
 }
 export async function getInputParams() {
-  await getAccessToken("https://management.core.windows.net");
+  await setEndpointAndScope();
+  await getAccessToken(armTokenScope);
   YamlPath = core.getInput("loadTestConfigFile");
   if (
     !(
@@ -388,6 +393,27 @@ async function getAccessToken(aud: string) {
   }
 }
 
+async function setEndpointAndScope() {
+  try {
+    const cmdArguments = ["cloud", "show"];
+    var result: any = await execAz(cmdArguments);
+    let env = result ? result.name : null;
+    environment = env ? env : environment;
+    let endpointUrl = (result && result.endpoints) ? result.endpoints.resourceManager : null;
+    armEndpoint = endpointUrl ? endpointUrl : armEndpoint;
+
+    if(environment == 'AzureUSGovernment'){
+      dataPlaneTokenScope = 'https://cnt-prod.loadtesting.azure.us';
+      armTokenScope = 'https://management.usgovcloudapi.net';
+    }
+  } catch (err: any) {
+    const message =
+      `An error occurred while getting credentials from ` +
+      `Azure CLI: ${err.stack}`;
+    throw new Error(message);
+  }
+}
+
 async function execAz(cmdArguments: string[]): Promise<any> {
   const azCmd = process.platform === "win32" ? "az.cmd" : "az";
   return new Promise<any>((resolve, reject) => {
@@ -524,6 +550,9 @@ export function getFileName(filepath: string) {
 
 export function getTenantId() {
   return tenantId;
+}
+export function getARMEndpoint() {
+  return armEndpoint;
 }
 function getPassFailCriteria() {
   passFailCriteria.forEach((criteria) => {
