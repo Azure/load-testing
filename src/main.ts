@@ -392,18 +392,12 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
 }
 async function getLoadTestResource()
 {
-    let env = "prod";
     let id = map.getResourceId();
-
-    let armEndpoint = "https://management.azure.com"+id+"?api-version="+util.apiConstants.cp2022Version;
-    if(env == "canary") {
-        armEndpoint = "https://eastus2euap.management.azure.com"+id+"?api-version="+util.apiConstants.cp2022Version;
-    }
-    if(env == "dogfood") {
-        armEndpoint = "https://api-dogfood.resources.windows-int.net"+id+"?api-version="+util.apiConstants.cp2022Version;
-    }
-    var header = map.dataPlaneHeader();
-    let response = await util.httpClientRetries(armEndpoint,header,'get',3,"");
+    let armUrl = map.getARMEndpoint();
+    let armEndpointSuffix = id + "?api-version=" + util.apiConstants.cp2022Version;
+    let armEndpoint = new URL(armEndpointSuffix, armUrl);
+    var header = map.armTokenHeader();
+    let response = await util.httpClientRetries(armEndpoint.toString(),header,'get',3,"");
     var resource_name: string = core.getInput('loadTestResource');
     if(response.message.statusCode == 404) {
         var message = "The Azure Load Testing resource "+ resource_name +" does not exist. Please provide an existing resource.";
