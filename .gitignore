@@ -84,6 +84,9 @@ StyleCopReport.xml
 *.pidb
 *.svclog
 *.scc
+# jest files
+coverage
+**/junit.xml
 
 # Chutzpah Test files
 _Chutzpah*
