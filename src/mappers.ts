@@ -5,13 +5,13 @@ const jwt_decode = require("jwt-decode");
 import * as fs from "fs";
 var FormData = require("form-data");
 import { execFile } from "child_process";
-import * as util from './util';
-import * as index from './main';
-import { isNullOrUndefined } from 'util';
-const pathLib = require('path');
-import { Readable } from 'stream';
+import * as util from "./util";
+import * as index from "./main";
+import { isNullOrUndefined } from "util";
+const pathLib = require("path");
+const { Readable } = require("stream");
+import { TestKind } from "./util";
 
-import { type } from "os";
 var testId = "";
 var displayName = "";
 var testdesc = "SampleTest";
@@ -28,7 +28,7 @@ var armTokenScope="https://management.core.windows.net";
 var dataPlaneTokenScope="https://loadtest.azure-dev.com";
 var armEndpoint="https://management.azure.com";
 var tenantId = "";
-var YamlPath = "";
+var yamlFile = "";
 var passFailCriteria: any[] = [];
 var autoStop: autoStopCriteriaObjOut | null = null;
 var kvRefId: string | null = null;
@@ -37,6 +37,8 @@ var subnetId: string | null = null;
 var splitCSVs: boolean | null = null;
 var certificate: certObj | null = null;
 let kind : TestKind;
+let publicIPDisabled : boolean = false;
+
 export interface certObj {
   type: string;
   value: string;
@@ -56,19 +58,13 @@ export interface autoStopCriteriaObjIn {
   timeWindow ?: number;
 }
 export interface autoStopCriteriaObjOut {
-  autoStopEnabled? : boolean;
   autoStopDisabled? : boolean;
   errorRate ?: number;
-  errorRateTimeWindow ?: number;
   errorRateTimeWindowInSeconds ?: number;
 }
 export interface paramObj {
   type: string;
   value: string;
-}
-export enum TestKind {
-  URL = "URL",
-  JMX = "JMX" // default
 }
 enum paramType {
   env = "env",
@@ -110,7 +106,6 @@ export function createTestData() {
       optionalLoadTestConfig : null
     },
     secrets: secretsYaml,
-    testType : kind,
     kind : kind,
     certificate: certificate,
     environmentVariables: envYaml,
@@ -119,6 +114,7 @@ export function createTestData() {
     },
     autoStopCriteria: autoStop,
     subnetId: subnetId,
+    publicIPDisabled : publicIPDisabled,
     keyvaultReferenceIdentityType: kvRefType,
     keyvaultReferenceIdentityId: kvRefId,
   };
@@ -131,20 +127,6 @@ export async function createTestHeader() {
     Authorization: "Bearer " + token,
   };
   return headers;
-}
-
-export function uploadFileData(filepath: string) {
-  try {
-    let filedata: Buffer = fs.readFileSync(filepath);
-    const readable = new Readable();
-    readable._read = () => {};
-    readable.push(filedata);
-    readable.push(null);
-    return readable;
-  } catch (err: any) {
-    err.message = "File not found " + filepath;
-    throw new Error(err.message);
-  }
 }
 
 export async function UploadAndValidateHeader() {
@@ -204,87 +186,48 @@ export async function getTestHeader() {
 export function getResourceId() {
   const rg: string = core.getInput("resourceGroup");
   const ltres: string = core.getInput("loadTestResource");
-  resourceId =
-    "/subscriptions/" +
-    subscriptionID +
-    "/resourcegroups/" +
-    rg +
-    "/providers/microsoft.loadtestservice/loadtests/" +
-    ltres;
+  if(isNullOrUndefined(rg) || rg == ''){
+    throw new Error(`The input field "resourceGroup" is empty. Provide an existing resource group name.`);
+  }
+  if(isNullOrUndefined(ltres) || ltres == ''){
+      throw new Error(`The input field "loadTestResource" is empty. Provide an existing load test resource name.`);
+  }
+  resourceId = "/subscriptions/" + subscriptionID + "/resourcegroups/" + rg + "/providers/microsoft.loadtestservice/loadtests/" + ltres;
   return resourceId;
-}
-function invalidName(value: string) {
-  if (value.length < 2 || value.length > 50) return true;
-  var r = new RegExp(/[^a-z0-9_-]+/);
-  return r.test(value);
-}
-function invalidDisplayName(value: string) {
-  if (value.length < 2 || value.length > 50) return true;
-  return false;
-}
-function invalidDescription(value: string) {
-  if (value.length > 100) return true;
-  return false;
 }
 export async function getInputParams() {
   await setEndpointAndScope();
   await getAccessToken(armTokenScope);
-  YamlPath = core.getInput("loadTestConfigFile");
+  yamlFile = core.getInput("loadTestConfigFile");
+  if(isNullOrUndefined(yamlFile) || yamlFile == ''){
+    throw new Error(`The input field "loadTestConfigFile" is empty. Provide the path to load test yaml file.`);
+  }
   if (
     !(
-      pathLib.extname(YamlPath) === ".yaml" ||
-      pathLib.extname(YamlPath) === ".yml"
+      pathLib.extname(yamlFile) === ".yaml" ||
+      pathLib.extname(yamlFile) === ".yml"
     )
   )
     throw new Error(
       "The Load Test configuration file should be of type .yaml or .yml"
     );
-  const config = yaml.load(fs.readFileSync(YamlPath, "utf8"));
-  if (isNullOrUndefined(config.testName) && isNullOrUndefined(config.testId))
-    throw new Error(
-      "The required field testId is missing in " + YamlPath + "."
-    );
-  if (!isNullOrUndefined(config.testName)) {
-    testId = config.testName;
+  const config = yaml.load(fs.readFileSync(yamlFile, "utf8"));
+  
+  let validConfig : {valid : boolean, error :string} = util.checkValidityYaml(config);
+  if(!validConfig.valid){
+      throw new Error(validConfig.error + ` Refer to the load test YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml`);
   }
-  if (!isNullOrUndefined(config.testId)) {
-    testId = config.testId;
-  }
-  if (typeof testId != "string") {
-    throw new Error("TestId should be a string not a number.");
-  }
+  testId = config.testId ?? config.testName;
   testId = testId.toLowerCase();
-  displayName = testId;
-  if (!isNullOrUndefined(config.displayName)) displayName = config.displayName;
-  if (invalidName(testId))
-    throw new Error(
-      "Invalid testId. Allowed chararcters are [a-zA-Z0-9-_] and must be between 2 to 50 characters."
-    );
-  if (invalidDisplayName(displayName))
-    throw new Error(
-      "Invalid display name. Display name must be between 2 to 50 characters."
-    );
+  displayName = config.displayName ?? testId;
+
   testdesc = config.description;
-  engineInstances = config.engineInstances;
-  let path = pathLib.dirname(YamlPath);
-  if (isNullOrUndefined(config.testPlan))
-    throw new Error(
-      "The required field testPlan is missing in " + YamlPath + "."
-    );
+  engineInstances = config.engineInstances ?? 1;
+
+  let path = pathLib.dirname(yamlFile);
   testPlan = pathLib.join(path, config.testPlan);
   kind = config.testType ?? TestKind.JMX;
-  if(!isValidTestKind(kind)){
-      throw new Error("testType field given is invalid, valid testType are URL and JMX only.");
-  }
-  if(config.testType as TestKind == TestKind.URL){
-      kind = TestKind.URL;
-      if(!util.checkFileType(testPlan,'json')) {
-          throw new Error("A test plan of JSON file type is required for a URL test. Please upload a JSON file to run the test.")
-      }
-  }
-  else if(!util.checkFileType(testPlan,'jmx')) {
-      throw new Error("A test plan of JMX file type is required for a JMX test. Please upload a JMX file to run the test.")
-  }
+
   if (config.configurationFiles != null) {
     let tempconfigFiles: string[] = [];
     tempconfigFiles = config.configurationFiles;
@@ -316,6 +259,9 @@ export async function getInputParams() {
   }
   if (config.subnetId != undefined) {
     subnetId = config.subnetId;
+  }
+  if(config.publicIPDisabled != undefined) {
+    publicIPDisabled = (config.publicIPDisabled)
   }
   if(config.properties != undefined && config.properties.userPropertyFile != undefined)
   {
@@ -355,7 +301,7 @@ export async function getInputParams() {
     isNullOrUndefined(testPlan)
   ) {
     throw new Error(
-      "The required fields testName/testPlan are missing in " + YamlPath + "."
+      "The required fields testName/testPlan are missing in " + yamlFile + "."
     );
   }
 }
@@ -454,20 +400,33 @@ function getParameters(obj: any, type: paramType) {
   if (type == paramType.secrets) {
     for (var index in obj) {
       var val = obj[index];
-      if (!validateUrl(val.value)) {
-        throw new Error("Invalid secret URI");
+      let str : string =  `name : ${val.name}, value : ${val.value}`;
+      if(isNullOrUndefined(val.name)){
+          throw new Error(`Invalid secret name at ${str}`);
+      }
+      if(!validateUrl(val.value)){
+          throw new Error(`Invalid secret url at ${str}`);
       }
       secretsYaml[val.name] = { type: "AKV_SECRET_URI", value: val.value };
     }
   } else if (type == paramType.env) {
     for (var index in obj) {
       var val = obj[index];
+      let str : string =  `name : ${val.name}, value : ${val.value}`;
+      if(isNullOrUndefined(val.name)){
+          throw new Error(`Invalid environment name at ${str}`);
+      }
       envYaml[val.name] = val.value;
     }
   } else if (type == paramType.cert) {
     for (var index in obj) {
       var val = obj[index];
-      if (!validateUrl(val.value)) throw new Error("Invalid certificate url");
+      let str : string =  `name : ${val.name}, value : ${val.value}`;
+      if(isNullOrUndefined(val.name)){
+          throw new Error(`Invalid certificate name at ${str}`);
+      }
+      if(!validateUrl(val.value))
+          throw new Error(`Invalid certificate url at ${str}`);
       certificate = { name: val.name, type: "AKV_CERT_URI", value: val.value };
       break;
     }
@@ -487,13 +446,18 @@ function getRunTimeParams() {
       var obj = JSON.parse(secretRun);
       for (var index in obj) {
         var val = obj[index];
-        /*if(validateValue(val.value)) {
-                    throw new Error("Invalid secret value"); 
-                }*/
+        let str : string =  `name : ${val.name}, value : ${val.value}`;
+        if(isNullOrUndefined(val.name)){
+            throw new Error(`Invalid secret name at pipeline params at ${str}`);
+        }
+        if(!validateUrl(val.value)){
+            throw new Error(`Invalid secret url at pipeline params at ${str}`);
+        }
         secretsRun[val.name] = { type: "SECRET_VALUE", value: val.value };
       }
     } catch (error) {
-      throw new Error("Invalid secrets");
+        console.log(error);
+        throw new Error("Invalid format of secrets in the pipeline yaml file. Refer to the pipeline YAML syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-test-secured-endpoints?tabs=pipelines#reference-the-secret-in-the-load-test-configuration");
     }
   }
   var eRun = core.getInput("env");
@@ -502,21 +466,26 @@ function getRunTimeParams() {
       var obj = JSON.parse(eRun);
       for (var index in obj) {
         var val = obj[index];
+        let str : string =  `name : ${val.name}, value : ${val.value}`;
+        if(isNullOrUndefined(val.name)){
+            throw new Error(`Invalid environment name at pipeline params at ${str}`);
+        }
         envRun[val.name] = val.value;
       }
     } catch (error) {
-      throw new Error("Invalid env");
-    }
+        console.log(error);
+        throw new Error("Invalid format of env in the pipeline yaml file. Refer to the pipeline YAML syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-test-secured-endpoints?tabs=pipelines#reference-the-secret-in-the-load-test-configuration");        
+      }
   }
 }
 function validateTestRunParams() {
   let runDisplayName: string = core.getInput("loadTestRunName");
   let runDescription: string = core.getInput("loadTestRunDescription");
-  if (runDisplayName && invalidDisplayName(runDisplayName))
+  if (runDisplayName && util.invalidDisplayName(runDisplayName))
     throw new Error(
       "Invalid test run name. Test run name must be between 2 to 50 characters."
     );
-  if (runDescription && invalidDescription(runDescription))
+  if (runDescription && util.invalidDescription(runDescription))
     throw new Error(
       "Invalid test run description. Test run description must be less than 100 characters."
     );
@@ -525,7 +494,7 @@ export function getTestKind(){
   return kind;
 }
 export function getYamlPath() {
-  return YamlPath;
+  return yamlFile;
 }
 export function getTestFile() {
   return testPlan;
@@ -650,10 +619,8 @@ function getAutoStopCriteria(autoStopInput : autoStopCriteriaObjIn | string | nu
   if (typeof autoStopInput == "string") {
     if (autoStopInput == "disable") {
       let data = {
-        autoStopEnabled: false,
         autoStopDisabled : true,
         errorRate: 0,
-        errorRateTimeWindow: 0,
         errorRateTimeWindowInSeconds: 60,
       };
       autoStop = data;
@@ -664,10 +631,8 @@ function getAutoStopCriteria(autoStopInput : autoStopCriteriaObjIn | string | nu
     }
   } else {
     let data = {
-      autoStopEnabled : true,
       autoStopDisabled : false,
       errorRate: autoStopInput.errorPercentage,
-      errorRateTimeWindow: autoStopInput.timeWindow,
       errorRateTimeWindowInSeconds: autoStopInput.timeWindow,
     };
     autoStop = data;
