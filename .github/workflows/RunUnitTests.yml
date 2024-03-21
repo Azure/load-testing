@@ -37,8 +37,8 @@ jobs:
       run: |
         npm install
         npm run compile
-      working-directory: ./load-testing/
+      working-directory: load-testing
 
     - name: Run Unit Tests
       run: npm run test
-      working-directory: ./load-testing/
+      working-directory: load-testing

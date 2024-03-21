@@ -38,7 +38,7 @@ jobs:
       run: |
         npm install
         npm run compile
-      working-directory: ./load-testing/
+      working-directory: load-testing
     
     - name: Azure authentication
       uses: azure/login@v1
