@@ -35,10 +35,11 @@ jobs:
 
     - name: Installing dependencies and building latest changes
       run: |
+        cd load-testing
         npm install
         npm run compile
-      working-directory: load-testing
 
     - name: Run Unit Tests
-      run: npm run test
-      working-directory: load-testing
+      run: |
+        npm run test
+        cd ../
