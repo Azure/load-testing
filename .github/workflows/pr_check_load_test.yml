@@ -9,7 +9,6 @@ on:
   pull_request:
     branches:
       - 'releases/*'
-
 # NOTE : This workflow doesn't run on PRs against forks of this repositories
 # Since they won't have access to the repository secrets. Ref: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 # CONFIGURATION
@@ -34,13 +33,12 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-
+    
     - name: Installing dependencies and building latest changes
       run: |
-        cd load-testing
-        npm install
+        npm install -f
         npm run compile
-    
+
     - name: Azure authentication
       uses: azure/login@v1
       with:

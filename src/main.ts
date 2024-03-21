@@ -4,7 +4,7 @@ import * as map from "./mappers"
 import * as util from './util';
 import * as fs from 'fs';
 import { isNullOrUndefined } from 'util';
-import {TestKind} from "./mappers";
+import {TestKind} from "./util";
 
 const resultFolder = 'loadTest';
 let baseURL = '';
@@ -60,8 +60,6 @@ async function getTestAPI(validate:boolean) {
         if (testObj.kind == null){
             testObj.kind = testObj.testType;
         }
-        if (testObj.inputArtifacts.urlTestConfigFileInfo == null)
-            testObj.inputArtifacts.urlTestConfigFileInfo = testObj.inputArtifacts.urlTestsConfigFileInfo;
         var inputScriptFileInfo = testObj.kind == TestKind.URL ? testObj.inputArtifacts.urlTestConfigFileInfo :testObj.inputArtifacts.testScriptFileInfo;
         if(validate){
             return inputScriptFileInfo.validationStatus;
@@ -109,8 +107,13 @@ async function createTestAPI() {
         // this will be error in the url tests when the quick test is getting updated to the url test. so removing this.
         let testObj:any=await util.getResultObj(createTestresult);
         var testFiles = testObj.inputArtifacts;
-        if(testFiles.userPropUrl != null && map.getPropertyFile() != null){
-            await deleteFileAPI(testFiles.userPropFileInfo.filename);
+        if(testFiles.userPropUrl != null){
+            console.log(`Deleting the existing UserProperty file.`);
+            await deleteFileAPI(testFiles.userPropFileInfo.fileName);
+        }
+        if(testFiles.testScriptFileInfo != null){
+            console.log(`Deleting the existing TestScript file.`);
+            await deleteFileAPI(testFiles.testScriptFileInfo.fileName);
         }
         if(testFiles.additionalFileInfo != null){
             // delete existing files which are not present in yaml, the files which are in yaml will anyway be uploaded again.
@@ -132,7 +135,7 @@ async function createTestAPI() {
                 }
             }
             if(existingFiles.length > 0){
-                console.log(`Deleting the ${existingFiles.length} existing test files which are not in the configuration yaml file.`);
+                console.log(`Deleting the ${existingFiles.length} existing test file(s) which is(are) not in the configuration yaml file.`);
             }
             for(file of existingFiles){
                 await deleteFileAPI(file);
@@ -229,6 +232,8 @@ async function uploadZipArtifacts()
         let startTime = new Date();
         var maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
         let flagValidationPending = true;
+        let zipInvalid = false;
+        let zipFailureReason = "";
         while(maxAllowedTime>(new Date()) && flagValidationPending) {
             var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm2023Version;
             urlSuffix = baseURL+urlSuffix;
@@ -241,13 +246,24 @@ async function uploadZipArtifacts()
                     if (file.fileType == FileType.ZIPPED_ARTIFACTS && (file.validationStatus != "VALIDATION_SUCCESS" && file.validationStatus != "VALIDATION_FAILURE")) {
                         flagValidationPending = true;
                         break;
+                    } else if(file.fileType == FileType.ZIPPED_ARTIFACTS && file.validationStatus == "VALIDATION_FAILURE"){
+                        zipInvalid = true;
+                        zipFailureReason = file.validationFailureDetails ?? "Validation failed for the zip artifact with an unknown error.";
+                        break;
                     }
                 }
+            } else {
+                break;
             }
-            else {
+            if(zipInvalid){
                 break;
             }
             await util.sleep(3000);
+        }
+        if(zipInvalid) {
+            throw new Error(`Validation of one or more zip artifacts failed with Error : "${zipFailureReason}".`);
+        } else if(flagValidationPending) {
+            throw new Error("Validation of one or more zip artifacts timed out. Please retry.");
         }
         console.log(`Uploaded and validated ${zipFiles.length} zip artifact(s) for the test successfully.`);
     }
@@ -369,6 +385,7 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 }
             }
             if(testRunObj.status === "FAILED" || testRunObj.status === "CANCELLED") {
+                console.log("Please go to the Portal for more error details: "+ testRunObj.portalUrl);
                 core.setFailed("TestStatus: "+ testRunObj.status);
                 return;
             }
