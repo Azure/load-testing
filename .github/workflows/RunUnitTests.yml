@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - releases/*
+      - main
     paths-ignore:
       - '**.md'
   pull_request:
     branches:
       - releases/*
+      - main
 # NOTE : This workflow doesn't run on PRs against forks of this repositories
 # Since they won't have access to the repository secrets. Ref: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 # CONFIGURATION
@@ -37,7 +39,7 @@ jobs:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         path: 'load-testing'
         ref: ${{ github.event.pull_request.head.ref }}
-        
+
     - name: Installing dependencies and building latest changes
       run: |
         cd load-testing
