@@ -33,17 +33,16 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - uses: actions/checkout@v2
-      name: Checkout from PR branch
-      with: 
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-        path: 'load-testing'
-        ref: ${{ github.event.pull_request.head.ref }}
+    # - uses: actions/checkout@v2
+    #   name: Checkout from PR branch
+    #   with: 
+    #     repository: ${{ github.event.pull_request.head.repo.full_name }}
+    #     path: 'load-testing'
+    #     ref: ${{ github.event.pull_request.head.ref }}
 
     - name: Installing dependencies and building latest changes
       run: |
-        cd load-testing
-        npm install --include=dev
+        npm install -f
 
     - name: Run Unit Tests
       run: |
