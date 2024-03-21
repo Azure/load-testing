@@ -36,9 +36,9 @@ jobs:
 
     - name: Installing dependencies and building latest changes
       run: |
-        cd load-testing
         npm install
         npm run compile
+      working-directory: ./load-testing
     
     - name: Azure authentication
       uses: azure/login@v1
