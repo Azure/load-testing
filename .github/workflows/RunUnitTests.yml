@@ -43,8 +43,7 @@ jobs:
     - name: Installing dependencies and building latest changes
       run: |
         cd load-testing
-        npm install
-        npm run compile
+        npm ci
 
     - name: Run Unit Tests
       run: |
