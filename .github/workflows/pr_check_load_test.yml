@@ -39,8 +39,11 @@ jobs:
         cd load-testing
         npm install
         npm run compile
-        cd ../
-    
+
+    - name: Run Unit Tests
+      run: |
+        npm run test
+
     - name: Azure authentication
       uses: azure/login@v1
       with:

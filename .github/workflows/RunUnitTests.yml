@@ -1,15 +1,13 @@
-name: pr_check_load_test
+name: unit tests for main
 
 on:
   push:
     branches:
-      - releases/*
       - main
     paths-ignore:
       - '**.md'
   pull_request:
     branches:
-      - 'releases/*'
       - main
 # NOTE : This workflow doesn't run on PRs against forks of this repositories
 # Since they won't have access to the repository secrets. Ref: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
@@ -42,4 +40,3 @@ jobs:
     - name: Run Unit Tests
       run: |
         npm run test
-        cd ../
