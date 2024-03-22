@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - releases/*
-      - users/mohit/*
       
     paths-ignore:
       - '**.md'
