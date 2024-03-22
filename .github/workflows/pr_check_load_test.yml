@@ -23,6 +23,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
+        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml'] 
         
     runs-on: ${{ matrix.os }}
     steps:
@@ -43,12 +44,12 @@ jobs:
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-
+  
     - name: 'Azure Load Testing'
-      run: |
-        for configFile in sample-test-url.yaml sample-test-jmx.yaml; do
-          echo "Running load test with config file $configFile"
-          Azure/load-testing@b6e25a93f77ce4988759e3629fe3d641c154d82b --loadTestConfigFile $configFile --loadTestResource ${{ env.LOAD_TEST_RESOURCE }} --resourceGroup ${{ env.LOAD_TEST_RESOURCE_GROUP }}
-        done
+      uses: Azure/load-testing@b6e25a93f77ce4988759e3629fe3d641c154d82b
+      with:
+        loadTestConfigFile: ${{ matrix.configFile }}
+        loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
+        resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
       
     #https://stackoverflow.microsoft.com/questions/394308 when u get the answer for this question update the uses with the proper branch or commit id.
