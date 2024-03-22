@@ -261,7 +261,7 @@ async function uploadZipArtifacts()
             await util.sleep(3000);
         }
         if(zipInvalid) {
-            throw new Error(`Validation of one or more zip artifacts failed with Error : "${zipFailureReason}".`);
+            throw new Error(`Validation of one or more zip artifacts failed with error : "${zipFailureReason}".`);
         } else if(flagValidationPending) {
             throw new Error("Validation of one or more zip artifacts timed out. Please retry.");
         }

@@ -23,6 +23,8 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
+        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml'] 
+        
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
@@ -46,6 +48,8 @@ jobs:
     - name: 'Azure Load Testing'
       uses: Azure/load-testing@${{ github.repository }}
       with:
-        loadTestConfigFile: 'SampleApp.yaml'
+        loadTestConfigFile: ${{ matrix.configFile }}
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
+      
+    #https://stackoverflow.microsoft.com/questions/394308 when u get the answer for this question update the uses with the proper branch or commit id.

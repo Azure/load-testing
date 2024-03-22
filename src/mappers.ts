@@ -1,7 +1,7 @@
 import { IHeaders } from "typed-rest-client/Interfaces";
 import * as core from "@actions/core";
 const yaml = require("js-yaml");
-const jwt_decode = require("jwt-decode");
+import * as jwt_decode from "jwt-decode";
 import * as fs from "fs";
 var FormData = require("form-data");
 import { execFile } from "child_process";
@@ -67,7 +67,7 @@ export interface paramObj {
 }
 enum paramType {
   env = "env",
-  secrets = "secrets", 
+  secrets = "secrets",
   cert = "cert"
 }
 let failCriteria: { [name: string]: criteriaObj | null } = {};
@@ -170,9 +170,9 @@ export async function getTestRunHeader() {
 }
 
 function isExpired() {
-  const header = jwt_decode(token);
+  const header = jwt_decode.jwtDecode(token);
   const now = Math.floor(Date.now() / 1000);
-  return header && header.exp > now;
+  return header && header.exp && header.exp > now;
 }
 export async function getTestHeader() {
   await getAccessToken(dataPlaneTokenScope);
@@ -184,7 +184,6 @@ export async function getTestHeader() {
 }
 export function getResourceId() {
   const rg: string = core.getInput("resourceGroup");
-  console.log(rg);
   const ltres: string = core.getInput("loadTestResource");
   if(isNullOrUndefined(rg) || rg == ''){
     throw new Error(`The input field "resourceGroup" is empty. Provide an existing resource group name.`);
@@ -448,10 +447,10 @@ function getRunTimeParams() {
         var val = obj[index];
         let str : string =  `name : ${val.name}, value : ${val.value}`;
         if(isNullOrUndefined(val.name)){
-            throw new Error(`Invalid secret name at pipeline params at ${str}`);
+            throw new Error(`Invalid secret name in the pipeline yaml file at ${str}`);
         }
         if(!validateUrl(val.value)){
-            throw new Error(`Invalid secret url at pipeline params at ${str}`);
+            throw new Error(`Invalid secret url in the pipeline yaml file at ${str}`);
         }
         secretsRun[val.name] = { type: "SECRET_VALUE", value: val.value };
       }
@@ -468,7 +467,7 @@ function getRunTimeParams() {
         var val = obj[index];
         let str : string =  `name : ${val.name}, value : ${val.value}`;
         if(isNullOrUndefined(val.name)){
-            throw new Error(`Invalid environment name at pipeline params at ${str}`);
+            throw new Error(`Invalid environment name in the pipeline yaml file at ${str}`);
         }
         envRun[val.name] = val.value;
       }
