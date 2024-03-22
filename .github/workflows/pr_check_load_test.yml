@@ -10,6 +10,7 @@ on:
   pull_request:
     branches:
       - releases/*
+
 env:
   LOAD_TEST_RESOURCE: "rbac-test"
   LOAD_TEST_RESOURCE_GROUP: "radhika-test"
@@ -42,7 +43,7 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
   
     - name: 'Azure Load Testing'
-      uses: Azure/load-testing@52f49fb46a3ed4abc16f949176f66fe0ec562ae3
+      uses: ./load-testing/
       with:
         loadTestConfigFile: 'SampleApp.yaml'
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
