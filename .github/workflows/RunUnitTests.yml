@@ -24,6 +24,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20'
+
     - name: Installing dependencies and building latest changes
       run: |
         npm install --include=dev -f
