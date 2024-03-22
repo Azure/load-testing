@@ -40,4 +40,5 @@ jobs:
 
     - name: Run Unit Tests
       run: |
-        npm run test
+        npm ci
+        npx jest --testPathPattern=test --coverage
