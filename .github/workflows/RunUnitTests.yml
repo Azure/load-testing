@@ -32,6 +32,11 @@ jobs:
     - name: Installing dependencies and building latest changes
       run: |
         npm install --include=dev -f
+        npm install --save-dev jest
+        npm install --save-dev jest-junit
+        npm install --save-dev jwt-check-expiration
+        npm install --save-dev ts-jest
+        npm install --save-dev typescript
 
     - name: Run Unit Tests
       run: |
