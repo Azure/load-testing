@@ -26,5 +26,5 @@ branding:
     icon: 'extension-icon.svg'
     color: 'blue'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'lib/main.js'
