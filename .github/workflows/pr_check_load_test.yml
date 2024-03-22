@@ -51,7 +51,7 @@ jobs:
   
     - name: 'Azure Load Testing'
       uses: Azure/load-testing@${{ github.sha }}
-      with: 
+      with:
         loadTestConfigFile: 'SampleApp.yaml'
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
