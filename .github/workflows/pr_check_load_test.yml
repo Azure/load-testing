@@ -10,7 +10,10 @@ on:
   pull_request:
     branches:
       - releases/*
-      
+env:
+  LOAD_TEST_RESOURCE: "rbac-test"
+  LOAD_TEST_RESOURCE_GROUP: "radhika-test"
+
 jobs:
   run-integration-test:
     environment: automation test
