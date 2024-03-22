@@ -1,4 +1,4 @@
-name: pr_check_load_test
+name: pr build check
 
 on:
   push:
@@ -8,19 +8,8 @@ on:
       - '**.md'
   pull_request:
     branches:
-      - 'releases/*'
-
-# CONFIGURATION
-# For help, go to https://github.com/Azure/Actions
-#
-# 1. Set up the following secrets in your repository:
-#   AZURE_CREDENTIALS
-#
-# 2. Change these variables for your configuration:
-env:
-  LOAD_TEST_RESOURCE: "load-testing-ghaction"
-  LOAD_TEST_RESOURCE_GROUP: "load-testing-ghaction-rg"
-
+      - releases/*
+      
 jobs:
   run-integration-test:
     environment: automation test
@@ -42,7 +31,6 @@ jobs:
       run: |
         npm install --include=dev -f
         npm ci
-        npm run compile
 
     - name: Azure authentication
       uses: azure/login@v1
