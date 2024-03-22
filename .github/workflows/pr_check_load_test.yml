@@ -46,7 +46,7 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
   
     - name: 'Azure Load Testing'
-      uses: Azure/load-testing@${{ github.repository }}
+      uses: Azure/load-testing@b6e25a93f77ce4988759e3629fe3d641c154d82b
       with:
         loadTestConfigFile: ${{ matrix.configFile }}
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
