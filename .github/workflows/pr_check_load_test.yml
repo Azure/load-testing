@@ -43,6 +43,7 @@ jobs:
     - name: Installing dependencies and building latest changes
       run: |
         npm install --include=dev -f
+        npm ci
         npm run compile
 
     - name: Azure authentication
