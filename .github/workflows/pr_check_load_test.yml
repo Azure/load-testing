@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - releases/*
-      - users/mohit/*
-      
+
     paths-ignore:
       - '**.md'
   pull_request:
@@ -38,10 +37,3 @@ jobs:
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-  
-    - name: 'Azure Load Testing'
-      uses: Azure/load-testing@${{ github.sha }}
-      with:
-        loadTestConfigFile: 'SampleApp.yaml'
-        loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
-        resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
