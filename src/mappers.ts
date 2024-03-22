@@ -184,6 +184,7 @@ export async function getTestHeader() {
 }
 export function getResourceId() {
   const rg: string = core.getInput("resourceGroup");
+  console.log(rg);
   const ltres: string = core.getInput("loadTestResource");
   if(isNullOrUndefined(rg) || rg == ''){
     throw new Error(`The input field "resourceGroup" is empty. Provide an existing resource group name.`);
