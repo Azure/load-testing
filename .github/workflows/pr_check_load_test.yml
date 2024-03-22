@@ -8,7 +8,7 @@ on:
       - '**.md'
   pull_request:
     branches:
-      - 'releases/*'
+      - releases/*
 
 # CONFIGURATION
 # For help, go to https://github.com/Azure/Actions
@@ -50,8 +50,8 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
   
     - name: 'Azure Load Testing'
-      uses: ./load-testing/
-      with:
+      uses: Azure/load-testing@${{ github.sha }}
+      with: 
         loadTestConfigFile: 'SampleApp.yaml'
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
