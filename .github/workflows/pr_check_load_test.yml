@@ -14,6 +14,7 @@ on:
 env:
   LOAD_TEST_RESOURCE: "rbac-test"
   LOAD_TEST_RESOURCE_GROUP: "radhika-test"
+  COMMIT_ID : ${{ github.sha }}
 
 jobs:
   run-integration-test:
@@ -43,7 +44,7 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
   
     - name: 'Azure Load Testing'
-      uses: Azure/load-testing@45cadece821471e0ac4efab137182dac7931db41
+      uses: Azure/load-testing@${{ github.repository }}
       with:
         loadTestConfigFile: 'SampleApp.yaml'
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
