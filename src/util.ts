@@ -8,7 +8,10 @@ import internal = require('stream');
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 import { IHttpClientResponse, IHeaders } from 'typed-rest-client/Interfaces';
 import * as map from "./mappers";
-import { isNullOrUndefined } from 'util';
+import { Readable } from 'stream';
+import { isNull, isUndefined, isNullOrUndefined } from 'util';
+import { defaultYaml } from './constants';
+
 const validAggregateList = {
     'response_time_ms': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
     'requests_per_sec': ['avg'],
@@ -17,6 +20,11 @@ const validAggregateList = {
     'error': ['percentage']
 }
 
+export enum TestKind {
+    URL = "URL",
+    JMX = "JMX" // default
+}
+  
 const validConditionList = {
     'response_time_ms': ['>', '<'],
     'requests_per_sec': ['>', '<'],
@@ -28,6 +36,24 @@ export module apiConstants {
     export const tm2023Version = '2023-04-01-preview';
     export const tm2022Version = '2022-11-01';
     export const cp2022Version = '2022-12-01'
+}
+export enum ManagedIdentityType {
+    SystemAssigned = "SystemAssigned",
+    UserAssigned = "UserAssigned",
+}
+
+export function uploadFileData(filepath: string) {
+    try {
+        let filedata: Buffer = fs.readFileSync(filepath);
+        const readable = new Readable();
+        readable._read = () => {};
+        readable.push(filedata);
+        readable.push(null);
+        return readable;
+    } catch (err: any) {
+        err.message = "File not found " + filepath;
+        throw new Error(err.message);
+    }
 }
 
 const correlationHeader = 'x-ms-correlation-request-id'
@@ -43,7 +69,7 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
             httpResponse = await httpClient.del(urlSuffix, header); 
         }
         else if(method == 'put' && isUploadCall){
-            let fileContent = map.uploadFileData(data);
+            let fileContent = uploadFileData(data);
             httpResponse = await httpClient.request(method,urlSuffix, fileContent, header);
         }
         else{
@@ -203,6 +229,152 @@ export function sleep(ms:any) {
 export function getUniqueId() {
     return uuidv4().toString();
 }
+function isDictionary(variable: any): variable is { [key: string]: any } {
+    return typeof variable === 'object' && variable !== null && !Array.isArray(variable);
+}
+export function invalidName(value:string) 
+{
+    if(value.length < 2 || value.length > 50) return true;
+    var r = new RegExp(/[^a-z0-9_-]+/);
+    return r.test(value);
+}
+export function invalidDisplayName(value : string){
+    if(value.length < 2 || value.length > 50) return true;
+    return false;
+}
+export function invalidDescription(value : string){
+    if(value.length > 100) return true;
+    return false;
+}
+function isInValidSubnet(uri: string): boolean {
+    const pattern = /^\/subscriptions\/[a-f0-9-]+\/resourceGroups\/[a-zA-Z0-9\u0080-\uFFFF()._-]+\/providers\/Microsoft\.Network\/virtualNetworks\/[a-zA-Z0-9._-]+\/subnets\/[a-zA-Z0-9._-]+$/i;
+    return !(pattern.test(uri));
+}
+function isInValidKVId(uri: string): boolean {
+    const pattern = /^\/subscriptions\/[a-f0-9-]+\/resourceGroups\/[a-zA-Z0-9\u0080-\uFFFF()._-]+\/providers\/Microsoft\.ManagedIdentity\/userAssignedIdentities\/[a-zA-Z0-9._-]+$/i;
+
+    return !(pattern.test(uri));
+}
+function isValidTestKind(value: string): value is TestKind {
+    return Object.values(TestKind).includes(value as TestKind);
+}
+function isValidManagedIdentityType(value: string): value is ManagedIdentityType {
+    return Object.values(ManagedIdentityType).includes(value as ManagedIdentityType);
+}
+function isArrayOfStrings(variable: any): variable is string[] {
+    return Array.isArray(variable) && variable.every((item) => typeof item === 'string');
+}
+function inValidEngineInstances(engines : number) : boolean{
+    if(engines > 400 || engines < 1){
+        return true;
+    }
+    return false;
+}
+
+export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : string} {
+    if(!isDictionary(givenYaml)) {
+        return {valid : false,error :`Invalid YAML syntax.`};
+    }
+    let unSupportedKeys : string[] = [];
+    let supportedKeys : string[] = Object.keys(defaultYaml);
+    Object.keys(givenYaml).forEach(element => {
+        if(supportedKeys.indexOf(element) == -1){
+            unSupportedKeys.push(element);
+        }
+    });
+    if(unSupportedKeys.length) {
+        const result = unSupportedKeys.map(element => `${element}`).join(", ");
+        return {valid : false, error : `The YAML file provided has unsupported field(s) "${result}".`};
+    }
+    if(isNullOrUndefined(givenYaml.testName) && isNullOrUndefined(givenYaml.testId)){
+        return {valid : false, error : "The required field testId is missing in the load test YAML file."};
+    }
+    let testId = '';
+    if(!isNullOrUndefined(givenYaml.testName)){
+        testId = givenYaml.testName;
+    }
+    if(!isNullOrUndefined(givenYaml.testId)){
+        testId = givenYaml.testId;
+    }
+    testId = testId.toLowerCase();
+    if(typeof(testId) != "string" || invalidName(testId)){
+        return {valid : false, error : `The value "${testId}" for testId is not a valid string. Allowed characters are [a-zA-Z0-9-_] and the length must be between 2 to 50 characters.`};
+    }
+    if(givenYaml.displayName && (typeof givenYaml.displayName != 'string' || invalidDisplayName(givenYaml.displayName))){
+        return {valid : false, error : `The value "${givenYaml.displayName}" for displayName is invalid. Display name must be a string of length between 2 to 50.`};
+    }
+    if(givenYaml.description && (typeof givenYaml.description != 'string' || invalidDescription(givenYaml.description))){
+        return {valid : false, error : `The value "${givenYaml.description}" for description is invalid. Description must be a string of length less than 100.`};
+    }
+    if(isNullOrUndefined(givenYaml.testPlan)){
+        return {valid : false, error : "The required field testPlan is missing in the load test YAML file."};
+    }
+    if(givenYaml.engineInstances && (isNaN(givenYaml.engineInstances) || inValidEngineInstances(givenYaml.engineInstances))){
+        return {valid : false, error : `The value "${givenYaml.engineInstances}" for engineInstances is invalid. The value should be an integer between 1 and 400.`};
+    }
+    let kind : TestKind = givenYaml.testType ?? TestKind.JMX;
+    if(!isValidTestKind(kind)){
+        return {valid : false, error : `The value "${kind}" for testType is invalid. Acceptable values are are URL and JMX.`};
+    }
+    if(givenYaml.testType as TestKind == TestKind.URL){
+        if(!checkFileType(givenYaml.testPlan,'json')) {
+            return {valid : false, error : "The testPlan for a URL test should of type JSON."};
+        }
+    }
+    else if(!checkFileType(givenYaml.testPlan,'jmx')) {
+        return {valid : false, error : "The testPlan for a JMX test should of type JMX."};
+    }
+    if(givenYaml.subnetId && (typeof givenYaml.subnetId!= 'string' || isInValidSubnet(givenYaml.subnetId))){
+        return {valid : false, error : `The value "${givenYaml.subnetId}" for subnetId is invalid. The value should be a string of the format: "/subscriptions/{subscriptionId}/resourceGroups/{rgName}/providers/Microsoft.Network/virtualNetworks/{vnetName}/subnets/{subnetName}".`};
+    }
+    if(givenYaml.keyVaultReferenceIdentity && (typeof givenYaml.keyVaultReferenceIdentity!= 'string' || isInValidKVId(givenYaml.keyVaultReferenceIdentity))){
+        return {valid : false, error : `The value "${givenYaml.keyVaultReferenceIdentity}" for keyVaultReferenceIdentity is invalid. The value should be a string of the format: "/subscriptions/{subsId}/resourceGroups/{rgName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}".`};
+    }
+    if(givenYaml.keyVaultReferenceIdentityType != undefined && givenYaml.keyVaultReferenceIdentityType != null && !isValidManagedIdentityType(givenYaml.keyVaultReferenceIdentityType)){
+        return {valid : false, error : `The value "${givenYaml.keyVaultReferenceIdentityType}" for keyVaultReferenceIdentityType is invalid. Allowed values are "SystemAssigned" and "UserAssigned".`};
+    }
+    if(!isNullOrUndefined(givenYaml.keyVaultReferenceIdentity) && givenYaml.keyVaultReferenceIdentityType == ManagedIdentityType.SystemAssigned){
+        return {valid : false, error : `The "keyVaultReferenceIdentity" should omitted or set to null when using the "SystemAssigned" identity type.`};
+    }
+    if(isNullOrUndefined(givenYaml.keyVaultReferenceIdentity) && givenYaml.keyVaultReferenceIdentityType == ManagedIdentityType.UserAssigned){
+        return {valid : false, error : `"The value for 'keyVaultReferenceIdentity' cannot be null when using the 'UserAssigned' identity type. Provide a valid identity reference for 'keyVaultReferenceIdentity'."`};
+    }
+    if(givenYaml.publicIPDisabled && typeof givenYaml.publicIPDisabled!= 'boolean'){
+        return {valid : false, error : `The value "${givenYaml.publicIPDisabled}" for publicIPDisabled is invalid. The value should be either true or false.`};
+    }
+    if(givenYaml.publicIPDisabled && isNullOrUndefined(givenYaml.subnetId)){
+        return {valid : false, error : `Public IP deployment can only be disabled for tests against private endpoints. For public endpoints, set publicIPDisabled to False.`}
+    }
+    if(givenYaml.configurationFiles && !isArrayOfStrings(givenYaml.configurationFiles)){
+        return {valid : false, error : `The value "${givenYaml.configurationFiles}" for configurationFiles is invalid. Provide a valid list of strings.`};
+    }
+    if(givenYaml.zipArtifacts && !isArrayOfStrings(givenYaml.zipArtifacts)){
+        return {valid : false, error : `The value "${givenYaml.zipArtifacts}" for zipArtifacts is invalid. Provide a valid list of strings.`};
+    }
+    if(givenYaml.splitAllCSVs && typeof givenYaml.splitAllCSVs!= 'boolean'){
+        return {valid : false, error : `The value "${givenYaml.splitAllCSVs}" for splitAllCSVs is invalid. The value should be either true or false`};
+    }
+    if(givenYaml.properties != undefined && givenYaml.properties.userPropertyFile != undefined){
+        if(isNull(givenYaml.properties.userPropertyFile) || typeof givenYaml.properties.userPropertyFile != 'string' || !checkFileType(givenYaml.properties.userPropertyFile, 'properties')){
+            return {valid : false, error : `The value "${givenYaml.properties.userPropertyFile}" for userPropertyFile is invalid. Provide a valid file path of type ".properties". Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`}
+        }
+    }
+    if(givenYaml.autoStop){
+        if(typeof givenYaml.autoStop != 'string'){
+            if(isNullOrUndefined(givenYaml.autoStop.errorPercentage) || isNaN(givenYaml.autoStop.errorPercentage) || givenYaml.autoStop.errorPercentage > 100 || givenYaml.autoStop.errorPercentage < 0) {
+                return {valid : false, error : `The value "${givenYaml.autoStop.errorPercentage}" for errorPercentage of auto-stop criteria is invalid. The value should be valid decimal number from 0 to 100.`};
+            }
+            if(isNullOrUndefined(givenYaml.autoStop.timeWindow) || isNaN(givenYaml.autoStop.timeWindow) || givenYaml.autoStop.timeWindow <= 0 || !Number.isInteger(givenYaml.autoStop.timeWindow)){
+                return {valid : false, error : `The value "${givenYaml.autoStop.timeWindow}" for timeWindow of auto-stop criteria is invalid. The value should be valid integer greater than 0.`};
+            }
+        }
+        else if(givenYaml.autoStop != "disable"){
+            return {valid : false, error : 'Invalid value for "autoStop", for disabling auto stop use "autoStop: disable"'};
+        }
+    }
+    return {valid : true, error : ""};
+}
+
 export function getResultFolder(testArtifacts:any) {
     if(testArtifacts == null || testArtifacts.outputArtifacts == null)
         return null;

@@ -1,0 +1,39 @@
+name: unit tests for main
+
+on:
+  push:
+    branches:
+      - releases/*
+      - main
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches:
+      - releases/*
+      - main
+      
+jobs:
+  run-integration-test:
+    environment: automation test
+    name: Validate PR
+    strategy:
+      matrix:
+        os: [windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20'
+
+    - name: Installing dependencies and building latest changes
+      run: |
+        npm install --include=dev -f
+
+    - name: Run Unit Tests
+      run: |
+        npm ci
+        npx jest --testPathPattern=test --coverage
