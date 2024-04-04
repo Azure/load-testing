@@ -1,25 +1,20 @@
-name: pr_check_load_test
+name: pr build check
 
 on:
   push:
     branches:
       - releases/*
+      
     paths-ignore:
       - '**.md'
-  pull_request_target:
+  pull_request:
     branches:
-      - 'releases/*'
+      - releases/*
 
-# CONFIGURATION
-# For help, go to https://github.com/Azure/Actions
-#
-# 1. Set up the following secrets in your repository:
-#   AZURE_CREDENTIALS
-#
-# 2. Change these variables for your configuration:
 env:
-  LOAD_TEST_RESOURCE: "load-testing-ghaction"
-  LOAD_TEST_RESOURCE_GROUP: "load-testing-ghaction-rg"
+  LOAD_TEST_RESOURCE: "rbac-test"
+  LOAD_TEST_RESOURCE_GROUP: "radhika-test"
+  COMMIT_ID : ${{ github.sha }}
 
 jobs:
   run-integration-test:
@@ -28,11 +23,18 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
+        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml'] 
+        
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20'
+
     - uses: actions/checkout@v2
       name: Checkout from PR branch
       with: 
@@ -43,17 +45,18 @@ jobs:
     - name: Installing dependencies and building latest changes
       run: |
         cd load-testing
-        npm install
-        npm run compile
-    
+        npm install --include=dev -f
+        npm ci
+
     - name: Azure authentication
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
   
     - name: 'Azure Load Testing'
-      uses: ./load-testing/
+      uses: ./load-testing
       with:
-        loadTestConfigFile: 'SampleApp.yaml'
+        loadTestConfigFile: ${{ matrix.configFile }}
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
+      
