@@ -333,3 +333,4 @@ ASALocalRun/
 .vscode
 TmpFiles
 loadTest
+node_modules
