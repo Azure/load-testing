@@ -450,9 +450,6 @@ function getRunTimeParams() {
         if(isNullOrUndefined(val.name)){
             throw new Error(`Invalid secret name at pipeline params at ${str}`);
         }
-        if(!validateUrl(val.value)){
-            throw new Error(`Invalid secret url at pipeline params at ${str}`);
-        }
         secretsRun[val.name] = { type: "SECRET_VALUE", value: val.value };
       }
     } catch (error) {
