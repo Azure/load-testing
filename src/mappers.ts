@@ -1,7 +1,7 @@
 import { IHeaders } from "typed-rest-client/Interfaces";
 import * as core from "@actions/core";
 const yaml = require("js-yaml");
-const jwt_decode = require("jwt-decode");
+import * as jwt_decode from "jwt-decode";
 import * as fs from "fs";
 var FormData = require("form-data");
 import { execFile } from "child_process";
@@ -171,9 +171,9 @@ export async function getTestRunHeader() {
 }
 
 function isExpired() {
-  const header = jwt_decode(token);
+  const header = jwt_decode.jwtDecode(token);
   const now = Math.floor(Date.now() / 1000);
-  return header && header.exp > now;
+  return header && header.exp && header.exp > now;
 }
 export async function getTestHeader() {
   await getAccessToken(dataPlaneTokenScope);

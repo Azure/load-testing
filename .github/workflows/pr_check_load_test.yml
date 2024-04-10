@@ -1,26 +1,21 @@
-name: pr_check_load_test
+name: pr build check
 
 on:
   push:
     branches:
       - releases/*
+      - main
     paths-ignore:
       - '**.md'
   pull_request:
     branches:
-      - 'releases/*'
-# NOTE : This workflow doesn't run on PRs against forks of this repositories
-# Since they won't have access to the repository secrets. Ref: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
-# CONFIGURATION
-# For help, go to https://github.com/Azure/Actions
-#
-# 1. Set up the following secrets in your repository:
-#   AZURE_CREDENTIALS
-#
-# 2. Change these variables for your configuration:
+      - releases/*
+      - main
+
 env:
-  LOAD_TEST_RESOURCE: "load-testing-ghaction"
-  LOAD_TEST_RESOURCE_GROUP: "load-testing-ghaction-rg"
+  LOAD_TEST_RESOURCE: "rbac-test"
+  LOAD_TEST_RESOURCE_GROUP: "radhika-test"
+  COMMIT_ID : ${{ github.sha }}
 
 jobs:
   run-integration-test:
@@ -29,15 +24,30 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
+        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml'] 
+        
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20'
+
+    - uses: actions/checkout@v2
+      name: Checkout from PR branch
+      with: 
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        path: 'load-testing'
+        ref: ${{ github.event.pull_request.head.ref }}
+
     - name: Installing dependencies and building latest changes
       run: |
-        npm install -f
-        npm run compile
+        cd load-testing
+        npm install --include=dev -f
+        npm ci
 
     - name: Azure authentication
       uses: azure/login@v1
@@ -45,8 +55,9 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
   
     - name: 'Azure Load Testing'
-      uses: ./load-testing/
+      uses: ./load-testing
       with:
-        loadTestConfigFile: 'SampleApp.yaml'
+        loadTestConfigFile: ${{ matrix.configFile }}
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
+      
