@@ -36,16 +36,8 @@ jobs:
       with:
         node-version: '20'
 
-    - uses: actions/checkout@v2
-      name: Checkout from PR branch
-      with: 
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-        path: 'load-testing'
-        ref: ${{ github.event.pull_request.head.ref }}
-
     - name: Installing dependencies and building latest changes
       run: |
-        cd load-testing
         npm install --include=dev -f
         npm ci
 
@@ -55,7 +47,7 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
   
     - name: 'Azure Load Testing'
-      uses: ./load-testing
+      uses: ./
       with:
         loadTestConfigFile: ${{ matrix.configFile }}
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
