@@ -956,3 +956,90 @@ export const invalidAutoStop3 : any =
     configurationFiles: ['sampledata.csv' ],
     autoStop : { errorPercentage : 10.23, timeWindow : -100.01}
 }
+
+export const multiRegionConfigTestInvalidEngineInstances : any = 
+{
+    version: 'v0.1',
+    testId: 'SampleTest',
+    testName: 'SampleTest',
+    displayName: 'Sample Test',
+    description: 'Load test website home page',
+    testPlan: 'SampleTest.jmx',
+    testType: 'JMX',
+    engineInstances: 2,
+    regionalLoadTestConfig: [
+      {
+        region: 'eastus',
+        engineInstances: -1,
+      },
+      {
+        region: 'westus',
+        engineInstances: 1,
+      }
+    ]
+}
+
+export const multiRegionConfigTestNullRegion : any =
+{
+  version: 'v0.1',
+  testId: 'SampleTest',
+  testName: 'SampleTest',
+  displayName: 'Sample Test',
+  description: 'Load test website home page',
+  testPlan: 'SampleTest.jmx',
+  testType: 'JMX',
+  engineInstances: 2,
+  regionalLoadTestConfig: [
+    {
+      region: null,
+      engineInstances: 1,
+    },
+    {
+      region: 'westus',
+      engineInstances: 1,
+    }
+  ]
+}
+
+export const multiRegionConfigTestEmptyRegion : any =
+{
+  version: 'v0.1',
+  testId: 'SampleTest',
+  testName: 'SampleTest',
+  displayName: 'Sample Test',
+  description: 'Load test website home page',
+  testPlan: 'SampleTest.jmx',
+  testType: 'JMX',
+  engineInstances: 2,
+  regionalLoadTestConfig: [
+    {
+      region: "",
+      engineInstances: 1,
+    },
+    {
+      region: 'westus',
+      engineInstances: 1,
+    }
+  ]
+}
+
+export const multiRegionConfigTestInvalidEngineInstanceSum : any =
+{
+  version: 'v0.1',
+  testId: 'SampleTest',
+  testName: 'SampleTest',
+  displayName: 'Sample Test',
+  description: 'Load test website home page',
+  testPlan: 'SampleTest.jmx',
+  testType: 'JMX',
+  regionalLoadTestConfig: [
+    {
+      region: "eastus",
+      engineInstances: 3,
+    },
+    {
+      region: 'westus',
+      engineInstances: 1,
+    }
+  ]
+}

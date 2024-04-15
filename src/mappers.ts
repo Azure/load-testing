@@ -30,6 +30,7 @@ var armEndpoint="https://management.azure.com";
 var tenantId = "";
 var yamlFile = "";
 var passFailCriteria: any[] = [];
+var regionalLoadTestConfig: regionConfiguration[] | null = null;
 var autoStop: autoStopCriteriaObjOut | null = null;
 var kvRefId: string | null = null;
 var kvRefType: string | null = null;
@@ -62,6 +63,12 @@ export interface autoStopCriteriaObjOut {
   errorRate ?: number;
   errorRateTimeWindowInSeconds ?: number;
 }
+
+export interface regionConfiguration {
+  region: string;
+  engineInstances: number;
+};
+
 export interface paramObj {
   type: string;
   value: string;
@@ -103,7 +110,8 @@ export function createTestData() {
     loadTestConfiguration: {
       engineInstances: engineInstances,
       splitAllCSVs: splitCSVs,
-      optionalLoadTestConfig : null
+      optionalLoadTestConfig : null,
+      regionalLoadTestConfig : regionalLoadTestConfig,
     },
     secrets: secretsYaml,
     kind : kind,
@@ -291,6 +299,9 @@ export async function getInputParams() {
   if (config.keyVaultReferenceIdentity != undefined) {
     kvRefType = "UserAssigned";
     kvRefId = config.keyVaultReferenceIdentity;
+  }
+  if(config.regionalLoadTestConfig != undefined) {
+    regionalLoadTestConfig = getMultiRegionLoadTestConfig(config.regionalLoadTestConfig);
   }
   getRunTimeParams();
   validateTestRunParams();
@@ -634,4 +645,16 @@ function getAutoStopCriteria(autoStopInput : autoStopCriteriaObjIn | string | nu
     };
     autoStop = data;
   }
+}
+
+function getMultiRegionLoadTestConfig(multiRegionalConfig : any[]) : regionConfiguration[]  {
+  let parsedMultiRegionConfiguration : regionConfiguration[] = []
+  multiRegionalConfig.forEach(regionConfig => {
+      let data = {
+          region: regionConfig.region,
+          engineInstances: regionConfig.engineInstances,
+      };
+      parsedMultiRegionConfiguration.push(data);
+  });
+  return parsedMultiRegionConfiguration;
 }
