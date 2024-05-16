@@ -117,6 +117,9 @@ describe('invalid Yaml tests', () =>{
     test('Invalid engine instance sum', () => {
       expect(checkValidityYaml(constants.multiRegionConfigTestInvalidEngineInstanceSum)).toStrictEqual({valid : false, error : `The sum of engineInstances in regionalLoadTestConfig should be equal to the value of totalEngineInstances "1" in the test configuration.`});
     });
+    test('Invalid number of regions', () => {
+      expect(checkValidityYaml(constants.multiRegionConfigTestInvalidNumberOfRegions)).toStrictEqual({valid : false, error : `Multi-region load tests should contain a minimum of 2 geographic regions in the configuration.`});
+    });
   });
 })
 

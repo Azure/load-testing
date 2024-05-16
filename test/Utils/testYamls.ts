@@ -1043,3 +1043,20 @@ export const multiRegionConfigTestInvalidEngineInstanceSum : any =
     }
   ]
 }
+
+export const multiRegionConfigTestInvalidNumberOfRegions : any =
+{
+  version: 'v0.1',
+  testId: 'SampleTest',
+  testName: 'SampleTest',
+  displayName: 'Sample Test',
+  description: 'Load test website home page',
+  testPlan: 'SampleTest.jmx',
+  testType: 'JMX',
+  regionalLoadTestConfig: [
+    {
+      region: "eastus",
+      engineInstances: 1,
+    }
+  ]
+}
