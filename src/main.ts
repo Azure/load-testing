@@ -37,7 +37,7 @@ async function run() {
     }
 }
 async function getTestAPI(validate:boolean) {
-    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm2023Version;
+    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm20240301previewVersion;
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let testResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
@@ -76,7 +76,7 @@ async function getTestAPI(validate:boolean) {
     }   
 }
 async function deleteFileAPI(filename:string) {
-    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm2023Version;
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion;
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let delFileResult = await util.httpClientRetries(urlSuffix,header,'del',3,"");
@@ -87,7 +87,7 @@ async function deleteFileAPI(filename:string) {
     }
 }
 async function createTestAPI() {
-    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm2023Version;
+    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm20240301previewVersion;
     urlSuffix = baseURL+urlSuffix;
     var createData = map.createTestData();
     let header = await map.createTestHeader();
@@ -151,7 +151,7 @@ async function uploadTestPlan()
     let retry = 5;
     let filepath = map.getTestFile();
     let filename = map.getFileName(filepath);
-    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm2023Version;
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion;
     if(map.getTestKind() == TestKind.URL){
         urlSuffix = urlSuffix + ("&fileType="+FileType.URL_TEST_CONFIG);
     }
@@ -197,7 +197,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (let filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm2023Version;
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion;
             urlSuffix = baseURL+urlSuffix;
             let headers = await map.UploadAndValidateHeader();
             let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
@@ -218,7 +218,7 @@ async function uploadZipArtifacts()
         console.log("Uploading and validating the zip artifacts");
         for (let filepath of zipFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm2023Version+"&fileType="+FileType.ZIPPED_ARTIFACTS;
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion+"&fileType="+FileType.ZIPPED_ARTIFACTS;
             urlSuffix = baseURL+urlSuffix;
             let headers = await map.UploadAndValidateHeader();
             let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
@@ -235,7 +235,7 @@ async function uploadZipArtifacts()
         let zipInvalid = false;
         let zipFailureReason = "";
         while(maxAllowedTime>(new Date()) && flagValidationPending) {
-            var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm2023Version;
+            var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm20240301previewVersion;
             urlSuffix = baseURL+urlSuffix;
             let header = await map.getTestHeader();
             let testResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
@@ -277,7 +277,7 @@ async function uploadPropertyFile()
     let propertyFile = map.getPropertyFile();
     if(propertyFile != undefined) {
         let filename = map.getFileName(propertyFile);
-        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm2023Version+"&fileType="+FileType.USER_PROPERTIES;
+        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion+"&fileType="+FileType.USER_PROPERTIES;
         urlSuffix = baseURL + urlSuffix;
         let headers = await map.UploadAndValidateHeader();
         let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,propertyFile);
@@ -294,7 +294,7 @@ async function uploadPropertyFile()
 async function createTestRun() {
     const tenantId = map.getTenantId();
     const testRunId = util.getUniqueId();
-    var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version="+util.apiConstants.tm2023Version;
+    var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version="+util.apiConstants.tm20240301previewVersion;
     urlSuffix = baseURL+urlSuffix;
     const ltres: string = core.getInput('loadTestResource');
     const runDisplayName: string = core.getInput('loadTestRunName');
@@ -329,7 +329,7 @@ async function createTestRun() {
 }
 async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date) 
 {   
-    var urlSuffix = "test-runs/"+testRunId+"?api-version="+util.apiConstants.tm2023Version;
+    var urlSuffix = "test-runs/"+testRunId+"?api-version="+util.apiConstants.tm20240301previewVersion;
     urlSuffix = baseURL+urlSuffix;
     while(!util.isTerminalTestStatus(testStatus)) 
     {
