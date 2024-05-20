@@ -104,6 +104,23 @@ describe('invalid Yaml tests', () =>{
       expect(checkValidityYaml(constants.invalidAutoStop3)).toStrictEqual({valid : false, error : `The value "-100.01" for timeWindow of auto-stop criteria is invalid. The value should be valid integer greater than 0.`});
     });
   });
+  describe('Multi region config invalid scenarios', () => {
+    test('Invalid regional engine instance', () => {
+      expect(checkValidityYaml(constants.multiRegionConfigTestInvalidEngineInstances)).toStrictEqual({valid : false, error : `The value "-1" for engineInstances in regionalLoadTestConfig is invalid. The value should be an integer between 1 and 400.`});
+    });
+    test('Null region value', () => {
+      expect(checkValidityYaml(constants.multiRegionConfigTestNullRegion)).toStrictEqual({valid : false, error : `The value "null" for region in regionalLoadTestConfig is invalid. Provide a valid string.`});
+    });
+    test('Empty region value', () => {
+      expect(checkValidityYaml(constants.multiRegionConfigTestEmptyRegion)).toStrictEqual({valid : false, error : `The value "" for region in regionalLoadTestConfig is invalid. Provide a valid string.`});
+    });
+    test('Invalid engine instance sum', () => {
+      expect(checkValidityYaml(constants.multiRegionConfigTestInvalidEngineInstanceSum)).toStrictEqual({valid : false, error : `The sum of engineInstances in regionalLoadTestConfig should be equal to the value of totalEngineInstances "1" in the test configuration.`});
+    });
+    test('Invalid number of regions', () => {
+      expect(checkValidityYaml(constants.multiRegionConfigTestInvalidNumberOfRegions)).toStrictEqual({valid : false, error : `Multi-region load tests should contain a minimum of 2 geographic regions in the configuration.`});
+    });
+  });
 })
 
 describe('valid yaml tests', () => {

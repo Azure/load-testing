@@ -33,6 +33,7 @@ const validConditionList = {
     'error': ['>']
 }
 export module apiConstants {
+    export const tm20240301previewVersion = '2024-03-01-preview';
     export const tm2023Version = '2023-04-01-preview';
     export const tm2022Version = '2022-11-01';
     export const cp2022Version = '2022-12-01'
@@ -368,6 +369,30 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
         }
         else if(givenYaml.autoStop != "disable"){
             return {valid : false, error : 'Invalid value for "autoStop", for disabling auto stop use "autoStop: disable"'};
+        }
+    }
+    if(givenYaml.regionalLoadTestConfig){
+        if(!Array.isArray(givenYaml.regionalLoadTestConfig)){
+            return {valid : false, error : `The value "${givenYaml.regionalLoadTestConfig}" for regionalLoadTestConfig is invalid. Provide a valid list of region configuration for Multi-region load test.`};
+        }
+        
+        if(givenYaml.regionalLoadTestConfig.length < 2){
+            return {valid : false, error : `Multi-region load tests should contain a minimum of 2 geographic regions in the configuration.`};
+        }
+
+        var totalEngineCount = 0;
+        for(let i = 0; i < givenYaml.regionalLoadTestConfig.length; i++){
+            if(isNullOrUndefined(givenYaml.regionalLoadTestConfig[i].region) || typeof givenYaml.regionalLoadTestConfig[i].region != 'string' || givenYaml.regionalLoadTestConfig[i].region == ""){
+                return {valid : false, error : `The value "${givenYaml.regionalLoadTestConfig[i].region}" for region in regionalLoadTestConfig is invalid. Provide a valid string.`};
+            }
+            if(isNullOrUndefined(givenYaml.regionalLoadTestConfig[i].engineInstances) || isNaN(givenYaml.regionalLoadTestConfig[i].engineInstances) || inValidEngineInstances(givenYaml.regionalLoadTestConfig[i].engineInstances)){
+                return {valid : false, error : `The value "${givenYaml.regionalLoadTestConfig[i].engineInstances}" for engineInstances in regionalLoadTestConfig is invalid. The value should be an integer between 1 and 400.`};
+            }
+            totalEngineCount += givenYaml.regionalLoadTestConfig[i].engineInstances;
+        }
+        let engineInstances = givenYaml.engineInstances ?? 1;
+        if(totalEngineCount != givenYaml.engineInstances){
+            return {valid : false, error : `The sum of engineInstances in regionalLoadTestConfig should be equal to the value of totalEngineInstances "${engineInstances}" in the test configuration.`};
         }
     }
     return {valid : true, error : ""};
