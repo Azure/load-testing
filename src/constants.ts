@@ -7,7 +7,7 @@ export const defaultYaml : any =
     description: 'Load test website home page',
     testPlan: 'SampleTest.jmx',
     testType: 'JMX',
-    engineInstances: 1,
+    engineInstances: 2,
     subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
     publicIPDisabled: false,
     configurationFiles: [ 'sampledata.csv' ],
@@ -34,5 +34,15 @@ export const defaultYaml : any =
     ],
     autoStop: { errorPercentage: 80, timeWindow: 60 },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
-    keyVaultReferenceIdentityType: 'SystemAssigned'
+    keyVaultReferenceIdentityType: 'SystemAssigned',
+    regionalLoadTestConfig: [
+      {
+          region: 'eastus',
+          engineInstances: 1,
+      },
+      {
+          region: 'westus',
+          engineInstances: 1,
+      }
+    ]
 }
