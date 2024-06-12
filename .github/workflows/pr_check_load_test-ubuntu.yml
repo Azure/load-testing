@@ -65,7 +65,7 @@ jobs:
         # replace 'originalTestName' with the original test name in the file
         # replace 'newTestName${{ matrix.test }}' with the new test name for each test
         guid=${{ steps.guid.outputs.GUID }}
-        cp ${{ matrix.file }} test-config-$guid.yaml
+        cp ${{ matrix.configFile }} test-config-$guid.yaml
         sed -i 's/testId/${guid}${{ matrix.os }}/g' test-config-$guid.yaml
 
     - name: 'Azure Load Testing'
