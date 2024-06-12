@@ -81,7 +81,7 @@ jobs:
 
     - name: Check for results and report files
       run: |
-        if [[ -d "./loadTests" ]]; then
+        if [[ -d "./loadTest" ]]; then
           if [[ -f "./loadTest/results.zip" && -f "./loadTest/report.zip" ]]; then
             echo "Both results.zip and report.zip files are present."
           else
