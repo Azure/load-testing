@@ -106,7 +106,7 @@ export function checkFileType(filePath: string, fileExtToValidate: string): bool
 }
 export async function printTestDuration(vusers:string, startTime:Date, endTime : Date, testStatus : string) 
 {
-    console.log("TestRun completed\n");
+    console.log("Summary generation completed\n");
     console.log("-------------------Summary ---------------");
     console.log("TestRun start time: "+ startTime);
     console.log("TestRun end time: "+ endTime);
