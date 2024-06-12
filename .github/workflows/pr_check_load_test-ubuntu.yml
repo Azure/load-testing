@@ -18,8 +18,8 @@ env:
   COMMIT_ID : ${{ github.sha }}
 
 permissions:
-  id-token: write # This is required for requesting the JWTcontents: read  # This is required for actions/checkout
-  contents : read
+  id-token: write # This is required for requesting the JWT
+  contents : read # This is required for actions/checkout
 
 jobs:
   run-integration-test:
@@ -27,7 +27,7 @@ jobs:
     name: Validate PR
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         configFile: ['sample-test-url-ubuntu.yaml', 'sample-test-jmx-ubuntu.yaml'] 
         
     runs-on: ${{ matrix.os }}
@@ -53,11 +53,25 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-  
+    - name: Generate GUID
+      id: guid
+      run: |
+        echo "::set-output name=GUID::$(uuidgen)"
+      shell: bash
+
+    - name: Set up testName
+      shell: bash
+      run: |
+        # replace 'originalTestName' with the original test name in the file
+        # replace 'newTestName${{ matrix.test }}' with the new test name for each test
+        guid=${{ steps.guid.outputs.GUID }}
+        cp ${{ matrix.file }} test-config-$guid.yaml
+        sed -i 's/testId/${guid}${{ matrix.os }}/g' test-config-$guid.yaml
+
     - name: 'Azure Load Testing'
       uses: ./
       with:
-        loadTestConfigFile: ${{ matrix.configFile }}
+        loadTestConfigFile: test-config-${{ steps.guid.outputs.GUID }}.yaml
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
       
