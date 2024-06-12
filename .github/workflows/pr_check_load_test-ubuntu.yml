@@ -56,9 +56,11 @@ jobs:
     - name: Generate GUID
       id: guid
       run: |
-        echo "::set-output name=GUID::$(powershell -Command "[guid]::NewGuid().ToString()")"
-      shell: bash
-
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "::set-output name=GUID::$(powershell -Command "[guid]::NewGuid().ToString()")"
+          else
+            echo "::set-output name=GUID::$(uuidgen)"
+          fi
     - name: Set up testName
       shell: bash
       run: |
