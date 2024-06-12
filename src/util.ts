@@ -34,10 +34,8 @@ const validConditionList = {
 }
 export module apiConstants {
     export const latestVersion = '2024-05-01-preview';
-    // export const tm20240301PreviewVersion = '2024-03-01-preview';
-    // export const tm2023Version = '2023-04-01-preview'; // not used now.
     export const tm2022Version = '2022-11-01';
-    export const cp2022Version = '2022-12-01'
+    export const cp2022Version = '2022-12-01';
 }
 export enum ManagedIdentityType {
     SystemAssigned = "SystemAssigned",
