@@ -56,7 +56,7 @@ jobs:
     - name: Generate GUID
       id: guid
       run: |
-        echo "::set-output name=GUID::$(uuidgen)"
+        echo "::set-output name=GUID::$(powershell -Command "[guid]::NewGuid().ToString()")"
       shell: bash
 
     - name: Set up testName
