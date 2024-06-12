@@ -1,4 +1,4 @@
-name: pr build check
+name: pr build check ubuntu
 
 on:
   push:
