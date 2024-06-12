@@ -27,8 +27,8 @@ jobs:
     name: Validate PR
     strategy:
       matrix:
-        os: [windows-latest]
-        configFile: ['sample-test-url-windows.yaml', 'sample-test-jmx-windows.yaml'] 
+        os: [ubuntu-latest]
+        configFile: ['sample-test-url-ubuntu.yaml', 'sample-test-jmx-ubuntu.yaml'] 
         
     runs-on: ${{ matrix.os }}
     steps:

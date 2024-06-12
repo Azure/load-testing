@@ -1,5 +1,5 @@
 version: v0.1
-testName: fdklxmebnjdabjef
+testName: sbkjbfeudefn
 testPlan: SampleApp.jmx
 testType: JMX
 description: 'E2E for the build pipeline'
