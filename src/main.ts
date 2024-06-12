@@ -7,6 +7,8 @@ import { isNullOrUndefined } from 'util';
 import {TestKind} from "./util";
 
 const resultFolder = 'loadTest';
+const reportZipFileName = 'report.zip';
+const resultZipFileName = 'results.zip';
 let baseURL = '';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 let testId = '';
@@ -37,7 +39,7 @@ async function run() {
     }
 }
 async function getTestAPI(validate:boolean) {
-    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let testResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
@@ -76,7 +78,7 @@ async function getTestAPI(validate:boolean) {
     }   
 }
 async function deleteFileAPI(filename:string) {
-    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let delFileResult = await util.httpClientRetries(urlSuffix,header,'del',3,"");
@@ -87,7 +89,7 @@ async function deleteFileAPI(filename:string) {
     }
 }
 async function createTestAPI() {
-    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     var createData = map.createTestData();
     let header = await map.createTestHeader();
@@ -151,7 +153,7 @@ async function uploadTestPlan()
     let retry = 5;
     let filepath = map.getTestFile();
     let filename = map.getFileName(filepath);
-    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion;
     if(map.getTestKind() == TestKind.URL){
         urlSuffix = urlSuffix + ("&fileType="+FileType.URL_TEST_CONFIG);
     }
@@ -197,7 +199,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (let filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion;
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion;
             urlSuffix = baseURL+urlSuffix;
             let headers = await map.UploadAndValidateHeader();
             let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
@@ -218,7 +220,7 @@ async function uploadZipArtifacts()
         console.log("Uploading and validating the zip artifacts");
         for (let filepath of zipFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion+"&fileType="+FileType.ZIPPED_ARTIFACTS;
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion+"&fileType="+FileType.ZIPPED_ARTIFACTS;
             urlSuffix = baseURL+urlSuffix;
             let headers = await map.UploadAndValidateHeader();
             let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
@@ -235,7 +237,7 @@ async function uploadZipArtifacts()
         let zipInvalid = false;
         let zipFailureReason = "";
         while(maxAllowedTime>(new Date()) && flagValidationPending) {
-            var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm20240301previewVersion;
+            var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.latestVersion;
             urlSuffix = baseURL+urlSuffix;
             let header = await map.getTestHeader();
             let testResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
@@ -277,7 +279,7 @@ async function uploadPropertyFile()
     let propertyFile = map.getPropertyFile();
     if(propertyFile != undefined) {
         let filename = map.getFileName(propertyFile);
-        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion+"&fileType="+FileType.USER_PROPERTIES;
+        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion+"&fileType="+FileType.USER_PROPERTIES;
         urlSuffix = baseURL + urlSuffix;
         let headers = await map.UploadAndValidateHeader();
         let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,propertyFile);
@@ -294,7 +296,7 @@ async function uploadPropertyFile()
 async function createTestRun() {
     const tenantId = map.getTenantId();
     const testRunId = util.getUniqueId();
-    var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     const ltres: string = core.getInput('loadTestResource');
     const runDisplayName: string = core.getInput('loadTestRunName');
@@ -329,7 +331,7 @@ async function createTestRun() {
 }
 async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date) 
 {   
-    var urlSuffix = "test-runs/"+testRunId+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "test-runs/"+testRunId+"?api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     while(!util.isTerminalTestStatus(testStatus)) 
     {
@@ -343,8 +345,10 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         if(util.isTerminalTestStatus(testStatus)) {
             let vusers = null;
             let count = 0;
+            let reportsAvailable = false;
+            console.log("Test run completed. Polling for statistics and dashboard report to populate.");
             // Polling for max 3 min for statistics and pass fail criteria to populate
-            while(isNullOrUndefined(vusers) && count < 18){
+            while((!reportsAvailable || isNullOrUndefined(vusers)) && count < 18){
                 await util.sleep(10000);
                 let header = await map.getTestRunHeader();
                 let testRunResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
@@ -359,6 +363,10 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 }
                 vusers = testRunObj.virtualUsers;
                 count++;
+                let testReport = util.getReportFolder(testRunObj.testArtifacts);
+                if(testReport) {
+                    reportsAvailable = true;
+                }
             }
             if(testRunObj && testRunObj.startDateTime){
                 startTime = new Date(testRunObj.startDateTime);
@@ -372,16 +380,28 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
             if(testRunObj.testRunStatistics != null)
                 util.printClientMetrics(testRunObj.testRunStatistics);
-            var testResultUrl = util.getResultFolder(testRunObj.testArtifacts);
+            let testResultUrl = util.getResultFolder(testRunObj.testArtifacts);
             if(testResultUrl != null) {
-                const response = await util.httpClientRetries(testResultUrl,{'content-type' : 'application/merge-patch+json'},'get',3,"");
+                const response = await util.httpClientRetries(testResultUrl,{},'get',3,"");
                 if (response.message.statusCode != 200) {
                     let respObj:any = await util.getResultObj(response);
                     console.log(respObj ? respObj : util.ErrorCorrection(response));
                     throw new Error("Error in fetching results ");
                 }
                 else {
-                    await util.getResultsFile(response);
+                    await util.uploadFileToResultsFolder(response,resultZipFileName);
+                }
+            }
+            let testReportUrl = util.getReportFolder(testRunObj.testArtifacts);
+            if(testReportUrl != null) {
+                const response = await util.httpClientRetries(testReportUrl,{},'get',3,"");
+                if (response.message.statusCode != 200) {
+                    let respObj:any = await util.getResultObj(response);
+                    console.log(respObj ? respObj : util.ErrorCorrection(response));
+                    throw new Error("Error in fetching report ");
+                }
+                else {
+                    await util.uploadFileToResultsFolder(response, reportZipFileName);
                 }
             }
             if(testRunObj.status === "FAILED" || testRunObj.status === "CANCELLED") {

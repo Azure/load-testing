@@ -17,6 +17,10 @@ env:
   LOAD_TEST_RESOURCE_GROUP: "radhika-test"
   COMMIT_ID : ${{ github.sha }}
 
+permissions:
+  id-token: write # This is required for requesting the JWTcontents: read  # This is required for actions/checkout
+  contents : read
+
 jobs:
   run-integration-test:
     environment: automation test
@@ -43,8 +47,12 @@ jobs:
 
     - name: Azure authentication
       uses: azure/login@v1
+      continue-on-error: false
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
   
     - name: 'Azure Load Testing'
       uses: ./

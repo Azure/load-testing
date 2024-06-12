@@ -3,7 +3,6 @@ import * as core from "@actions/core";
 const yaml = require("js-yaml");
 import * as jwt_decode from "jwt-decode";
 import * as fs from "fs";
-var FormData = require("form-data");
 import { execFile } from "child_process";
 import * as util from './util';
 import * as index from './main';
@@ -21,12 +20,12 @@ var configFiles: string[] = [];
 var zipFiles : string[]=[];
 var token = "";
 var resourceId = "";
-var subscriptionID = "";
+var subscriptionID = "7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a";
 var environment="AzureCloud";
 var armTokenScope="https://management.core.windows.net";
 var dataPlaneTokenScope="https://loadtest.azure-dev.com";
 var armEndpoint="https://management.azure.com";
-var tenantId = "";
+var tenantId = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 var yamlFile = "";
 var passFailCriteria: any[] = [];
 var regionalLoadTestConfig: regionConfiguration[] | null = null;
@@ -376,7 +375,7 @@ async function execAz(cmdArguments: string[]): Promise<any> {
     execFile(
       azCmd,
       [...cmdArguments, "--out", "json"],
-      { encoding: "utf8" },
+      { encoding: "utf8", shell: true },
       (error: any, stdout: any) => {
         if (error) {
           return reject(error);
