@@ -1,4 +1,4 @@
-name: pr build check ubuntu
+name: pr build check for some E2E tests
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        configFile: ['sample-test-url-ubuntu.yaml', 'sample-test-jmx-ubuntu.yaml'] 
+        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml']
         
     runs-on: ${{ matrix.os }}
     steps:
