@@ -80,11 +80,15 @@ jobs:
 
     - name: Check for results and report files
       run: |
-        if [[ -f "./loadTest/results.zip" && -f "./loadTest/report.zip" ]]; then
-          echo "Both results.zip and report.zip files are present."
+        if [[ -d "./loadTest" ]]; then
+          if [[ -f "./loadTest/results.zip" && -f "./loadTest/report.zip" ]]; then
+            echo "Both results.zip and report.zip files are present."
+          else
+            echo "One or both of the files are missing."
+            exit 1
+          fi
         else
-          echo "One or both of the files are missing."
+          echo "loadTest directory is missing."
           exit 1
         fi
       shell: bash
-      
