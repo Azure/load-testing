@@ -67,7 +67,8 @@ jobs:
       shell: bash
       run: |
         # replace 'originalTestName' with the original test name in the file
-        # replace 'newTestName${{ matrix.test }}' with the new test name for each test
+        # replacing '${{ steps.guid.outputs.GUID }}' with the new test name for each test
+        # copying the files to a new file and editing the testId for each file in the copied file.
         cp ${{ matrix.configFile }} test-config-${{ steps.guid.outputs.GUID }}.yaml
         sed -i 's/testId/${{ steps.guid.outputs.GUID }}/g' test-config-${{ steps.guid.outputs.GUID }}.yaml
 
