@@ -10,7 +10,6 @@ const resultFolder = 'loadTest';
 const reportZipFileName = 'report.zip';
 const resultZipFileName = 'results.zip';
 let baseURL = '';
-const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 let testId = '';
 let existingCriteria: { [name: string]: map.criteriaObj | null } = {};
 let existingParams: { [name: string]: map.paramObj|null } = {};
@@ -49,10 +48,20 @@ async function getTestAPI(validate:boolean) {
         +"https://docs.microsoft.com/azure/load-testing/tutorial-cicd-github-actions#configure-the-github-actions-workflow-to-run-a-load-test ";
         throw new Error(message);
     }
-    if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201 && testResult.message.statusCode != 404){
-        let testObj:any=await util.getResultObj(testResult);
-        console.log(testObj ? testObj : util.ErrorCorrection(testResult));
-        throw new Error("Error in getting the test.");
+    if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201){
+        if(validate){ // validate is called, then get should not be false, and this validate had retries because of the conflicts in jmx test, so lets not print in the console, instead put this in the error itself.
+            let testObj:any=await util.getResultObj(testResult);
+            let err = testObj?.error?.message ? testObj?.error?.message : util.ErrorCorrection(testResult);
+            throw new Error(err);
+        } else if(!validate && testResult.message.statusCode != 404){ // if not validate, then its to check if it is edit or create thats all, so it should not throw the error for 404.
+            let testObj:any=await util.getResultObj(testResult);
+            console.log(testObj ? testObj : util.ErrorCorrection(testResult));
+            throw new Error("Error in getting the test.");
+        }
+        // note : kumarmoh 
+        /// else {
+        //    do nothing if the validate = false and status code is 404, as it is for create test.
+        // } this is just for comment
     }
     if(testResult.message.statusCode == 200) {
         let testObj:any=await util.getResultObj(testResult);
@@ -171,14 +180,14 @@ async function uploadTestPlan()
         var startTime = new Date();
         var maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
         var validationStatus = "VALIDATION_INITIATED";
-        while(maxAllowedTime>(new Date()) && (validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED")) {
+        while(maxAllowedTime>(new Date()) && (validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED" || validationStatus == null)) {
             try{
                 validationStatus = await getTestAPI(true);
             }
-            catch(e) {
+            catch(e:any) {
                 retry--;
                 if(retry == 0){
-                    throw new Error("Unable to validate the test plan. Please retry.");
+                    throw new Error("Unable to validate the test plan. Please retry. Failed with error :" + e);
                 }
             }
             await util.sleep(5000);
