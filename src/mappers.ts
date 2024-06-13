@@ -328,9 +328,7 @@ export async function getSubName() {
     throw new Error(message);
   }
 }
-function isValidTestKind(value: string): value is TestKind {
-  return Object.values(TestKind).includes(value as TestKind);
-}
+
 async function getAccessToken(aud: string) {
   try {
     const cmdArguments = ["account", "get-access-token", "--resource"];
