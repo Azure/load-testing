@@ -3,7 +3,6 @@ import * as core from "@actions/core";
 const yaml = require("js-yaml");
 import * as jwt_decode from "jwt-decode";
 import * as fs from "fs";
-var FormData = require("form-data");
 import { execFile } from "child_process";
 import * as util from './util';
 import * as index from './main';
@@ -325,13 +324,11 @@ export async function getSubName() {
   } catch (err: any) {
     const message =
       `An error occurred while getting credentials from ` +
-      `Azure CLI: ${err.stack}`;
+      `Azure CLI for getting subscription name: ${err.message}`; 
     throw new Error(message);
   }
 }
-function isValidTestKind(value: string): value is TestKind {
-  return Object.values(TestKind).includes(value as TestKind);
-}
+
 async function getAccessToken(aud: string) {
   try {
     const cmdArguments = ["account", "get-access-token", "--resource"];
@@ -344,7 +341,7 @@ async function getAccessToken(aud: string) {
   } catch (err: any) {
     const message =
       `An error occurred while getting credentials from ` +
-      `Azure CLI: ${err.stack}`;
+      `Azure CLI for getting access token: ${err.message}`;
     throw new Error(message);
   }
 }
@@ -365,7 +362,7 @@ async function setEndpointAndScope() {
   } catch (err: any) {
     const message =
       `An error occurred while getting credentials from ` +
-      `Azure CLI: ${err.stack}`;
+      `Azure CLI for setting endPoint and scope: ${err.message}`;
     throw new Error(message);
   }
 }
@@ -376,7 +373,7 @@ async function execAz(cmdArguments: string[]): Promise<any> {
     execFile(
       azCmd,
       [...cmdArguments, "--out", "json"],
-      { encoding: "utf8" },
+      { encoding: "utf8", shell: true },
       (error: any, stdout: any) => {
         if (error) {
           return reject(error);
@@ -386,7 +383,7 @@ async function execAz(cmdArguments: string[]): Promise<any> {
         } catch (err: any) {
           const msg =
             `An error occurred while parsing the output "${stdout}", of ` +
-            `the cmd az "${cmdArguments}": ${err.stack}.`;
+            `the cmd az "${cmdArguments}": ${err.nmessage}.`;
           return reject(new Error(msg));
         }
       }

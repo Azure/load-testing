@@ -1,4 +1,4 @@
-name: pr build check
+name: pr build check for some E2E tests
 
 on:
   push:
@@ -13,9 +13,12 @@ on:
       - main
 
 env:
-  LOAD_TEST_RESOURCE: "rbac-test"
-  LOAD_TEST_RESOURCE_GROUP: "radhika-test"
-  COMMIT_ID : ${{ github.sha }}
+  LOAD_TEST_RESOURCE: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
+  LOAD_TEST_RESOURCE_GROUP: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents : read # This is required for actions/checkout
 
 jobs:
   run-integration-test:
@@ -23,8 +26,8 @@ jobs:
     name: Validate PR
     strategy:
       matrix:
-        os: [windows-latest]
-        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml'] 
+        os: [ubuntu-latest, windows-latest]
+        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml']
         
     runs-on: ${{ matrix.os }}
     steps:
@@ -43,13 +46,49 @@ jobs:
 
     - name: Azure authentication
       uses: azure/login@v1
+      continue-on-error: false
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-  
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Generate GUID
+      id: guid
+      run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "::set-output name=GUID::$(powershell -Command "[guid]::NewGuid().ToString()")"
+          else
+            echo "::set-output name=GUID::$(uuidgen)"
+          fi
+      shell : bash
+
+    - name: Set up testName
+      shell: bash
+      run: |
+        # copying the files to a new file and editing the testId for each file in the copied file.
+        # replacing 'testId'(the thing present in the file.) with the new testId ('${{ steps.guid.outputs.GUID }}') in the copied file.
+        cp ${{ matrix.configFile }} test-config-${{ steps.guid.outputs.GUID }}.yaml
+        sed -i 's/testId/${{ steps.guid.outputs.GUID }}/g' test-config-${{ steps.guid.outputs.GUID }}.yaml
+
     - name: 'Azure Load Testing'
       uses: ./
       with:
-        loadTestConfigFile: ${{ matrix.configFile }}
+        loadTestConfigFile: test-config-${{ steps.guid.outputs.GUID }}.yaml
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
-      
+      continue-on-error: true
+
+    - name: Check for results and report files
+      run: |
+        if [[ -d "./loadTest" ]]; then
+          if [[ -f "./loadTest/results.zip" && -f "./loadTest/report.zip" ]]; then
+            echo "Both results.zip and report.zip files are present."
+          else
+            echo "One or both of the files are missing."
+            exit 1
+          fi
+        else
+          echo "loadTest directory is missing."
+          exit 1
+        fi
+      shell: bash

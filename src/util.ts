@@ -13,10 +13,10 @@ import { isNull, isUndefined, isNullOrUndefined } from 'util';
 import { defaultYaml } from './constants';
 
 const validAggregateList = {
-    'response_time_ms': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
+    'response_time_ms': ['avg', 'min', 'max', 'p50', 'p75', 'p90', 'p95', 'p96', 'p97', 'p98', 'p99', 'p999', 'p9999'],
     'requests_per_sec': ['avg'],
     'requests': ['count'],
-    'latency': ['avg', 'min', 'max', 'p50', 'p90', 'p95', 'p99'],
+    'latency': ['avg', 'min', 'max', 'p50', 'p75', 'p90', 'p95', 'p96', 'p97', 'p98', 'p99', 'p999', 'p9999'],
     'error': ['percentage']
 }
 
@@ -33,10 +33,9 @@ const validConditionList = {
     'error': ['>']
 }
 export module apiConstants {
-    export const tm20240301previewVersion = '2024-03-01-preview';
-    export const tm2023Version = '2023-04-01-preview';
+    export const latestVersion = '2024-05-01-preview';
     export const tm2022Version = '2022-11-01';
-    export const cp2022Version = '2022-12-01'
+    export const cp2022Version = '2022-12-01';
 }
 export enum ManagedIdentityType {
     SystemAssigned = "SystemAssigned",
@@ -105,7 +104,7 @@ export function checkFileType(filePath: string, fileExtToValidate: string): bool
 }
 export async function printTestDuration(vusers:string, startTime:Date, endTime : Date, testStatus : string) 
 {
-    console.log("TestRun completed\n");
+    console.log("Summary generation completed\n");
     console.log("-------------------Summary ---------------");
     console.log("TestRun start time: "+ startTime);
     console.log("TestRun end time: "+ endTime);
@@ -150,10 +149,10 @@ function printTestResult(criteria:any) {
     console.log("-------------------Test Criteria ---------------");
     console.log("Results\t\t\t :"+pass+" Pass  "+fail+" Fail\n");
 }
-export async function getResultsFile(response:any) 
+export async function uploadFileToResultsFolder(response:any,fileName : string = 'results.zip') 
 {
     try {
-        const filePath = path.join('loadTest','results.zip');
+        const filePath = path.join('loadTest',fileName);
         const file: NodeJS.WritableStream = fs.createWriteStream(filePath);
         
         return new Promise((resolve, reject) => {
@@ -175,50 +174,32 @@ export async function printClientMetrics(obj:any) {
     if(Object.keys(obj).length == 0)
         return;
     console.log("------------------Client-side metrics------------\n");
-        for(var key in obj) {
-            if(key != "Total")
-                printMetrics(obj[key]);
-        }
-}
-export async function getStatisticsFile(obj:any) {
-    let target = path.join('dropResults',"reports");
-    try 
-    {
-        var filepath = path.join('dropResults','results.zip');
-        var zip = new AdmZip(filepath);
-        zip.extractAllTo(target);
-        let stats = path.join(target,"statistics.json");
-        let json = fs.readFileSync(stats, 'utf8');
-        var obj = JSON.parse(json);
-
-        console.log("------------------Client-side metrics------------\n");
-        for(var key in obj) {
-            if(key != "Total")
-                printMetrics(obj[key]);
-        }
-        deleteFile(target);
-    } 
-    catch(err:any) {
-        err.message = "Error in fetching the client-side metrics of the testRun";
-        throw new Error(err);
+    for(var key in obj) {
+        printMetrics(obj[key], key);
     }
 }
 
-function printMetrics(data:any) {
-    console.log(data.transaction);
-    console.log("response time \t\t : avg="+getAbsVal(data.meanResTime)+"ms min="+getAbsVal(data.minResTime)+"ms med="+getAbsVal(data.medianResTime)+"ms max="+getAbsVal(data.maxResTime)+"ms p(90)="+getAbsVal(data.pct1ResTime)+"ms p(95)="+getAbsVal(data.pct2ResTime)+"ms p(99)="+getAbsVal(data.pct3ResTime)+"ms");
+function printMetrics(data:any, key : string | null = null) {
+    let samplerName : string = data.transaction ?? key;
+    if(samplerName == 'Total'){
+        samplerName = "Aggregate";
+    }
+    console.log("Sampler name \t\t : ",samplerName, "\n");
+    console.log("response time \t\t : avg="+getAbsVal(data.meanResTime)+" ms, min="+getAbsVal(data.minResTime)+" ms, med="+getAbsVal(data.medianResTime)+" ms, max="+getAbsVal(data.maxResTime)+ " ms, p(75)="+getAbsVal(data.pct75ResTime)+" ms, p(90)="+getAbsVal(data.pct1ResTime)+" ms, p(95)="+getAbsVal(data.pct2ResTime)+" ms, p(96)="+getAbsVal(data.pct96ResTime)+" ms, p(98)="+getAbsVal(data.pct98ResTime)+" ms, p(99)="+getAbsVal(data.pct3ResTime)+" ms, p(99.9)="+getAbsVal(data.pct999ResTime)+" ms, p(99.99)="+getAbsVal(data.pct9999ResTime));
     console.log("requests per sec \t : avg="+getAbsVal(data.throughput));
-    console.log("total requests \t\t : "+data.sampleCount)
-    console.log("total errors \t\t : " + data.errorCount)
-    console.log("total error rate \t : "+data.errorPct + "\n");
+    console.log("total requests \t\t : "+data.sampleCount);
+    console.log("total errors \t\t : " + data.errorCount);
+    console.log("total error rate \t : "+data.errorPct);
+    console.log("\n");
 }
 
 function getAbsVal(data:any) {
-    data = data.toString();
-    var index = data.indexOf(".");
-    if(index != -1)
-        data =  data.substr(0,index);
-    return data;
+    if(isNullOrUndefined(data)) {
+        return "undefined";
+    }
+    let dataString : string = data.toString();
+    let dataArray : string[] = dataString.split('.');
+    return dataArray[0];
 }
 
 export function sleep(ms:any) {
@@ -406,6 +387,14 @@ export function getResultFolder(testArtifacts:any) {
     var outputurl = testArtifacts.outputArtifacts;
     return (outputurl.resultFileInfo != null)? outputurl.resultFileInfo.url: null;
 }
+
+export function getReportFolder(testArtifacts:any) {
+    if(testArtifacts == null || testArtifacts.outputArtifacts == null)
+        return null;
+    var outputurl = testArtifacts.outputArtifacts;
+    return (outputurl.reportFileInfo != null)? outputurl.reportFileInfo.url: null;
+}
+
 export function deleteFile(foldername:string) 
 {
     if (fs.existsSync(foldername)) 

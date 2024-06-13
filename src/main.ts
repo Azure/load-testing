@@ -7,8 +7,9 @@ import { isNullOrUndefined } from 'util';
 import {TestKind} from "./util";
 
 const resultFolder = 'loadTest';
+const reportZipFileName = 'report.zip';
+const resultZipFileName = 'results.zip';
 let baseURL = '';
-const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 let testId = '';
 let existingCriteria: { [name: string]: map.criteriaObj | null } = {};
 let existingParams: { [name: string]: map.paramObj|null } = {};
@@ -37,7 +38,7 @@ async function run() {
     }
 }
 async function getTestAPI(validate:boolean) {
-    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let testResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
@@ -47,10 +48,20 @@ async function getTestAPI(validate:boolean) {
         +"https://docs.microsoft.com/azure/load-testing/tutorial-cicd-github-actions#configure-the-github-actions-workflow-to-run-a-load-test ";
         throw new Error(message);
     }
-    if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201 && testResult.message.statusCode != 404){
-        let testObj:any=await util.getResultObj(testResult);
-        console.log(testObj ? testObj : util.ErrorCorrection(testResult));
-        throw new Error("Error in getting the test.");
+    if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201){
+        if(validate){ // validate is called, then get should not be false, and this validate had retries because of the conflicts in jmx test, so lets not print in the console, instead put this in the error itself.
+            let testObj:any=await util.getResultObj(testResult);
+            let err = testObj?.error?.message ? testObj?.error?.message : util.ErrorCorrection(testResult);
+            throw new Error(err);
+        } else if(!validate && testResult.message.statusCode != 404){ // if not validate, then its to check if it is edit or create thats all, so it should not throw the error for 404.
+            let testObj:any=await util.getResultObj(testResult);
+            console.log(testObj ? testObj : util.ErrorCorrection(testResult));
+            throw new Error("Error in getting the test.");
+        }
+        // note : kumarmoh 
+        /// else {
+        //    do nothing if the validate = false and status code is 404, as it is for create test.
+        // } this is just for comment
     }
     if(testResult.message.statusCode == 200) {
         let testObj:any=await util.getResultObj(testResult);
@@ -76,7 +87,7 @@ async function getTestAPI(validate:boolean) {
     }   
 }
 async function deleteFileAPI(filename:string) {
-    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
     let delFileResult = await util.httpClientRetries(urlSuffix,header,'del',3,"");
@@ -87,7 +98,7 @@ async function deleteFileAPI(filename:string) {
     }
 }
 async function createTestAPI() {
-    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     var createData = map.createTestData();
     let header = await map.createTestHeader();
@@ -151,7 +162,7 @@ async function uploadTestPlan()
     let retry = 5;
     let filepath = map.getTestFile();
     let filename = map.getFileName(filepath);
-    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion;
     if(map.getTestKind() == TestKind.URL){
         urlSuffix = urlSuffix + ("&fileType="+FileType.URL_TEST_CONFIG);
     }
@@ -169,14 +180,14 @@ async function uploadTestPlan()
         var startTime = new Date();
         var maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
         var validationStatus = "VALIDATION_INITIATED";
-        while(maxAllowedTime>(new Date()) && (validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED")) {
+        while(maxAllowedTime>(new Date()) && (validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED" || validationStatus == null)) {
             try{
                 validationStatus = await getTestAPI(true);
             }
-            catch(e) {
+            catch(e:any) {
                 retry--;
                 if(retry == 0){
-                    throw new Error("Unable to validate the test plan. Please retry.");
+                    throw new Error("Unable to validate the test plan. Please retry. Failed with error :" + e);
                 }
             }
             await util.sleep(5000);
@@ -197,7 +208,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (let filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion;
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion;
             urlSuffix = baseURL+urlSuffix;
             let headers = await map.UploadAndValidateHeader();
             let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
@@ -218,7 +229,7 @@ async function uploadZipArtifacts()
         console.log("Uploading and validating the zip artifacts");
         for (let filepath of zipFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion+"&fileType="+FileType.ZIPPED_ARTIFACTS;
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion+"&fileType="+FileType.ZIPPED_ARTIFACTS;
             urlSuffix = baseURL+urlSuffix;
             let headers = await map.UploadAndValidateHeader();
             let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
@@ -235,11 +246,15 @@ async function uploadZipArtifacts()
         let zipInvalid = false;
         let zipFailureReason = "";
         while(maxAllowedTime>(new Date()) && flagValidationPending) {
-            var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.tm20240301previewVersion;
+            var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.latestVersion;
             urlSuffix = baseURL+urlSuffix;
             let header = await map.getTestHeader();
             let testResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
             let testObj = await util.getResultObj(testResult);
+            if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201){
+                console.log(testObj ? testObj : util.ErrorCorrection(testResult));
+                throw new Error("Error in getting the test.");
+            }
             flagValidationPending = false;
             if (testObj && testObj.inputArtifacts && testObj.inputArtifacts.additionalFileInfo) {
                 for(const file of testObj.inputArtifacts.additionalFileInfo){
@@ -277,7 +292,7 @@ async function uploadPropertyFile()
     let propertyFile = map.getPropertyFile();
     if(propertyFile != undefined) {
         let filename = map.getFileName(propertyFile);
-        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.tm20240301previewVersion+"&fileType="+FileType.USER_PROPERTIES;
+        var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion+"&fileType="+FileType.USER_PROPERTIES;
         urlSuffix = baseURL + urlSuffix;
         let headers = await map.UploadAndValidateHeader();
         let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,propertyFile);
@@ -294,7 +309,7 @@ async function uploadPropertyFile()
 async function createTestRun() {
     const tenantId = map.getTenantId();
     const testRunId = util.getUniqueId();
-    var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "test-runs/"+testRunId+"?tenantId="+tenantId+"&api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     const ltres: string = core.getInput('loadTestResource');
     const runDisplayName: string = core.getInput('loadTestRunName');
@@ -329,22 +344,25 @@ async function createTestRun() {
 }
 async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date) 
 {   
-    var urlSuffix = "test-runs/"+testRunId+"?api-version="+util.apiConstants.tm20240301previewVersion;
+    var urlSuffix = "test-runs/"+testRunId+"?api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     while(!util.isTerminalTestStatus(testStatus)) 
     {
         let header = await map.getTestRunHeader();
         let testRunResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
         let testRunObj:any = await util.getResultObj(testRunResult);
-        if(testRunObj == null){
-            throw new Error(util.ErrorCorrection(testRunResult));
+        if(testRunResult.message.statusCode != 200 && testRunResult.message.statusCode != 201) {
+            console.log(testRunObj ? testRunObj : util.ErrorCorrection(testRunResult));
+            throw new Error("Error in getting the test run");
         }
         testStatus = testRunObj.status;
         if(util.isTerminalTestStatus(testStatus)) {
             let vusers = null;
             let count = 0;
+            let reportsAvailable = false;
+            console.log("Test run completed. Polling for statistics and dashboard report to populate.");
             // Polling for max 3 min for statistics and pass fail criteria to populate
-            while(isNullOrUndefined(vusers) && count < 18){
+            while((!reportsAvailable || isNullOrUndefined(vusers)) && count < 18){
                 await util.sleep(10000);
                 let header = await map.getTestRunHeader();
                 let testRunResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
@@ -353,12 +371,15 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                     throw new Error(util.ErrorCorrection(testRunResult));
                 }
                 if(testRunResult.message.statusCode != 200 && testRunResult.message.statusCode != 201){
-                    let testRunObj:any = await util.getResultObj(testRunResult);
                     console.log(testRunObj ? testRunObj : util.ErrorCorrection(testRunResult));
-                    throw new Error("Error in getting the test-run");
+                    throw new Error("Error in getting the test run");
                 }
                 vusers = testRunObj.virtualUsers;
                 count++;
+                let testReport = util.getReportFolder(testRunObj.testArtifacts);
+                if(testReport) {
+                    reportsAvailable = true;
+                }
             }
             if(testRunObj && testRunObj.startDateTime){
                 startTime = new Date(testRunObj.startDateTime);
@@ -372,16 +393,28 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                 util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
             if(testRunObj.testRunStatistics != null)
                 util.printClientMetrics(testRunObj.testRunStatistics);
-            var testResultUrl = util.getResultFolder(testRunObj.testArtifacts);
+            let testResultUrl = util.getResultFolder(testRunObj.testArtifacts);
             if(testResultUrl != null) {
-                const response = await util.httpClientRetries(testResultUrl,{'content-type' : 'application/merge-patch+json'},'get',3,"");
+                const response = await util.httpClientRetries(testResultUrl,{},'get',3,"");
                 if (response.message.statusCode != 200) {
                     let respObj:any = await util.getResultObj(response);
                     console.log(respObj ? respObj : util.ErrorCorrection(response));
                     throw new Error("Error in fetching results ");
                 }
                 else {
-                    await util.getResultsFile(response);
+                    await util.uploadFileToResultsFolder(response,resultZipFileName);
+                }
+            }
+            let testReportUrl = util.getReportFolder(testRunObj.testArtifacts);
+            if(testReportUrl != null) {
+                const response = await util.httpClientRetries(testReportUrl,{},'get',3,"");
+                if (response.message.statusCode != 200) {
+                    let respObj:any = await util.getResultObj(response);
+                    console.log(respObj ? respObj : util.ErrorCorrection(response));
+                    throw new Error("Error in fetching report ");
+                }
+                else {
+                    await util.uploadFileToResultsFolder(response, reportZipFileName);
                 }
             }
             if(testRunObj.status === "FAILED" || testRunObj.status === "CANCELLED") {
