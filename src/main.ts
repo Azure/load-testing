@@ -242,6 +242,10 @@ async function uploadZipArtifacts()
             let header = await map.getTestHeader();
             let testResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
             let testObj = await util.getResultObj(testResult);
+            if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201){
+                console.log(testObj ? testObj : util.ErrorCorrection(testResult));
+                throw new Error("Error in getting the test.");
+            }
             flagValidationPending = false;
             if (testObj && testObj.inputArtifacts && testObj.inputArtifacts.additionalFileInfo) {
                 for(const file of testObj.inputArtifacts.additionalFileInfo){
@@ -338,8 +342,9 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
         let header = await map.getTestRunHeader();
         let testRunResult = await util.httpClientRetries(urlSuffix,header,'get',3,"");
         let testRunObj:any = await util.getResultObj(testRunResult);
-        if(testRunObj == null){
-            throw new Error(util.ErrorCorrection(testRunResult));
+        if(testRunResult.message.statusCode != 200 && testRunResult.message.statusCode != 201) {
+            console.log(testRunObj ? testRunObj : util.ErrorCorrection(testRunResult));
+            throw new Error("Error in getting the test run");
         }
         testStatus = testRunObj.status;
         if(util.isTerminalTestStatus(testStatus)) {
@@ -357,9 +362,8 @@ async function getTestRunAPI(testRunId:string, testStatus:string, startTime:Date
                     throw new Error(util.ErrorCorrection(testRunResult));
                 }
                 if(testRunResult.message.statusCode != 200 && testRunResult.message.statusCode != 201){
-                    let testRunObj:any = await util.getResultObj(testRunResult);
                     console.log(testRunObj ? testRunObj : util.ErrorCorrection(testRunResult));
-                    throw new Error("Error in getting the test-run");
+                    throw new Error("Error in getting the test run");
                 }
                 vusers = testRunObj.virtualUsers;
                 count++;

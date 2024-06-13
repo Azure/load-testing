@@ -324,7 +324,7 @@ export async function getSubName() {
   } catch (err: any) {
     const message =
       `An error occurred while getting credentials from ` +
-      `Azure CLI: ${err.stack}`;
+      `Azure CLI: ${err.message}` + ` for getting subscription name.`;
     throw new Error(message);
   }
 }
@@ -343,7 +343,7 @@ async function getAccessToken(aud: string) {
   } catch (err: any) {
     const message =
       `An error occurred while getting credentials from ` +
-      `Azure CLI: ${err.stack}`;
+      `Azure CLI: ${err.message}` + ` for getting access token.`;
     throw new Error(message);
   }
 }
@@ -364,7 +364,7 @@ async function setEndpointAndScope() {
   } catch (err: any) {
     const message =
       `An error occurred while getting credentials from ` +
-      `Azure CLI: ${err.stack}`;
+      `Azure CLI: ${err.message}` + ` for setting endPoint and scope.`;
     throw new Error(message);
   }
 }
@@ -385,7 +385,7 @@ async function execAz(cmdArguments: string[]): Promise<any> {
         } catch (err: any) {
           const msg =
             `An error occurred while parsing the output "${stdout}", of ` +
-            `the cmd az "${cmdArguments}": ${err.stack}.`;
+            `the cmd az "${cmdArguments}": ${err.nmessage}.`;
           return reject(new Error(msg));
         }
       }

@@ -13,9 +13,8 @@ on:
       - main
 
 env:
-  LOAD_TEST_RESOURCE: "mohit-1"
-  LOAD_TEST_RESOURCE_GROUP: "radhika-test"
-  COMMIT_ID : ${{ github.sha }}
+  LOAD_TEST_RESOURCE: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
+  LOAD_TEST_RESOURCE_GROUP: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -66,8 +65,8 @@ jobs:
     - name: Set up testName
       shell: bash
       run: |
-        # replacing 'testId'(the thing present in the file.) with the new test name ('${{ steps.guid.outputs.GUID }}') in the file.
         # copying the files to a new file and editing the testId for each file in the copied file.
+        # replacing 'testId'(the thing present in the file.) with the new testId ('${{ steps.guid.outputs.GUID }}') in the copied file.
         cp ${{ matrix.configFile }} test-config-${{ steps.guid.outputs.GUID }}.yaml
         sed -i 's/testId/${{ steps.guid.outputs.GUID }}/g' test-config-${{ steps.guid.outputs.GUID }}.yaml
 
