@@ -4,11 +4,14 @@ const yaml = require("js-yaml");
 import * as jwt_decode from "jwt-decode";
 import * as fs from "fs";
 import { execFile } from "child_process";
-import * as util from './util';
-import * as index from './main';
-import { isNullOrUndefined } from 'util';
-const pathLib = require('path');
-import { TestKind } from "./util";
+import * as util from "./util";
+import * as index from "./main";
+import { isNullOrUndefined } from "util";
+const pathLib = require("path");
+const { Readable } = require("stream");
+import { TestKind } from "./engine/TestKind";
+import { BaseLoadTestFrameworkModel } from './engine/BaseLoadTestFrameworkModel';
+import * as EngineUtil from './engine/Util';
 
 var testId = "";
 var displayName = "";
@@ -232,7 +235,9 @@ export async function getInputParams() {
 
   let path = pathLib.dirname(yamlFile);
   testPlan = pathLib.join(path, config.testPlan);
-  kind = config.testType ?? TestKind.JMX;
+  
+  kind = config.testType as TestKind ?? TestKind.JMX;
+  let framework : BaseLoadTestFrameworkModel = EngineUtil.getLoadTestFrameworkModelFromKind(kind);
 
   if (config.configurationFiles != null) {
     let tempconfigFiles: string[] = [];
@@ -270,15 +275,15 @@ export async function getInputParams() {
     publicIPDisabled = (config.publicIPDisabled)
   }
   if(config.properties != undefined && config.properties.userPropertyFile != undefined)
-  {
-      if(!util.checkFileType(config.properties.userPropertyFile, 'properties')){
-        throw new Error("User property file with extension other than '.properties' is not permitted.");
-      }
-      if(kind == TestKind.URL){
-          throw new Error("User property file is not supported for the URL-based test.");
-      }
-      var propFile = config.properties.userPropertyFile;
-      propertyFile = pathLib.join(path,propFile);
+    {
+    if(kind == TestKind.URL){
+        throw new Error("User property file is not supported for the URL-based test.");
+    }
+    if(!util.checkFileTypes(config.properties.userPropertyFile, framework.userPropertyFileExtensions)){
+      throw new Error(`User property file with extension other than ${framework.ClientResources.userPropertyFileExtensionsFriendly} is not permitted.`);
+    }
+    var propFile = config.properties.userPropertyFile;
+    propertyFile = pathLib.join(path,propFile);
   }
   if (config.secrets != undefined) {
     kvRefType = "SystemAssigned";

@@ -1,3 +1,4 @@
+import { FeatureFlags } from '../../src/constants';
 import { checkValidityYaml } from '../../src/util'
 import * as constants from './testYamls';
 
@@ -25,13 +26,22 @@ describe('invalid Yaml tests', () =>{
       expect(checkValidityYaml(constants.invalidDescription)).toStrictEqual({valid : false, error : 'The value "Load test website home page bvfjnabgoidvcb Load test website home page bvfjnabgoidvcb Load test website home page bvfjnabgoidvcb Load test website home page bvfjnabgoidvcb" for description is invalid. Description must be a string of length less than 100.'}); 
     });
     test('invalid testType', () => {
-      expect(checkValidityYaml(constants.invalidTestType)).toStrictEqual({valid : false, error : 'The value "Invalid" for testType is invalid. Acceptable values are are URL and JMX.'});
-    });
-    test('invalid testPlan JMX', () => {
-      expect(checkValidityYaml(constants.wrongTestPlanJMX)).toStrictEqual({valid : false, error : 'The testPlan for a JMX test should of type JMX.'});
+      if (FeatureFlags.IsLocustEnabled)
+        expect(checkValidityYaml(constants.invalidTestType)).toStrictEqual({valid : false, error : 'The value "Invalid" for testType is invalid. Acceptable values are URL, JMX and Locust.'});
+      else
+        expect(checkValidityYaml(constants.invalidTestType)).toStrictEqual({valid : false, error : 'The value "Invalid" for testType is invalid. Acceptable values are URL and JMX.'});
     });
     test('invalid testPlan URL', () => {
-      expect(checkValidityYaml(constants.wrongTestPlanURL)).toStrictEqual({valid : false, error : 'The testPlan for a URL test should of type JSON.'});
+      expect(checkValidityYaml(constants.wrongTestPlanURL)).toStrictEqual({valid : false, error : 'The testPlan for a URL test should of type "json".'});
+    });
+    test('invalid testPlan JMX', () => {
+      expect(checkValidityYaml(constants.wrongTestPlanJMX)).toStrictEqual({valid : false, error : 'The testPlan for a JMX test should of type "jmx".'});
+    });
+    test('invalid testPlan Locust', () => {
+      let expectedErr = FeatureFlags.IsLocustEnabled
+        ? 'The testPlan for a Locust test should of type "py".'
+        : 'The value "Locust" for testType is invalid. Acceptable values are URL and JMX.';
+      expect(checkValidityYaml(constants.wrongTestPlanLocust)).toStrictEqual({valid : false, error : expectedErr});
     });
   });
   describe('engine instances inavlid tests', () => {
@@ -92,6 +102,12 @@ describe('invalid Yaml tests', () =>{
     test('user prop is invalid', () => {
       expect(checkValidityYaml(constants.invalidUserProp2)).toStrictEqual({valid : false, error : `The value "123" for userPropertyFile is invalid. Provide a valid file path of type ".properties". Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`});
     });
+    test('user prop is invalid for Locust', () => {
+      let expectedErr = FeatureFlags.IsLocustEnabled
+        ? `The value "invalid.properties" for userPropertyFile is invalid. Provide a valid file path of type ".conf", ".toml" or ".ini". Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`
+        : 'The value "Locust" for testType is invalid. Acceptable values are URL and JMX.';
+      expect(checkValidityYaml(constants.invalidUserProp3)).toStrictEqual({valid : false, error : expectedErr});
+    });
   });
   describe('auto stop invalid cases', () => {
     test('auto stop disable is invalid', () => {
@@ -132,6 +148,12 @@ describe('valid yaml tests', () => {
   });
   test('URL test', () => {
     expect(checkValidityYaml(constants.urlYaml)).toStrictEqual({valid : true, error : ""});
+  });
+  test('Locust test', () => {
+    let expectedErr = FeatureFlags.IsLocustEnabled
+      ? {valid : true, error : ""}
+      : {valid : false, error : 'The value "Locust" for testType is invalid. Acceptable values are URL and JMX.'};
+    expect(checkValidityYaml(constants.locustYaml)).toStrictEqual(expectedErr);
   });
   test('subnet id and PIP is true', () => {
     expect(checkValidityYaml(constants.subnetIdPIPDisabledTrue)).toStrictEqual({valid : true, error : ""});
