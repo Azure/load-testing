@@ -97,6 +97,27 @@ export const urlYaml : any =
     keyVaultReferenceIdentityType: 'UserAssigned'
 }
 
+export const locustYaml : any = 
+{
+    version: 'v0.1',
+    testId: 'SampleTest',
+    testName: 'SampleTest',
+    displayName: 'Sample Test',
+    description: 'Load test website home page',
+    testPlan: 'SampleTest.py',
+    testType: 'Locust',
+    engineInstances: 1,
+    subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
+    publicIPDisabled: false,
+    configurationFiles: [ 'sampledata.csv' ],
+    zipArtifacts: [ 'bigdata.zip' ],
+    splitAllCSVs: true,
+    properties: { userPropertyFile: 'locust.conf' },
+    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
+    keyVaultReferenceIdentityType: 'UserAssigned'
+}
+
 export const subnetIdPIPDisabledTrue : any = 
 {
     version: 'v0.1',
@@ -358,6 +379,44 @@ export const invalidTestType : any =
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
 
+export const wrongTestPlanURL : any = 
+{
+    version: 'v0.1',
+    testId: 'SampleTest',
+    testName: 'SampleTest',
+    displayName: 'Sample Test',
+    description: 'Load test website home page',
+    testPlan: 'SampleTest.jmx',
+    testType: 'URL',
+    engineInstances: 1,
+    subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
+    publicIPDisabled: false,
+    configurationFiles: [ 'sampledata.csv' ],
+    zipArtifacts: [ 'bigdata.zip' ],
+    splitAllCSVs: true,
+    properties: { userPropertyFile: 'user.properties' },
+    env: [ { name: 'domain', value: 'https://www.contoso-ads.com' } ],
+    certificates: [
+      {
+        name: 'my-certificate',
+        value: 'https://akv-contoso.vault.azure.net/certificates/MyCertificate/abc1234567890def12345'
+      }
+    ],
+    secrets: [
+      {
+        name: 'my-secret',
+        value: 'https://akv-contoso.vault.azure.net/secrets/MySecret/abc1234567890def12345'
+      }
+    ],
+    failureCriteria: [
+      'avg(response_time_ms) > 300',
+      'percentage(error) > 50',
+      { GetCustomerDetails: 'avg(latency) >200' }
+    ],
+    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
+    keyVaultReferenceIdentityType: 'SystemAssigned'
+}
 
 export const wrongTestPlanJMX : any = 
 {
@@ -398,22 +457,22 @@ export const wrongTestPlanJMX : any =
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
 
-export const wrongTestPlanURL : any = 
+export const wrongTestPlanLocust : any = 
 {
     version: 'v0.1',
     testId: 'SampleTest',
     testName: 'SampleTest',
     displayName: 'Sample Test',
     description: 'Load test website home page',
-    testPlan: 'SampleTest.jmx',
-    testType: 'URL',
+    testPlan: 'SampleTest.json',
+    testType: 'Locust',
     engineInstances: 1,
     subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
     publicIPDisabled: false,
     configurationFiles: [ 'sampledata.csv' ],
     zipArtifacts: [ 'bigdata.zip' ],
     splitAllCSVs: true,
-    properties: { userPropertyFile: 'user.properties' },
+    properties: { userPropertyFile: 'locust.conf' },
     env: [ { name: 'domain', value: 'https://www.contoso-ads.com' } ],
     certificates: [
       {
@@ -913,6 +972,19 @@ export const invalidUserProp2 : any =
     testType: 'JMX',
     configurationFiles: ['sampledata.csv' ],
     properties : { userPropertyFile : 123 }
+}
+
+export const invalidUserProp3 : any = 
+{
+    version: 'v0.1',
+    testId: 'SampleTest',
+    testName: 'SampleTest',
+    displayName: 'Sample Test',
+    description: 'Load test website home page',
+    testPlan: 'SampleTest.py',
+    testType: 'Locust',
+    configurationFiles: ['sampledata.csv' ],
+    properties : { userPropertyFile : 'invalid.properties' }
 }
 
 // autostop disable has string function and enable has dict function, so if it is string, only permissible value is disable.
