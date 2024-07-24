@@ -7,10 +7,12 @@ import httpc = require('typed-rest-client/HttpClient');
 import internal = require('stream');
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 import { IHttpClientResponse, IHeaders } from 'typed-rest-client/Interfaces';
-import * as map from "./mappers";
 import { Readable } from 'stream';
 import { isNull, isUndefined, isNullOrUndefined } from 'util';
-import { defaultYaml } from './constants';
+import { FeatureFlags, defaultYaml } from './constants';
+import * as EngineUtil from './engine/Util';
+import { BaseLoadTestFrameworkModel } from './engine/BaseLoadTestFrameworkModel';
+import { TestKind } from "./engine/TestKind";
 
 const validAggregateList = {
     'response_time_ms': ['avg', 'min', 'max', 'p50', 'p75', 'p90', 'p95', 'p96', 'p97', 'p98', 'p99', 'p999', 'p9999'],
@@ -18,11 +20,6 @@ const validAggregateList = {
     'requests': ['count'],
     'latency': ['avg', 'min', 'max', 'p50', 'p75', 'p90', 'p95', 'p96', 'p97', 'p98', 'p99', 'p999', 'p9999'],
     'error': ['percentage']
-}
-
-export enum TestKind {
-    URL = "URL",
-    JMX = "JMX" // default
 }
   
 const validConditionList = {
@@ -102,6 +99,16 @@ export function checkFileType(filePath: string, fileExtToValidate: string): bool
     let split = filePath.split('.');
     return split[split.length-1].toLowerCase() == fileExtToValidate.toLowerCase();
 }
+
+export function checkFileTypes(filePath: string, fileExtsToValidate: string[]): boolean{
+    if(isNullOrUndefined(filePath)){
+        return false;
+    }
+    let split = filePath.split('.');
+    let fileExtsToValidateLower = fileExtsToValidate.map(ext => ext.toLowerCase());
+    return fileExtsToValidateLower.includes(split[split.length-1]?.toLowerCase());
+}
+
 export async function printTestDuration(vusers:string, startTime:Date, endTime : Date, testStatus : string) 
 {
     console.log("Summary generation completed\n");
@@ -294,17 +301,26 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
     if(givenYaml.engineInstances && (isNaN(givenYaml.engineInstances) || inValidEngineInstances(givenYaml.engineInstances))){
         return {valid : false, error : `The value "${givenYaml.engineInstances}" for engineInstances is invalid. The value should be an integer between 1 and 400.`};
     }
+
     let kind : TestKind = givenYaml.testType ?? TestKind.JMX;
-    if(!isValidTestKind(kind)){
-        return {valid : false, error : `The value "${kind}" for testType is invalid. Acceptable values are are URL and JMX.`};
+
+    // TODO(harshanb): Remove this once Locust is GA.
+    if (!FeatureFlags.IsLocustEnabled && kind !== TestKind.JMX && kind !== TestKind.URL) {
+        return {valid : false, error : `The value "${kind}" for testType is invalid. Acceptable values are URL and JMX.`};
     }
+
+    if(!isValidTestKind(kind)){
+        return {valid : false, error : `The value "${kind}" for testType is invalid. Acceptable values are ${EngineUtil.Resources.Strings.allFrameworksFriendly}.`};
+    }
+
+    let framework : BaseLoadTestFrameworkModel = EngineUtil.getLoadTestFrameworkModelFromKind(kind);
     if(givenYaml.testType as TestKind == TestKind.URL){
         if(!checkFileType(givenYaml.testPlan,'json')) {
-            return {valid : false, error : "The testPlan for a URL test should of type JSON."};
+            return {valid : false, error : "The testPlan for a URL test should of type \"json\"."};
         }
     }
-    else if(!checkFileType(givenYaml.testPlan,'jmx')) {
-        return {valid : false, error : "The testPlan for a JMX test should of type JMX."};
+    else if(!checkFileType(givenYaml.testPlan, framework.testScriptFileExtension)) {
+        return {valid : false, error : `The testPlan for a ${kind} test should of type "${framework.testScriptFileExtension}".`};
     }
     if(givenYaml.subnetId && (typeof givenYaml.subnetId!= 'string' || isInValidSubnet(givenYaml.subnetId))){
         return {valid : false, error : `The value "${givenYaml.subnetId}" for subnetId is invalid. The value should be a string of the format: "/subscriptions/{subscriptionId}/resourceGroups/{rgName}/providers/Microsoft.Network/virtualNetworks/{vnetName}/subnets/{subnetName}".`};
@@ -337,8 +353,8 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
         return {valid : false, error : `The value "${givenYaml.splitAllCSVs}" for splitAllCSVs is invalid. The value should be either true or false`};
     }
     if(givenYaml.properties != undefined && givenYaml.properties.userPropertyFile != undefined){
-        if(isNull(givenYaml.properties.userPropertyFile) || typeof givenYaml.properties.userPropertyFile != 'string' || !checkFileType(givenYaml.properties.userPropertyFile, 'properties')){
-            return {valid : false, error : `The value "${givenYaml.properties.userPropertyFile}" for userPropertyFile is invalid. Provide a valid file path of type ".properties". Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`}
+        if(isNull(givenYaml.properties.userPropertyFile) || typeof givenYaml.properties.userPropertyFile != 'string' || !checkFileTypes(givenYaml.properties.userPropertyFile, framework.userPropertyFileExtensions)){
+            return {valid : false, error : `The value "${givenYaml.properties.userPropertyFile}" for userPropertyFile is invalid. Provide a valid file path of type ${framework.ClientResources.userPropertyFileExtensionsFriendly}. Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`}
         }
     }
     if(givenYaml.autoStop){

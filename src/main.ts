@@ -2,9 +2,11 @@ import * as core from '@actions/core'
 import httpc = require('typed-rest-client/HttpClient');
 import * as map from "./mappers"
 import * as util from './util';
+import * as Util from './engine/Util';
+import { TestKind } from "./engine/TestKind";
 import * as fs from 'fs';
 import { isNullOrUndefined } from 'util';
-import {TestKind} from "./util";
+import { FeatureFlags } from './constants';
 
 const resultFolder = 'loadTest';
 const reportZipFileName = 'report.zip';
@@ -19,7 +21,8 @@ enum FileType{
     USER_PROPERTIES = 'USER_PROPERTIES',
     ADDITIONAL_ARTIFACTS = 'ADDITIONAL_ARTIFACTS',
     ZIPPED_ARTIFACTS = "ZIPPED_ARTIFACTS",
-    URL_TEST_CONFIG = "URL_TEST_CONFIG"
+    URL_TEST_CONFIG = "URL_TEST_CONFIG",
+    TEST_SCRIPT = "TEST_SCRIPT"
 }
 async function run() {
     try {  
@@ -163,10 +166,23 @@ async function uploadTestPlan()
     let filepath = map.getTestFile();
     let filename = map.getFileName(filepath);
     var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion;
-    if(map.getTestKind() == TestKind.URL){
-        urlSuffix = urlSuffix + ("&fileType="+FileType.URL_TEST_CONFIG);
-    }
-    urlSuffix = baseURL + urlSuffix;
+
+    let fileType = FileType.JMX_FILE;
+        if(map.getTestKind() == TestKind.URL){
+            fileType = FileType.URL_TEST_CONFIG;
+        }
+        else {
+            //TODO(harshanb): Change to TEST_SCRIPT for all non-URL once Locust is GA
+            // If IsLocustEnabled is False, then kind cannot be Locust as validations would catch it
+            if (map.getTestKind() == TestKind.JMX) {
+                fileType = FileType.JMX_FILE;
+            }
+            else {
+                fileType = FileType.TEST_SCRIPT;
+            }
+        }
+        urlSuffix = baseURL + urlSuffix + ("&fileType=" + fileType);
+
     let headers = await map.UploadAndValidateHeader();
     let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,filepath,true);
     if(uploadresult.message.statusCode != 201){
