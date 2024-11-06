@@ -48,5 +48,5 @@ export const defaultYaml: any =
 }
 
 export module FeatureFlags {
-    export const IsLocustEnabled = false;
+    export const IsLocustEnabled = true;
 }
