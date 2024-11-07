@@ -9,7 +9,7 @@ const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
 import { IHttpClientResponse, IHeaders } from 'typed-rest-client/Interfaces';
 import { Readable } from 'stream';
 import { isNull, isUndefined, isNullOrUndefined } from 'util';
-import { FeatureFlags, defaultYaml } from './constants';
+import { defaultYaml } from './constants';
 import * as EngineUtil from './engine/Util';
 import { BaseLoadTestFrameworkModel } from './engine/BaseLoadTestFrameworkModel';
 import { TestKind } from "./engine/TestKind";
@@ -303,11 +303,6 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
     }
 
     let kind : TestKind = givenYaml.testType ?? TestKind.JMX;
-
-    // TODO(harshanb): Remove this once Locust is GA.
-    if (!FeatureFlags.IsLocustEnabled && kind !== TestKind.JMX && kind !== TestKind.URL) {
-        return {valid : false, error : `The value "${kind}" for testType is invalid. Acceptable values are URL and JMX.`};
-    }
 
     if(!isValidTestKind(kind)){
         return {valid : false, error : `The value "${kind}" for testType is invalid. Acceptable values are ${EngineUtil.Resources.Strings.allFrameworksFriendly}.`};
