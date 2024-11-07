@@ -6,7 +6,6 @@ import * as Util from './engine/Util';
 import { TestKind } from "./engine/TestKind";
 import * as fs from 'fs';
 import { isNullOrUndefined } from 'util';
-import { FeatureFlags } from './constants';
 
 const resultFolder = 'loadTest';
 const reportZipFileName = 'report.zip';
@@ -167,21 +166,11 @@ async function uploadTestPlan()
     let filename = map.getFileName(filepath);
     var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion;
 
-    let fileType = FileType.JMX_FILE;
-        if(map.getTestKind() == TestKind.URL){
-            fileType = FileType.URL_TEST_CONFIG;
-        }
-        else {
-            //TODO(harshanb): Change to TEST_SCRIPT for all non-URL once Locust is GA
-            // If IsLocustEnabled is False, then kind cannot be Locust as validations would catch it
-            if (map.getTestKind() == TestKind.JMX) {
-                fileType = FileType.JMX_FILE;
-            }
-            else {
-                fileType = FileType.TEST_SCRIPT;
-            }
-        }
-        urlSuffix = baseURL + urlSuffix + ("&fileType=" + fileType);
+    let fileType = FileType.TEST_SCRIPT;
+    if(map.getTestKind() == TestKind.URL){
+        fileType = FileType.URL_TEST_CONFIG;
+    }
+    urlSuffix = baseURL + urlSuffix + ("&fileType=" + fileType);
 
     let headers = await map.UploadAndValidateHeader();
     let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,filepath,true);

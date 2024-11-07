@@ -2,4 +2,4 @@ version: v0.1
 testName: testId
 testPlan: sample-test.json
 testType: URL
-description: 'E2E for the build pipeline'
+description: 'E2E for the build pipeline (URL)'
