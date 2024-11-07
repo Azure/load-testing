@@ -1,0 +1,17 @@
+version: v0.1
+testName: testId
+testPlan: SampleApp.py
+testType: Locust
+description: 'E2E for the build pipeline (Locust)'
+env:
+- name: domain
+  value: example.com
+- name: protocol
+  value: https
+- name: LOCUST_USERS
+  value: 1
+- name: LOCUST_RUN_TIME
+  value: 60
+autoStop:
+  errorPercentage: 90
+  timeWindow: 60

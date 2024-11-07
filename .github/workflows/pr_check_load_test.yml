@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml']
+        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml', 'sample-test-locust.yaml']
         
     runs-on: ${{ matrix.os }}
     steps:
