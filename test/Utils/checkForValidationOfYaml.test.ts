@@ -1,4 +1,3 @@
-import { FeatureFlags } from '../../src/constants';
 import { checkValidityYaml } from '../../src/util'
 import * as constants from './testYamls';
 
@@ -26,10 +25,7 @@ describe('invalid Yaml tests', () =>{
       expect(checkValidityYaml(constants.invalidDescription)).toStrictEqual({valid : false, error : 'The value "Load test website home page bvfjnabgoidvcb Load test website home page bvfjnabgoidvcb Load test website home page bvfjnabgoidvcb Load test website home page bvfjnabgoidvcb" for description is invalid. Description must be a string of length less than 100.'}); 
     });
     test('invalid testType', () => {
-      if (FeatureFlags.IsLocustEnabled)
-        expect(checkValidityYaml(constants.invalidTestType)).toStrictEqual({valid : false, error : 'The value "Invalid" for testType is invalid. Acceptable values are URL, JMX and Locust.'});
-      else
-        expect(checkValidityYaml(constants.invalidTestType)).toStrictEqual({valid : false, error : 'The value "Invalid" for testType is invalid. Acceptable values are URL and JMX.'});
+      expect(checkValidityYaml(constants.invalidTestType)).toStrictEqual({valid : false, error : 'The value "Invalid" for testType is invalid. Acceptable values are URL, JMX and Locust.'});
     });
     test('invalid testPlan URL', () => {
       expect(checkValidityYaml(constants.wrongTestPlanURL)).toStrictEqual({valid : false, error : 'The testPlan for a URL test should of type "json".'});
@@ -38,9 +34,7 @@ describe('invalid Yaml tests', () =>{
       expect(checkValidityYaml(constants.wrongTestPlanJMX)).toStrictEqual({valid : false, error : 'The testPlan for a JMX test should of type "jmx".'});
     });
     test('invalid testPlan Locust', () => {
-      let expectedErr = FeatureFlags.IsLocustEnabled
-        ? 'The testPlan for a Locust test should of type "py".'
-        : 'The value "Locust" for testType is invalid. Acceptable values are URL and JMX.';
+      let expectedErr = 'The testPlan for a Locust test should of type "py".';
       expect(checkValidityYaml(constants.wrongTestPlanLocust)).toStrictEqual({valid : false, error : expectedErr});
     });
   });
@@ -103,9 +97,7 @@ describe('invalid Yaml tests', () =>{
       expect(checkValidityYaml(constants.invalidUserProp2)).toStrictEqual({valid : false, error : `The value "123" for userPropertyFile is invalid. Provide a valid file path of type ".properties". Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`});
     });
     test('user prop is invalid for Locust', () => {
-      let expectedErr = FeatureFlags.IsLocustEnabled
-        ? `The value "invalid.properties" for userPropertyFile is invalid. Provide a valid file path of type ".conf", ".toml" or ".ini". Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`
-        : 'The value "Locust" for testType is invalid. Acceptable values are URL and JMX.';
+      let expectedErr = `The value "invalid.properties" for userPropertyFile is invalid. Provide a valid file path of type ".conf", ".toml" or ".ini". Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`;
       expect(checkValidityYaml(constants.invalidUserProp3)).toStrictEqual({valid : false, error : expectedErr});
     });
   });
@@ -150,9 +142,7 @@ describe('valid yaml tests', () => {
     expect(checkValidityYaml(constants.urlYaml)).toStrictEqual({valid : true, error : ""});
   });
   test('Locust test', () => {
-    let expectedErr = FeatureFlags.IsLocustEnabled
-      ? {valid : true, error : ""}
-      : {valid : false, error : 'The value "Locust" for testType is invalid. Acceptable values are URL and JMX.'};
+    let expectedErr = {valid : true, error : ""};
     expect(checkValidityYaml(constants.locustYaml)).toStrictEqual(expectedErr);
   });
   test('subnet id and PIP is true', () => {
