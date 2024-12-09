@@ -101,6 +101,11 @@ function getExistingData() {
     if (!envYaml.hasOwnProperty(key)) envYaml[key] = null;
   }
 }
+
+export function getToken() {
+  return token;
+}
+
 export function createTestData() {
   getExistingData();
   var data = {
