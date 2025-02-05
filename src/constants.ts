@@ -46,3 +46,14 @@ export const defaultYaml: any =
         }
     ]
 }
+
+export const testmanagerApiVersion = "2024-07-01-preview";
+
+namespace BaseAPIRoute {
+    export const featureFlag = "featureFlags";
+}
+
+export namespace APIRoute {
+    const latestVersion = "api-version="+testmanagerApiVersion;
+    export const FeatureFlags = (flag: string) => `${BaseAPIRoute.featureFlag}/${flag}?${latestVersion}`;
+}

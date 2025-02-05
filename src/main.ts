@@ -6,6 +6,8 @@ import * as Util from './engine/Util';
 import { TestKind } from "./engine/TestKind";
 import * as fs from 'fs';
 import { isNullOrUndefined } from 'util';
+import { FeatureFlagService } from './services/FeatureFlagService';
+import { FeatureFlags } from './services/FeatureFlags';
 
 const resultFolder = 'loadTest';
 const reportZipFileName = 'report.zip';
@@ -39,7 +41,7 @@ async function run() {
         core.setFailed(err.message);
     }
 }
-async function getTestAPI(validate:boolean) {
+async function getTestAPI(validate:boolean, returnTestObj:boolean = false) {
     var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.latestVersion;
     urlSuffix = baseURL+urlSuffix;
     let header = await map.getTestHeader();
@@ -74,7 +76,11 @@ async function getTestAPI(validate:boolean) {
             testObj.kind = testObj.testType;
         }
         var inputScriptFileInfo = testObj.kind == TestKind.URL ? testObj.inputArtifacts.urlTestConfigFileInfo :testObj.inputArtifacts.testScriptFileInfo;
+
         if(validate){
+            if (returnTestObj) {
+                return [inputScriptFileInfo.validationStatus, testObj];
+            }
             return inputScriptFileInfo.validationStatus;
         }
         else
@@ -185,9 +191,10 @@ async function uploadTestPlan()
         var startTime = new Date();
         var maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
         var validationStatus = "VALIDATION_INITIATED";
+        var testObj;
         while(maxAllowedTime>(new Date()) && (validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED" || validationStatus == null)) {
             try{
-                validationStatus = await getTestAPI(true);
+                [validationStatus, testObj] = await getTestAPI(true, true);
             }
             catch(e:any) {
                 retry--;
@@ -197,8 +204,21 @@ async function uploadTestPlan()
             }
             await util.sleep(5000);
         }
+        console.log("Validation status of the test plan: "+ validationStatus);
         if(validationStatus == null || validationStatus == "VALIDATION_SUCCESS" ){
             console.log(`Validated test plan for the test successfully.`);
+
+            // Get errors from all files
+            var fileErrors = util.getAllFileErrors(testObj);
+
+            if (Object.keys(fileErrors).length > 0) {
+                console.log("Validation failed for the following files:");
+                for (const [file, error] of Object.entries(fileErrors)) {
+                    console.log(`File: ${file}, Error: ${error}`);
+                }
+                throw new Error("Validation of one or more files failed. Please correct the errors and try again.");
+            }
+
             await createTestRun();
         }
         else if(validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED")
@@ -213,7 +233,7 @@ async function uploadConfigFile()
     if(configFiles != undefined && configFiles.length > 0) {
         for (let filepath of configFiles) {
             let filename = map.getFileName(filepath);
-            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion;
+            var urlSuffix = "tests/"+testId+"/files/"+filename+"?api-version="+util.apiConstants.latestVersion + ("&fileType=" + FileType.ADDITIONAL_ARTIFACTS);
             urlSuffix = baseURL+urlSuffix;
             let headers = await map.UploadAndValidateHeader();
             let uploadresult = await util.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
@@ -250,6 +270,15 @@ async function uploadZipArtifacts()
         let flagValidationPending = true;
         let zipInvalid = false;
         let zipFailureReason = "";
+
+        // TODO(harshanb): Remove this check once the feature flag is enabled by default.
+        let isTestScriptFragmentEnabled = await FeatureFlagService.isFeatureEnabledAsync(FeatureFlags.enableTestScriptFragments, baseURL);
+        let zipValidationTerminateStates = ["VALIDATION_SUCCESS", "VALIDATION_FAILURE"];
+        if (isTestScriptFragmentEnabled) {
+            // NOT_VALIDATED is a terminal state for the file validation and actual validation will be performed during test script upload
+            zipValidationTerminateStates.push("NOT_VALIDATED");
+        }
+
         while(maxAllowedTime>(new Date()) && flagValidationPending) {
             var urlSuffix = "tests/"+testId+"?api-version="+util.apiConstants.latestVersion;
             urlSuffix = baseURL+urlSuffix;
@@ -263,7 +292,7 @@ async function uploadZipArtifacts()
             flagValidationPending = false;
             if (testObj && testObj.inputArtifacts && testObj.inputArtifacts.additionalFileInfo) {
                 for(const file of testObj.inputArtifacts.additionalFileInfo){
-                    if (file.fileType == FileType.ZIPPED_ARTIFACTS && (file.validationStatus != "VALIDATION_SUCCESS" && file.validationStatus != "VALIDATION_FAILURE")) {
+                    if (file.fileType == FileType.ZIPPED_ARTIFACTS && (file.validationStatus !in zipValidationTerminateStates)) {
                         flagValidationPending = true;
                         break;
                     } else if(file.fileType == FileType.ZIPPED_ARTIFACTS && file.validationStatus == "VALIDATION_FAILURE"){
@@ -285,7 +314,12 @@ async function uploadZipArtifacts()
         } else if(flagValidationPending) {
             throw new Error("Validation of one or more zip artifacts timed out. Please retry.");
         }
-        console.log(`Uploaded and validated ${zipFiles.length} zip artifact(s) for the test successfully.`);
+        if (isTestScriptFragmentEnabled) {
+            console.log(`Uploaded ${zipFiles.length} zip artifact(s) for the test successfully.`);
+        }
+        else {
+            console.log(`Uploaded and validated ${zipFiles.length} zip artifact(s) for the test successfully.`);
+        }
     }
     var statuscode = await uploadPropertyFile();
     if(statuscode== 201){

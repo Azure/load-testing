@@ -54,7 +54,7 @@ export function uploadFileData(filepath: string) {
 }
 
 const correlationHeader = 'x-ms-correlation-request-id'
-export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : 'get' | 'del' | 'patch' | 'put', retries : number = 1,data : string, isUploadCall : boolean = true ) : Promise<IHttpClientResponse>{
+export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : 'get' | 'del' | 'patch' | 'put', retries : number = 1, data : string, isUploadCall : boolean = true, log: boolean = true) : Promise<IHttpClientResponse>{
     let httpResponse : IHttpClientResponse;
     try {
         let correlationId = `gh-actions-${getUniqueId()}`;
@@ -85,7 +85,9 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
         if(retries){
             let sleeptime = (5-retries)*1000 + Math.floor(Math.random() * 5001);
             await sleep(sleeptime);
-            console.log(`Failed to connect to ${urlSuffix} due to ${err.message}, retrying in ${sleeptime/1000} seconds`);
+            if (log) {
+                console.log(`Failed to connect to ${urlSuffix} due to ${err.message}, retrying in ${sleeptime/1000} seconds`);
+            }
             return httpClientRetries(urlSuffix,header,method,retries-1,data);
         }
         else
@@ -490,4 +492,25 @@ export async function getResultObj(data:any) {
 }
 export function ErrorCorrection(result : IHttpClientResponse){
     return "Unable to fetch the response. Please re-run or contact support if the issue persists. " + "Status code: " + result.message.statusCode ;
+}
+
+export function getAllFileErrors(testObj:any): { [key: string]: string } {
+    var allArtifacts:any[] = [];
+    for (var key in testObj.inputArtifacts) {
+        var artifacts = testObj.inputArtifacts[key];
+        if (artifacts instanceof Array ) {
+            allArtifacts = allArtifacts.concat(artifacts.filter((artifact:any) => artifact !== null && artifact !== undefined));
+        }
+        else if (artifacts !== null && artifacts !== undefined) {
+            allArtifacts.push(artifacts);
+        }
+    }
+
+    var fileErrors: { [key: string]: string } = {};
+    for (const file of allArtifacts) {
+        if (file.validationStatus === "VALIDATION_FAILURE") {
+            fileErrors[file.fileName] = file.validationFailureDetails;
+        }
+    }
+    return fileErrors;
 }
