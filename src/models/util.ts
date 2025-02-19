@@ -1,99 +1,13 @@
-import * as fs from 'fs';
-var path = require('path');
-var AdmZip = require("adm-zip");
+import { IHttpClientResponse } from 'typed-rest-client/Interfaces';
 const { v4: uuidv4 } = require('uuid');
-import * as core from '@actions/core'
-import httpc = require('typed-rest-client/HttpClient');
-import internal = require('stream');
-const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
-import { IHttpClientResponse, IHeaders } from 'typed-rest-client/Interfaces';
-import { Readable } from 'stream';
-import { isNull, isUndefined, isNullOrUndefined } from 'util';
+import { isNull, isNullOrUndefined } from 'util';
 import { defaultYaml } from './constants';
 import * as EngineUtil from './engine/Util';
 import { BaseLoadTestFrameworkModel } from './engine/BaseLoadTestFrameworkModel';
 import { TestKind } from "./engine/TestKind";
+import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel } from './PayloadModels';
+import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount } from './UtilModels';
 
-const validAggregateList = {
-    'response_time_ms': ['avg', 'min', 'max', 'p50', 'p75', 'p90', 'p95', 'p96', 'p97', 'p98', 'p99', 'p999', 'p9999'],
-    'requests_per_sec': ['avg'],
-    'requests': ['count'],
-    'latency': ['avg', 'min', 'max', 'p50', 'p75', 'p90', 'p95', 'p96', 'p97', 'p98', 'p99', 'p999', 'p9999'],
-    'error': ['percentage']
-}
-  
-const validConditionList = {
-    'response_time_ms': ['>', '<'],
-    'requests_per_sec': ['>', '<'],
-    'requests': ['>', '<'],
-    'latency': ['>', '<'],
-    'error': ['>']
-}
-export module apiConstants {
-    export const latestVersion = '2024-05-01-preview';
-    export const tm2022Version = '2022-11-01';
-    export const cp2022Version = '2022-12-01';
-}
-export enum ManagedIdentityType {
-    SystemAssigned = "SystemAssigned",
-    UserAssigned = "UserAssigned",
-}
-
-export function uploadFileData(filepath: string) {
-    try {
-        let filedata: Buffer = fs.readFileSync(filepath);
-        const readable = new Readable();
-        readable._read = () => {};
-        readable.push(filedata);
-        readable.push(null);
-        return readable;
-    } catch (err: any) {
-        err.message = "File not found " + filepath;
-        throw new Error(err.message);
-    }
-}
-
-const correlationHeader = 'x-ms-correlation-request-id'
-export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : 'get' | 'del' | 'patch' | 'put', retries : number = 1, data : string, isUploadCall : boolean = true, log: boolean = true) : Promise<IHttpClientResponse>{
-    let httpResponse : IHttpClientResponse;
-    try {
-        let correlationId = `gh-actions-${getUniqueId()}`;
-        header[correlationHeader] = correlationId; // even if we put console.debug its printing along with the logs, so lets just go ahead with the differentiation with GH-actions, so we can search the timeframe for GH-actions in correlationid and resource filter.
-        if(method == 'get'){
-            httpResponse = await httpClient.get(urlSuffix, header);
-        }
-        else if(method == 'del'){
-            httpResponse = await httpClient.del(urlSuffix, header); 
-        }
-        else if(method == 'put' && isUploadCall){
-            let fileContent = uploadFileData(data);
-            httpResponse = await httpClient.request(method,urlSuffix, fileContent, header);
-        }
-        else{
-            httpResponse = await httpClient.request(method,urlSuffix, data, header);
-        }
-        if(httpResponse.message.statusCode!= undefined && httpResponse.message.statusCode >= 300){
-            core.debug(`correlation id : ${correlationId}`);
-        }
-        if(httpResponse.message.statusCode!=undefined && [408,429,502,503,504].includes(httpResponse.message.statusCode)){
-            let err = await getResultObj(httpResponse);
-            throw {message : (err && err.error && err.error.message) ? err.error.message : ErrorCorrection(httpResponse)}; // throwing as message to catch it as err.message
-        }
-        return httpResponse;
-    }
-    catch(err:any){
-        if(retries){
-            let sleeptime = (5-retries)*1000 + Math.floor(Math.random() * 5001);
-            await sleep(sleeptime);
-            if (log) {
-                console.log(`Failed to connect to ${urlSuffix} due to ${err.message}, retrying in ${sleeptime/1000} seconds`);
-            }
-            return httpClientRetries(urlSuffix,header,method,retries-1,data);
-        }
-        else
-            throw new Error(`Operation did not succeed after 3 retries. Pipeline failed with error : ${err.message}`);
-    }
-}
 export function checkFileType(filePath: string, fileExtToValidate: string): boolean{
     if(isNullOrUndefined(filePath)){
         return false;
@@ -111,27 +25,30 @@ export function checkFileTypes(filePath: string, fileExtsToValidate: string[]): 
     return fileExtsToValidateLower.includes(split[split.length-1]?.toLowerCase());
 }
 
-export async function printTestDuration(vusers:string, startTime:Date, endTime : Date, testStatus : string) 
-{
+export async function printTestDuration(testRunObj: TestRunModel) {
     console.log("Summary generation completed\n");
     console.log("-------------------Summary ---------------");
-    console.log("TestRun start time: "+ startTime);
-    console.log("TestRun end time: "+ endTime);
-    console.log("Virtual Users: "+ vusers);
-    console.log(`TestStatus: ${testStatus} \n`);
+    console.log("TestRun start time: "+ new Date(testRunObj.startDateTime ?? new Date()));
+    console.log("TestRun end time: "+ new Date(testRunObj.endDateTime ?? new Date()));
+    console.log("Virtual Users: "+ testRunObj.virtualUsers);
+    console.log("TestStatus: "+ testRunObj.status + "\n");
     return;
 }
-export function printCriteria(criteria:any) {
+
+export function printCriteria(criteria:{ [key: string]: PassFailMetric | null }) {
     if(Object.keys(criteria).length == 0)
         return;
     printTestResult(criteria);
-    console.log("Criteria\t\t\t\t\t :Actual Value\t        Result");
+    console.log("Criteria\t\t\t\t\t :Actual Value\t      Result");
     for(var key in criteria) {
-        var metric = criteria[key];
+        let metric = criteria[key];
+        if(isNullOrUndefined(metric)) continue;
+
         var str = metric.aggregate+"("+metric.clientMetric+") "+ metric.condition+ ' '+metric.value;
         if(metric.requestName != null){
             str = metric.requestName + ": " + str;
         }
+        //str += ((metric.clientmetric == "error") ? ", " : "ms, ") + metric.action;
         var spaceCount = 50 - str.length;
         while(spaceCount > 0){
             str+=' ';
@@ -146,50 +63,29 @@ export function printCriteria(criteria:any) {
     }
     console.log("\n");
 }
-function printTestResult(criteria:any) {
+
+export function ErrorCorrection(result : IHttpClientResponse){
+    return "Unable to fetch the response. Please re-run or contact support if the issue persists. " + "Status code :" + result.message.statusCode ;
+}
+
+function printTestResult(criteria:{ [key: string] :PassFailMetric | null}) : PassFailCount {
     let pass = 0; 
     let fail = 0;
     for(var key in criteria) {
-        if(criteria[key].result == "passed")
+        if(criteria[key]?.result == "passed")
             pass++;
-        else if(criteria[key].result == "failed")
+        else if(criteria[key]?.result == "failed")
             fail++;
     }
     console.log("-------------------Test Criteria ---------------");
-    console.log("Results\t\t\t :"+pass+" Pass  "+fail+" Fail\n");
-}
-export async function uploadFileToResultsFolder(response:any,fileName : string = 'results.zip') 
-{
-    try {
-        const filePath = path.join('loadTest',fileName);
-        const file: NodeJS.WritableStream = fs.createWriteStream(filePath);
-        
-        return new Promise((resolve, reject) => {
-            file.on("error", (err) => reject(err));
-            const stream = response.message.pipe(file);
-            stream.on("close", () => {
-                try { resolve(filePath); } catch (err) {
-                    reject(err);
-                }
-            });
-        });
-    }
-    catch(err:any) {
-        err.message = "Error in fetching the results of the testRun";
-        throw new Error(err);
-    }
-}
-export async function printClientMetrics(obj:any) {
-    if(Object.keys(obj).length == 0)
-        return;
-    console.log("------------------Client-side metrics------------\n");
-    for(var key in obj) {
-        printMetrics(obj[key], key);
-    }
+    console.log("Results\t\t\t :"+pass+" Pass "+fail+" Fail\n");
+    return {pass, fail}; // returning so that we can use this in the UTs later.
 }
 
-function printMetrics(data:any, key : string | null = null) {
-    let samplerName : string = data.transaction ?? key;
+
+
+function printMetrics(data: Statistics, key : string | null = null) {
+    let samplerName : string | null = data.transaction ?? key;
     if(samplerName == 'Total'){
         samplerName = "Aggregate";
     }
@@ -202,7 +98,16 @@ function printMetrics(data:any, key : string | null = null) {
     console.log("\n");
 }
 
-function getAbsVal(data:any) {
+export async function printClientMetrics( obj:{ [key: string]: Statistics }) {
+    if(Object.keys(obj).length == 0)
+        return;
+    console.log("------------------Client-side metrics------------\n");
+    for(var key in obj) {
+        printMetrics(obj[key], key);
+    }
+}
+
+function getAbsVal(data: number| undefined | null) {
     if(isNullOrUndefined(data)) {
         return "undefined";
     }
@@ -211,50 +116,151 @@ function getAbsVal(data:any) {
     return dataArray[0];
 }
 
-export function sleep(ms:any) {
+export function sleep(ms:number) {
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
     });
 }  
 
 export function getUniqueId() {
-    return uuidv4().toString();
+    return uuidv4();
 }
+
+export function getResultFolder(testArtifacts:TestRunArtifacts | undefined) {
+    if(isNullOrUndefined(testArtifacts) || isNullOrUndefined(testArtifacts.outputArtifacts))
+        return null;
+    var outputurl = testArtifacts.outputArtifacts;
+    return !isNullOrUndefined(outputurl.resultFileInfo) ? outputurl.resultFileInfo.url: null;
+}
+
+export function getReportFolder(testArtifacts:TestRunArtifacts | undefined) {
+    if(isNullOrUndefined(testArtifacts) || isNullOrUndefined(testArtifacts.outputArtifacts))
+        return null;
+    var outputurl = testArtifacts.outputArtifacts;
+    return !isNullOrUndefined(outputurl.reportFileInfo) ? outputurl.reportFileInfo.url: null;
+}
+
+export function indexOfFirstDigit(input: string) {
+    let i = 0;
+    for (; input[i] < '0' || input[i] > '9'; i++);
+    return i == input.length ? -1 : i;
+}
+export function removeUnits(input:string) 
+{
+    let i = 0;
+    for (; input[i] >= '0' && input[i] <= '9'; i++);
+    return i == input.length ? input : input.substring(0,i);
+}
+
+export function isTerminalTestStatus(testStatus: string){
+    if(testStatus == "DONE" || testStatus === "FAILED" || testStatus === "CANCELLED"){
+        return true;
+    }
+    return false;
+}
+
+export function isStatusFailed(testStatus: string){
+    if(testStatus === "FAILED" || testStatus === "CANCELLED"){
+        return true;
+    }
+    return false;
+}
+
+export function validCriteria(data:any) {
+    switch(data.clientMetric) {
+        case "response_time_ms":
+            return validResponseTimeCriteria(data);
+        case "requests_per_sec":
+            return validRequestsPerSecondCriteria(data);
+        case "requests":
+            return validRequestsCriteria(data);
+        case "latency":
+            return validLatencyCriteria(data);
+        case "error":
+            return validErrorCriteria(data);
+        default:
+            return false;
+    }
+}
+
+function validResponseTimeCriteria(data:any)  {
+    return !(!ValidAggregateList['response_time_ms'].includes(data.aggregate) || !ValidConditionList['response_time_ms'].includes(data.condition)
+        || (data.value).indexOf('.')!=-1 || data.action!= "continue");
+}
+function validRequestsPerSecondCriteria(data:any)  {
+    return !(!ValidAggregateList['requests_per_sec'].includes(data.aggregate) || !ValidConditionList['requests_per_sec'].includes(data.condition)
+        || data.action!= "continue");
+}
+function validRequestsCriteria(data:any)  {
+    return !(!ValidAggregateList['requests'].includes(data.aggregate) || !ValidConditionList['requests'].includes(data.condition)
+        || (data.value).indexOf('.')!=-1 || data.action!= "continue");
+}
+function validLatencyCriteria(data:any)  {
+    return !(!ValidAggregateList['latency'].includes(data.aggregate) || !ValidConditionList['latency'].includes(data.condition)
+        || (data.value).indexOf('.')!=-1 || data.action!= "continue");
+}
+function validErrorCriteria(data:any)  {
+    return !(!ValidAggregateList['error'].includes(data.aggregate) || !ValidConditionList['error'].includes(data.condition)
+        || Number(data.value)<0 || Number(data.value)>100 || data.action!= "continue");
+}
+
+export async function getResultObj(data:IHttpClientResponse) {
+    let dataString ;
+    let dataJSON ;
+    try{
+        dataString = await data.readBody();
+        dataJSON = JSON.parse(dataString);
+        return dataJSON;
+    }
+    catch{
+        return null;
+    }
+}
+
 function isDictionary(variable: any): variable is { [key: string]: any } {
     return typeof variable === 'object' && variable !== null && !Array.isArray(variable);
 }
-export function invalidName(value:string) 
+
+function invalidName(value:string) 
 {
     if(value.length < 2 || value.length > 50) return true;
     var r = new RegExp(/[^a-z0-9_-]+/);
     return r.test(value);
 }
+
 export function invalidDisplayName(value : string){
     if(value.length < 2 || value.length > 50) return true;
     return false;
 }
+
 export function invalidDescription(value : string){
     if(value.length > 100) return true;
     return false;
 }
+
 function isInValidSubnet(uri: string): boolean {
     const pattern = /^\/subscriptions\/[a-f0-9-]+\/resourceGroups\/[a-zA-Z0-9\u0080-\uFFFF()._-]+\/providers\/Microsoft\.Network\/virtualNetworks\/[a-zA-Z0-9._-]+\/subnets\/[a-zA-Z0-9._-]+$/i;
     return !(pattern.test(uri));
 }
+
 function isInValidKVId(uri: string): boolean {
     const pattern = /^\/subscriptions\/[a-f0-9-]+\/resourceGroups\/[a-zA-Z0-9\u0080-\uFFFF()._-]+\/providers\/Microsoft\.ManagedIdentity\/userAssignedIdentities\/[a-zA-Z0-9._-]+$/i;
 
     return !(pattern.test(uri));
 }
+
 function isValidTestKind(value: string): value is TestKind {
     return Object.values(TestKind).includes(value as TestKind);
 }
+
 function isValidManagedIdentityType(value: string): value is ManagedIdentityType {
     return Object.values(ManagedIdentityType).includes(value as ManagedIdentityType);
 }
+
 function isArrayOfStrings(variable: any): variable is string[] {
     return Array.isArray(variable) && variable.every((item) => typeof item === 'string');
 }
+
 function inValidEngineInstances(engines : number) : boolean{
     if(engines > 400 || engines < 1){
         return true;
@@ -303,13 +309,13 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
     if(givenYaml.engineInstances && (isNaN(givenYaml.engineInstances) || inValidEngineInstances(givenYaml.engineInstances))){
         return {valid : false, error : `The value "${givenYaml.engineInstances}" for engineInstances is invalid. The value should be an integer between 1 and 400.`};
     }
-
+    
     let kind : TestKind = givenYaml.testType ?? TestKind.JMX;
-
+    
     if(!isValidTestKind(kind)){
         return {valid : false, error : `The value "${kind}" for testType is invalid. Acceptable values are ${EngineUtil.Resources.Strings.allFrameworksFriendly}.`};
     }
-
+    
     let framework : BaseLoadTestFrameworkModel = EngineUtil.getLoadTestFrameworkModelFromKind(kind);
     if(givenYaml.testType as TestKind == TestKind.URL){
         if(!checkFileType(givenYaml.testPlan,'json')) {
@@ -375,7 +381,7 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
         if(givenYaml.regionalLoadTestConfig.length < 2){
             return {valid : false, error : `Multi-region load tests should contain a minimum of 2 geographic regions in the configuration.`};
         }
-
+        
         var totalEngineCount = 0;
         for(let i = 0; i < givenYaml.regionalLoadTestConfig.length; i++){
             if(isNullOrUndefined(givenYaml.regionalLoadTestConfig[i].region) || typeof givenYaml.regionalLoadTestConfig[i].region != 'string' || givenYaml.regionalLoadTestConfig[i].region == ""){
@@ -394,123 +400,150 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
     return {valid : true, error : ""};
 }
 
-export function getResultFolder(testArtifacts:any) {
-    if(testArtifacts == null || testArtifacts.outputArtifacts == null)
-        return null;
-    var outputurl = testArtifacts.outputArtifacts;
-    return (outputurl.resultFileInfo != null)? outputurl.resultFileInfo.url: null;
-}
-
-export function getReportFolder(testArtifacts:any) {
-    if(testArtifacts == null || testArtifacts.outputArtifacts == null)
-        return null;
-    var outputurl = testArtifacts.outputArtifacts;
-    return (outputurl.reportFileInfo != null)? outputurl.reportFileInfo.url: null;
-}
-
-export function deleteFile(foldername:string) 
-{
-    if (fs.existsSync(foldername)) 
-    {
-        fs.readdirSync(foldername).forEach((file, index) => {
-            const curPath = path.join(foldername, file);
-            if (fs.lstatSync(curPath).isDirectory()) {
-                deleteFile(curPath);
-            } else {
-                fs.unlinkSync(curPath);
+/*
+    ado takes the full pf criteria as a string after parsing the string into proper data model, 
+*/
+export function getPassFailCriteriaFromString(passFailCriteria: (string | {[key: string]: string})[]): { [key: string]: number } {
+    let failureCriteriaValue : {[key: string] : number} = {};
+    passFailCriteria.forEach(criteria => {
+        let criteriaString = criteria as string;
+        let data = {
+            aggregate: "",
+            clientMetric: "",
+            condition: "",
+            value: "",
+            requestName: "",
+            action: "",
+        }
+        if(typeof criteria !== "string"){
+            let request = Object.keys(criteria)[0]
+            data.requestName = request;
+            criteriaString = criteria[request]
+        }
+        let tempStr: string = "";
+        for(let i=0; i<criteriaString.length; i++){
+            if(criteriaString[i] == '('){
+                data.aggregate = tempStr.trim();
+                tempStr = "";
             }
-        });
-        fs.rmdirSync(foldername);
+            else if(criteriaString[i] == ')'){
+                data.clientMetric = tempStr;
+                tempStr = "";
+            }
+            else if(criteriaString[i] == ','){
+                data.condition = tempStr.substring(0, indexOfFirstDigit(tempStr)).trim();
+                data.value = tempStr.substr(indexOfFirstDigit(tempStr)).trim();
+                tempStr = "";
+            }
+            else{
+                tempStr += criteriaString[i];
+            }
+        }
+        if(criteriaString.indexOf(',') != -1){
+            data.action = tempStr.trim()
+        } 
+        else{
+            data.condition = tempStr.substring(0, indexOfFirstDigit(tempStr)).trim();
+            data.value = tempStr.substr(indexOfFirstDigit(tempStr)).trim();
+        }
+        ValidateCriteriaAndConvertToWorkingStringModel(data, failureCriteriaValue);
+    });
+    return failureCriteriaValue;
+}
+/*
+    ado takes the full pf criteria as a string after parsing the string into proper data model, 
+    this is to avoid duplicates of the data by keeping the full aggrregated metric 
+    as a key and the values will be set in this function to use it further
+*/
+export function ValidateCriteriaAndConvertToWorkingStringModel(data: any, failureCriteriaValue : {[key: string] : number}) {
+
+    if(data.action == "")
+        data.action = "continue"
+    data.value = removeUnits(data.value);
+    if(!validCriteria(data)) 
+        throw new Error("Invalid Failure Criteria");
+    let key: string = data.clientMetric+' '+data.aggregate+' '+data.condition+' '+data.action;
+    if(data.requestName != ""){
+        key = key + ' ' + data.requestName;
+    }
+    let val: number = parseInt(data.value);
+    let currVal = val;
+    
+    if(failureCriteriaValue.hasOwnProperty(key))
+        currVal = failureCriteriaValue[key];
+    if(data.condition == '>'){
+        failureCriteriaValue[key] = (val<currVal) ? val : currVal;
+    }
+    else{
+        failureCriteriaValue[key] = (val>currVal) ? val : currVal;
     }
 }
-export function indexOfFirstDigit(input: string) {
-    let i = 0;
-    for (; input[i] < '0' || input[i] > '9'; i++);
-    return i == input.length ? -1 : i;
-  }
-export function removeUnits(input:string) 
+
+export function validateUrl(url:string) 
 {
-    let i = 0;
-    for (; input[i] >= '0' && input[i] <= '9'; i++);
-    return i == input.length ? input : input.substring(0,i);
+    var r = new RegExp(/(http|https):\/\/.*\/secrets\/.+$/);
+    return r.test(url);
 }
-export function isTerminalTestStatus(testStatus: string){
-    if(testStatus === "DONE" || testStatus === "FAILED" || testStatus === "CANCELLED"){
-        return true;
-    }
-    return false;
-}
-export function validCriteria(data:any) {
-    switch(data.clientMetric) {
-        case "response_time_ms":
-            return validResponseTimeCriteria(data);
-        case "requests_per_sec":
-            return validRequestsPerSecondCriteria(data);
-        case "requests":
-            return validRequestsCriteria(data);
-        case "latency":
-            return validLatencyCriteria(data);
-        case "error":
-            return validErrorCriteria(data);
-        default:
-            return false;
-    }
+export function validateUrlcert(url:string) 
+{
+    var r = new RegExp(/(http|https):\/\/.*\/certificates\/.+$/);
+    return r.test(url);
 }
 
-function validResponseTimeCriteria(data:any)  {
-    return !(!validAggregateList['response_time_ms'].includes(data.aggregate) || !validConditionList['response_time_ms'].includes(data.condition)
-        || (data.value).indexOf('.')!=-1 || data.action!= "continue");
+export function getDefaultTestName()
+{
+    const a = (new Date(Date.now())).toLocaleString()
+    const b = a.split(", ")
+    const c = a.split(" ")
+    return "Test_"+b[0]+"_"+c[1]+c[2]
 }
 
-function validRequestsPerSecondCriteria(data:any)  {
-    return !(!validAggregateList['requests_per_sec'].includes(data.aggregate) || !validConditionList['requests_per_sec'].includes(data.condition)
-        || data.action!= "continue");
-}
-function validRequestsCriteria(data:any)  {
-    return !(!validAggregateList['requests'].includes(data.aggregate) || !validConditionList['requests'].includes(data.condition)
-        || (data.value).indexOf('.')!=-1 || data.action!= "continue");
-}
-function validLatencyCriteria(data:any)  {
-    return !(!validAggregateList['latency'].includes(data.aggregate) || !validConditionList['latency'].includes(data.condition)
-        || (data.value).indexOf('.')!=-1 || data.action!= "continue");
-}
-function validErrorCriteria(data:any)  {
-    return !(!validAggregateList['error'].includes(data.aggregate) || !validConditionList['error'].includes(data.condition)
-        || Number(data.value)<0 || Number(data.value)>100 || data.action!= "continue");
-}
-export async function getResultObj(data:any) {
-    var dataString ;
-    var dataJSON ;
-    try{
-        dataString = await data.readBody();
-        dataJSON = JSON.parse(dataString);
-        return dataJSON;
-    }
-    catch{
-        return null;
-    }
-}
-export function ErrorCorrection(result : IHttpClientResponse){
-    return "Unable to fetch the response. Please re-run or contact support if the issue persists. " + "Status code: " + result.message.statusCode ;
+export function getDefaultTestRunName()
+{
+    const a = (new Date(Date.now())).toLocaleString()
+    const b = a.split(", ")
+    const c = a.split(" ")
+    return "TestRun_"+b[0]+"_"+c[1]+c[2]
 }
 
-export function getAllFileErrors(testObj:any): { [key: string]: string } {
-    var allArtifacts:any[] = [];
-    for (var key in testObj.inputArtifacts) {
-        var artifacts = testObj.inputArtifacts[key];
-        if (artifacts instanceof Array ) {
-            allArtifacts = allArtifacts.concat(artifacts.filter((artifact:any) => artifact !== null && artifact !== undefined));
-        }
-        else if (artifacts !== null && artifacts !== undefined) {
-            allArtifacts.push(artifacts);
-        }
-    }
+export function getDefaultRunDescription()
+{
+    return "Started using GitHub Actions"
+}
 
-    var fileErrors: { [key: string]: string } = {};
+export function validateTestRunParamsFromPipeline(runTimeParams: RunTimeParams){    
+    if(runTimeParams.runDisplayName && invalidDisplayName(runTimeParams.runDisplayName))
+        throw new Error("Invalid test run name. Test run name must be between 2 to 50 characters.");
+    if(runTimeParams.runDescription && invalidDescription(runTimeParams.runDescription))
+        throw new Error("Invalid test run description. Test run description must be less than 100 characters.")
+}
+
+export function getAllFileErrors(testObj:TestModel | null): { [key: string]: string } {
+    let allArtifacts:any[] = [];
+    let additionalArtifacts = testObj?.inputArtifacts?.additionalFileInfo;
+    additionalArtifacts && (allArtifacts = allArtifacts.concat(additionalArtifacts.filter((artifact:any) => artifact !== null && artifact !== undefined)));
+
+    let testScript = testObj?.inputArtifacts?.testScriptFileInfo;
+    testScript && allArtifacts.push(testScript);
+
+    let configFile = testObj?.inputArtifacts?.configFileInfo;
+    configFile && allArtifacts.push(configFile);
+
+    let userProperties = testObj?.inputArtifacts?.userPropFileInfo;
+    userProperties && allArtifacts.push(userProperties);
+
+    let zipFile = testObj?.inputArtifacts?.inputArtifactsZipFileInfo;
+    zipFile && allArtifacts.push(zipFile);
+
+    let urlFile = testObj?.inputArtifacts?.urlTestConfigFileInfo;
+    urlFile && allArtifacts.push(urlFile);
+
+    let fileErrors: { [key: string]: string } = {};
     for (const file of allArtifacts) {
         if (file.validationStatus === "VALIDATION_FAILURE") {
             fileErrors[file.fileName] = file.validationFailureDetails;
         }
     }
+
     return fileErrors;
 }

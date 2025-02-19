@@ -1,4 +1,4 @@
-import { checkValidityYaml, getAllFileErrors } from '../../src/util'
+import { checkValidityYaml, getAllFileErrors } from '../../src/models/util'
 import * as constants from './testYamls';
 
 describe('invalid Yaml tests', () =>{
