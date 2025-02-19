@@ -24,7 +24,7 @@ export interface PassFailMetric {
     requestName?: string | null;
     value?: number;
     actualValue?: number;
-    result?: string;
+    result?: string | null;
 };
 
 export interface TestModel {
