@@ -52,10 +52,10 @@ jobs:
     - name: Installing dependencies and building latest changes
       run: |
         npm install --include=dev -f
-        npm install typescript -g
         npm ci
+        npm install typescript -g 
         tsc
-
+      # (note:mohit) - generally typescript is ignored somehow in the installation and now we want to ignore the js files for main branch hence we need tsc and npm install seperately.
     - name: Azure authentication
       uses: azure/login@v1
       continue-on-error: false
