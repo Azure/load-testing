@@ -10,7 +10,7 @@ import * as core from '@actions/core'
 export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : 'get' | 'del' | 'patch' | 'put', retries : number = 1,data : string, isUploadCall : boolean = true, log: boolean = true) : Promise<IHttpClientResponse>{
     let httpResponse : IHttpClientResponse;
     try {
-        let correlationId = `azdo-${getUniqueId()}`;
+        let correlationId = `gh-actions-${getUniqueId()}`;
         header[correlationHeader] = correlationId; // even if we put console.debug its printing along with the logs, so lets just go ahead with the differentiation with azdo, so we can search the timeframe for azdo in correlationid and resource filter.
         if(method == 'get'){
             httpResponse = await httpClient.get(urlSuffix, header);

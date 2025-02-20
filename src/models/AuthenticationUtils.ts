@@ -123,7 +123,7 @@ export class AuthenticationUtils {
     }
 
     async armTokenHeader() {
-        // right now only get calls from the ADO, so no need of content type for now for the get calls.
+        // right now only get calls from the GH, so no need of content type for now for the get calls.
         var tokenRes:any = await this.getTokenAPI(TokenScope.ControlPlane);
         this.controlPlaneToken = tokenRes;
         let headers: IHeaders = {
