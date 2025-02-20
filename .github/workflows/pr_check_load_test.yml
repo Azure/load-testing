@@ -53,6 +53,7 @@ jobs:
       run: |
         npm install --include=dev -f
         npm ci
+        tsc
 
     - name: Azure authentication
       uses: azure/login@v1
