@@ -1,24 +1,27 @@
 import { FeatureFlags } from "./FeatureFlags";
 import { Definitions } from "../models/APIResponseModel";
-import { APIRoute } from "../constants";
-import * as map from '../mappers';
-import * as util from '../util';
-import { IHeaders } from "typed-rest-client/Interfaces";
+import { APIRoute } from "../models/constants";
+import * as util from '../models/util';
+import { AuthenticationUtils } from "../models/AuthenticationUtils";
+import { CallTypeForDP } from "../models/UtilModels";
+import * as FetchUtil from './../models/FetchHelper';
 
 export class FeatureFlagService {
-    private static featureFlagCache: { [key: string]: boolean } = {};
+    featureFlagCache: { [key: string]: boolean } = {};
+    authContext: AuthenticationUtils;
 
-    public static async getFeatureFlagAsync(flag: FeatureFlags, baseUrl: string, useCache: boolean = true): Promise<Definitions['FeatureFlagResponse'] | null> {
+    constructor(authContext: AuthenticationUtils) {
+        this.authContext = authContext;
+    }
+
+    async getFeatureFlagAsync(flag: FeatureFlags, baseUrl: string, useCache: boolean = true): Promise<Definitions['FeatureFlagResponse'] | null> {
         if (useCache && flag in this.featureFlagCache) {
             return {featureFlag: flag, enabled: this.featureFlagCache[flag.toString()]};
         }
 
         let uri: string = baseUrl + APIRoute.FeatureFlags(flag.toString());
-        let headers: IHeaders = {
-            'content-type': 'application/json',
-            'Authorization': 'Bearer '+ map.getToken()
-        };
-        let flagResponse = await util.httpClientRetries(uri, headers, 'get', 3, "", false, false);
+        let headers = this.authContext.getDataPlaneHeader(CallTypeForDP.get);
+        let flagResponse = await FetchUtil.httpClientRetries(uri, headers, 'get', 3, "", false, false);
         try {
             let flagObj = (await util.getResultObj(flagResponse)) as Definitions["FeatureFlagResponse"];
             this.featureFlagCache[flag.toString()] = flagObj.enabled;
@@ -33,7 +36,7 @@ export class FeatureFlagService {
         }
     }
 
-    public static async isFeatureEnabledAsync(flag: FeatureFlags, baseUrl: string, useCache: boolean = true): Promise<boolean> {
+    async isFeatureEnabledAsync(flag: FeatureFlags, baseUrl: string, useCache: boolean = true): Promise<boolean> {
         let flagObj = await this.getFeatureFlagAsync(flag, baseUrl, useCache);
         return flagObj ? flagObj.enabled : false;
     }
