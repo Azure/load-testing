@@ -52,6 +52,7 @@ jobs:
     - name: Installing dependencies and building latest changes
       run: |
         npm install --include=dev -f
+        npm install typescript -g
         npm ci
         tsc
 
