@@ -6,8 +6,8 @@ import { TestKind } from "./engine/TestKind";
 import { BaseLoadTestFrameworkModel } from "./engine/BaseLoadTestFrameworkModel";
 const yaml = require('js-yaml');
 import * as fs from 'fs';
-import { AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut } from "./PayloadModels";
-import {  AutoStopCriteriaObjYaml, ManagedIdentityType,  ParamType, RunTimeParams } from "./UtilModels";
+import { AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI } from "./PayloadModels";
+import {  AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml,  ParamType, ReferenceIdentityKinds, RunTimeParams } from "./UtilModels";
 import * as core from '@actions/core';
 import { PassFailMetric, ExistingParams, TestModel, CertificateMetadata, SecretMetadata, RegionConfiguration } from "./PayloadModels";
 
@@ -29,9 +29,17 @@ export class YamlConfig {
     secrets: { [key: string] : SecretMetadata | null} = {};
     failureCriteria: { [key: string]: number } = {}; // this is yaml model.
     passFailApiModel : { [key: string]: PassFailMetric | null } = {}; // this is api model.
-    autoStop: autoStopCriteriaObjOut | null = null;
+
+    keyVaultReferenceIdentityType: ManagedIdentityTypeForAPI = ManagedIdentityTypeForAPI.SystemAssigned;
+    metricsReferenceIdentityType: ManagedIdentityTypeForAPI = ManagedIdentityTypeForAPI.SystemAssigned;
+    engineReferenceIdentityType: ManagedIdentityTypeForAPI = ManagedIdentityTypeForAPI.None;
+
     keyVaultReferenceIdentity: string| null = null;
-    keyVaultReferenceIdentityType: ManagedIdentityType = ManagedIdentityType.SystemAssigned;
+    metricsReferenceIdentity: string| null = null;
+    engineReferenceIdentities: string[] | null = null;
+
+    autoStop: autoStopCriteriaObjOut | null = null;
+
     regionalLoadTestConfig: RegionConfiguration[] | null = null;
     runTimeParams: RunTimeParams = {env: {}, secrets: {}, runDisplayName: '', runDescription: '', testId: '', testRunId: ''};
 
@@ -109,7 +117,6 @@ export class YamlConfig {
             }
         }
         if(config.secrets != undefined) {
-            this.keyVaultReferenceIdentityType = ManagedIdentityType.SystemAssigned;
             this.secrets = this.parseParameters(config.secrets, ParamType.secrets) as { [key: string]: SecretMetadata };
         }
         if(config.env != undefined) {
@@ -118,10 +125,15 @@ export class YamlConfig {
         if(config.certificates != undefined){
             this.certificates = this.parseParameters(config.certificates, ParamType.cert) as CertificateMetadata | null;
         }
-        if(config.keyVaultReferenceIdentity != undefined) {
-            this.keyVaultReferenceIdentityType = ManagedIdentityType.UserAssigned;
-            this.keyVaultReferenceIdentity = config.keyVaultReferenceIdentity;
+        if(config.keyVaultReferenceIdentity != undefined || config.keyVaultReferenceIdentityType != undefined) {
+            this.keyVaultReferenceIdentityType = config.keyVaultReferenceIdentity ? ManagedIdentityTypeForAPI.UserAssigned : ManagedIdentityTypeForAPI.SystemAssigned;
+            this.keyVaultReferenceIdentity = config.keyVaultReferenceIdentity ?? null;
         }
+
+        if(config.referenceIdentities != undefined) {
+            this.getReferenceIdentities(config.referenceIdentities as {[key: string]: string}[]);
+        }
+
         if(config.regionalLoadTestConfig != undefined) {
             this.regionalLoadTestConfig = this.getMultiRegionLoadTestConfig(config.regionalLoadTestConfig);
         }
@@ -137,6 +149,26 @@ export class YamlConfig {
         }
         this.runTimeParams =  this.getRunTimeParams();
         Util.validateTestRunParamsFromPipeline(this.runTimeParams);
+    }
+
+    getReferenceIdentities(referenceIdentities: {[key: string]: string}[]) {
+
+        let segregatedManagedIdentities : AllManagedIdentitiesSegregated = Util.validateAndGetSegregatedManagedIdentities(referenceIdentities);
+        
+        this.keyVaultReferenceIdentity = segregatedManagedIdentities.referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.KeyVault].length > 0  ? segregatedManagedIdentities.referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.KeyVault][0] : null;
+        this.keyVaultReferenceIdentityType = segregatedManagedIdentities.referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.KeyVault].length > 0 ? ManagedIdentityTypeForAPI.UserAssigned : ManagedIdentityTypeForAPI.SystemAssigned;
+
+        this.metricsReferenceIdentity = segregatedManagedIdentities.referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.Metrics].length > 0  ? segregatedManagedIdentities.referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.Metrics][0] : null;
+        this.metricsReferenceIdentityType = segregatedManagedIdentities.referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.Metrics].length > 0 ? ManagedIdentityTypeForAPI.UserAssigned : ManagedIdentityTypeForAPI.SystemAssigned;
+        
+        if(segregatedManagedIdentities.referenceIdentiesSystemAssignedCount[ReferenceIdentityKinds.Engine] > 0) {
+            this.engineReferenceIdentityType = ManagedIdentityTypeForAPI.SystemAssigned;
+        } else if(segregatedManagedIdentities.referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.Engine].length > 0) {
+            this.engineReferenceIdentityType = ManagedIdentityTypeForAPI.UserAssigned;
+            this.engineReferenceIdentities = segregatedManagedIdentities.referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.Engine];
+        } else {
+            this.engineReferenceIdentityType = ManagedIdentityTypeForAPI.None;
+        }
     }
 
     getRunTimeParams() {
@@ -248,6 +280,10 @@ export class YamlConfig {
             publicIPDisabled : this.publicIPDisabled,
             keyvaultReferenceIdentityType: this.keyVaultReferenceIdentityType,
             keyvaultReferenceIdentityId: this.keyVaultReferenceIdentity,
+            engineBuiltinIdentityIds: this.engineReferenceIdentities,
+            engineBuiltinIdentityType: this.engineReferenceIdentityType,
+            metricsReferenceIdentityType: this.metricsReferenceIdentityType,
+            metricsReferenceIdentityId: this.metricsReferenceIdentity
         };
         return data;
     }

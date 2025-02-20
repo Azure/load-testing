@@ -44,6 +44,18 @@ export const defaultYaml: any =
             region: 'westus',
             engineInstances: 1,
         }
+    ],
+    referenceIdentities: [
+        {
+          kind: "KeyVault",
+          type: "UserAssigned",
+          value: "/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity"
+        },
+        {
+          kind: "Metrics",
+          type: "UserAssigned",
+          value: "/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity"
+        }
     ]
 }
 

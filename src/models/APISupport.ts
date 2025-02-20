@@ -299,11 +299,12 @@ export class APISupport {
     }
 
     async createTestRun() {
-        const testRunId = Util.getUniqueId();
-        let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.tm2024Version;
-        urlSuffix = this.baseURL+urlSuffix;
         try {
             var startData = this.yamlModel.getStartTestData();
+            const testRunId = this.yamlModel.runTimeParams.testRunId;
+            let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.tm2024Version;
+            urlSuffix = this.baseURL+urlSuffix;
+
             console.log("Creating and running a testRun for the test");
             let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.patch);
             let startTestresult = await FetchUtil.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(startData));
