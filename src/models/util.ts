@@ -6,7 +6,7 @@ import * as EngineUtil from './engine/Util';
 import { BaseLoadTestFrameworkModel } from './engine/BaseLoadTestFrameworkModel';
 import { TestKind } from "./engine/TestKind";
 import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, ManagedIdentityTypeForAPI } from './PayloadModels';
-import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated } from './UtilModels';
+import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated, ValidationModel } from './UtilModels';
 
 export function checkFileType(filePath: string, fileExtToValidate: string): boolean{
     if(isNullOrUndefined(filePath)){
@@ -266,11 +266,39 @@ function isArrayOfStrings(variable: any): variable is string[] {
     return Array.isArray(variable) && variable.every((item) => typeof item === 'string');
 }
 
+function isInvalidString(variable: any, allowNull : boolean = false): variable is string[] {
+    if(allowNull){
+        return !isNullOrUndefined(variable) && (typeof variable != 'string' || variable == "");
+    }
+    return isNullOrUndefined(variable) || typeof variable != 'string' || variable == "";
+}
+
 function inValidEngineInstances(engines : number) : boolean{
     if(engines > 400 || engines < 1){
         return true;
     }
     return false;
+}
+
+export function getResourceTypeFromResourceId(resourceId:string){
+    return resourceId && resourceId.split("/").length > 7 ? resourceId.split("/")[6] + "/" + resourceId.split("/")[7] : null
+}
+
+export function getResourceNameFromResourceId(resourceId:string){
+    return resourceId  && resourceId.split("/").length > 8 ? resourceId.split("/")[8] : null
+}
+
+export function getResourceGroupFromResourceId(resourceId:string){
+    return resourceId  && resourceId.split("/").length > 4 ? resourceId.split("/")[4] : null
+}
+
+export function getSubscriptionIdFromResourceId(resourceId:string){
+    return resourceId  && resourceId.split("/").length > 2 ? resourceId.split("/")[2] : null
+}
+
+function isValidGUID(guid: string): boolean {
+    const guidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    return guidRegex.test(guid);
 }
 
 export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : string} {
@@ -383,6 +411,15 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
             return {valid : false, error : `The value "${givenYaml.properties.userPropertyFile}" for userPropertyFile is invalid. Provide a valid file path of type ${framework.ClientResources.userPropertyFileExtensionsFriendly}. Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`}
         }
     }
+    if(givenYaml.appComponents) {
+        if(!Array.isArray(givenYaml.appComponents)){
+            return {valid : false, error : `The value "${givenYaml.appComponents}" for appComponents is invalid. Provide a valid list of application components.`};
+        }
+        let validationAppComponents = validateAppComponentAndServerComponents(givenYaml.appComponents);
+        if(validationAppComponents.valid == false){
+            return validationAppComponents;
+        }
+    }
     if(givenYaml.autoStop){
         if(typeof givenYaml.autoStop != 'string'){
             if(isNullOrUndefined(givenYaml.autoStop.errorPercentage) || isNaN(givenYaml.autoStop.errorPercentage) || givenYaml.autoStop.errorPercentage > 100 || givenYaml.autoStop.errorPercentage < 0) {
@@ -471,6 +508,58 @@ export function validateAndGetSegregatedManagedIdentities(referenceIdentities: {
         throw new Error("Only one Engine reference identity with SystemAssigned should be provided in the referenceIdentities array.");
     }
     return {referenceIdentityValuesUAMIMap, referenceIdentiesSystemAssignedCount};
+}
+function validateAppComponentAndServerComponents(appComponents: Array<any>) : ValidationModel {
+    let appComponentsParsed = appComponents;
+    for(let i = 0; i < appComponentsParsed.length; i++){
+        if(!isDictionary(appComponentsParsed[i])){
+            return {valid : false, error : `The value "${appComponentsParsed[i].toString()}" for AppComponents in the index "${i}" is invalid. Provide a valid dictionary.`};
+        }
+        let resourceId = appComponentsParsed[i].resourceId;
+        if(isInvalidString(resourceId)){
+            return {valid : false, error : `The value "${appComponentsParsed[i].resourceId}" for resourceId in appComponents is invalid. Provide a valid resourceId.`};
+        }
+        resourceId = resourceId.toLowerCase();
+        let subscriptionId = getSubscriptionIdFromResourceId(resourceId);
+        let resourceType = getResourceTypeFromResourceId(resourceId);
+        let name = getResourceNameFromResourceId(resourceId);
+        let resourceGroup = getResourceGroupFromResourceId(resourceId);
+        if(isNullOrUndefined(resourceGroup) || isNullOrUndefined(subscriptionId) 
+            || isNullOrUndefined(resourceType) || isNullOrUndefined(name) 
+            || !isValidGUID(subscriptionId)){
+            return {valid : false, error : `The value "${resourceId}" for resourceId in appComponents is invalid. Provide a valid resourceId.`};
+        }
+        if(isInvalidString(appComponentsParsed[i].kind, true)){
+            return {valid : false, error : `The value "${appComponentsParsed[i].kind?.toString()}" for kind in appComponents is invalid. Provide a valid string.`};
+        }
+        if(isInvalidString(appComponentsParsed[i].resourceName, true)){
+            return {valid : false, error : `The value "${appComponentsParsed[i].resourceName?.toString()}" for resourceName in appComponents is invalid. Provide a valid string.`};
+        }
+        let resourceName = appComponentsParsed[i].resourceName || name;
+        if(!isNullOrUndefined(appComponentsParsed[i].metrics)) {
+            let metrics = appComponentsParsed[i].metrics;
+            if(!Array.isArray(metrics)){
+                return {valid : false, error : `The value "${metrics?.toString()}" for metrics in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid list of metrics.`};
+            }
+            for(let metric of metrics){
+                if(!isDictionary(metric)){
+                    return {valid : false, error : `The value "${metric?.toString()}" for metrics in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid dictionary.`};
+                }
+                if(metric && isInvalidString(metric.name)){
+                    return {valid : false, error : `The value "${metric.name?.toString()}" for name in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid string.`};
+                }
+                if(isInvalidString(metric.aggregation)){
+                    return {valid : false, error : `The value "${metric.aggregation?.toString()}" for aggregation in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid string.`};
+                }
+                if(isInvalidString(metric.namespace, true)){
+                    return {valid : false, error : `The value "${metric.namespace?.toString()}" for namespace in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid string.`};
+                }
+            }
+        } else {
+            console.log(`Metrics not provided for the appComponent "${resourceName}", default metrics will be enabled for the same.`);
+        }
+    }
+    return {valid : true, error : ""};
 }
 
 function validateReferenceIdentities(referenceIdentities: Array<any>) : {valid : boolean, error : string} {

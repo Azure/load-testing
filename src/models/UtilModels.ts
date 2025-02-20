@@ -66,8 +66,7 @@ export const resultZipFileName = 'results.zip';
 export const correlationHeader = 'x-ms-correlation-request-id';
 
 export module ApiVersionConstants {
-    export const tm2024Version = '2024-05-01-preview';
-    export const tm2023Version = '2023-04-01-preview';
+    export const latestVersion = '2024-12-01-preview';
     export const tm2022Version = '2022-11-01';
     export const cp2022Version = '2022-12-01'
 }
@@ -93,7 +92,18 @@ export enum ManagedIdentityType {
     UserAssigned = "UserAssigned",
 }
 
+export interface ServerMetricsClientModel {
+    name: string;
+    aggregation: string;
+    namespace?: string;
+}
+
 export interface AllManagedIdentitiesSegregated {
     referenceIdentityValuesUAMIMap: { [key in ReferenceIdentityKinds]: string[] },
     referenceIdentiesSystemAssignedCount : { [key in ReferenceIdentityKinds]: number }
+}
+
+export interface ValidationModel {
+    valid: boolean;
+    error: string;
 }

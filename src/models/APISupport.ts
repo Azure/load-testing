@@ -5,7 +5,7 @@ import { TestKind } from "./engine/TestKind";
 import * as Util from './util';
 import * as FileUtils from './FileUtils';
 import * as core from '@actions/core';
-import { FileInfo, TestModel, ExistingParams, TestRunModel } from "./PayloadModels";
+import { FileInfo, TestModel, ExistingParams, TestRunModel, AppComponents, ServerMetricConfig } from "./PayloadModels";
 import { YamlConfig } from "./TaskModels";
 import * as FetchUtil from './FetchHelper';
 
@@ -13,10 +13,8 @@ export class APISupport {
     authContext : AuthenticationUtils;
     yamlModel: YamlConfig;
     baseURL = '';
-    existingParams: ExistingParams = {secrets: {}, env: {}, passFailCriteria: {}};
+    existingParams: ExistingParams = {secrets: {}, env: {}, passFailCriteria: {}, appComponents: new Map()};
     testId: string;
-    resourceName: string | undefined;
-    subName: string | undefined;
 
     constructor(authContext: AuthenticationUtils, yamlModel: YamlConfig) {
         this.authContext = authContext;
@@ -32,8 +30,6 @@ export class APISupport {
         let header = await this.authContext.armTokenHeader();
         let response = await FetchUtil.httpClientRetries(armEndpoint.toString(),header,'get',3,"");
         let resource_name: string | undefined = core.getInput('loadTestResource');
-        this.resourceName = resource_name;
-        this.subName = this.authContext.subscriptionId;
         if(response.message.statusCode == 404) {
             var message = `The Azure Load Testing resource ${resource_name} does not exist. Please provide an existing resource.`;
             throw new Error(message);
@@ -48,7 +44,7 @@ export class APISupport {
     }
 
     async getTestAPI(validate:boolean, returnTestObj:boolean = false) : Promise<[string | undefined, TestModel] | string | undefined> {
-        var urlSuffix = "tests/"+this.testId+"?api-version="+ ApiVersionConstants.tm2024Version;
+        var urlSuffix = "tests/"+this.testId+"?api-version="+ ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
         let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.get);
         let testResult = await FetchUtil.httpClientRetries(urlSuffix,header,'get',3,"");
@@ -62,8 +58,8 @@ export class APISupport {
 
         if(testResult.message.statusCode != 200 && testResult.message.statusCode != 201){
             if(validate){ // validate is called, then get should not be false, and this validate had retries because of the conflicts in jmx test, so lets not print in the console, instead put this in the error itself.
-                let testObj:any=await Util.getResultObj(testResult);
-                let err = testObj?.error?.message ? testObj?.error?.message : Util.ErrorCorrection(testResult);
+                let errorObj:any=await Util.getResultObj(testResult);
+                let err = errorObj?.error?.message ? errorObj?.error?.message : Util.ErrorCorrection(testResult);
                 throw new Error(err);
             } else if(!validate && testResult.message.statusCode != 404){ // if not validate, then its to check if it is edit or create thats all, so it should not throw the error for 404.
                 let testObj:any=await Util.getResultObj(testResult);
@@ -101,28 +97,59 @@ export class APISupport {
             }
         }
     }
+    
+    async getAppComponents() {
+        let urlSuffix = "tests/"+this.testId+"/app-components/"+"?api-version="+ ApiVersionConstants.latestVersion;
+        urlSuffix = this.baseURL+urlSuffix;
+        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.get);
+        let appComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,'get',3,"");
+        if(appComponentsResult.message.statusCode == 200) {
+            let appComponentsObj:AppComponents = await Util.getResultObj(appComponentsResult);
+            for(let guid in appComponentsObj.components){
+                let resourceId = appComponentsObj.components[guid]?.resourceId ?? "";
+                if(this.existingParams.appComponents.has(resourceId?.toLowerCase())) {
+                    let existingGuids = this.existingParams.appComponents.get(resourceId?.toLowerCase()) ?? [];
+                    existingGuids.push(guid);
+                    this.existingParams.appComponents.set(resourceId.toLowerCase(), existingGuids);
+                } else {
+                    this.existingParams.appComponents.set(resourceId.toLowerCase(), [guid]);
+                }
+            }
+        }
+    }
+
+    async getServerMetricsConfig() {
+        let urlSuffix = "tests/"+this.testId+"/server-metrics-config/"+"?api-version="+ ApiVersionConstants.latestVersion;
+        urlSuffix = this.baseURL+urlSuffix;
+        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.get);
+        let serverComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,'get',3,"");
+        if(serverComponentsResult.message.statusCode == 200) {
+            let serverComponentsObj: ServerMetricConfig = await Util.getResultObj(serverComponentsResult);
+            this.yamlModel.mergeExistingServerCriteria(serverComponentsObj);
+        }
+    }
 
     async deleteFileAPI(filename:string) {
-        var urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version="+ ApiVersionConstants.tm2024Version;
+        var urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version="+ ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
         let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.delete);
         let delFileResult = await FetchUtil.httpClientRetries(urlSuffix,header,'del',3,"");
         if(delFileResult.message.statusCode != 204) {
-            let delFileObj:any=await Util.getResultObj(delFileResult);
-            let Message: string = delFileObj ? delFileObj.message : Util.ErrorCorrection(delFileResult);
+            let errorObj:any=await Util.getResultObj(delFileResult);
+            let Message: string = errorObj ? errorObj.message : Util.ErrorCorrection(delFileResult);
             throw new Error(Message);
         }
     }
 
     async createTestAPI() {
-        let urlSuffix = "tests/"+this.testId+"?api-version="+ ApiVersionConstants.tm2024Version;
+        let urlSuffix = "tests/"+this.testId+"?api-version="+ ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
         let createData = this.yamlModel.getCreateTestData(this.existingParams);
         let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.patch);
         let createTestresult = await FetchUtil.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(createData));
         if(createTestresult.message.statusCode != 200 && createTestresult.message.statusCode != 201) {
-            let testRunObj:any=await Util.getResultObj(createTestresult);
-            console.log(testRunObj ? testRunObj : Util.ErrorCorrection(createTestresult));
+            let errorObj:any=await Util.getResultObj(createTestresult);
+            console.log(errorObj ? errorObj : Util.ErrorCorrection(createTestresult));
             throw new Error("Error in creating test: " + this.testId);
         }
         if(createTestresult.message.statusCode == 201) {
@@ -174,68 +201,114 @@ export class APISupport {
         }
         await this.uploadConfigFile();
     }
-    
+
+    async patchAppComponents() {
+        let urlSuffix = "tests/"+this.testId+"/app-components/"+"?api-version="+ ApiVersionConstants.latestVersion;
+        urlSuffix = this.baseURL+urlSuffix;
+        let appComponentsData : AppComponents = this.yamlModel.getAppComponentsData();
+        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.patch);
+        let appComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(appComponentsData));
+        if(appComponentsResult.message.statusCode != 200 && appComponentsResult.message.statusCode != 201) {
+            let errorObj:any=await Util.getResultObj(appComponentsResult);
+            console.log(errorObj ? errorObj : Util.ErrorCorrection(appComponentsResult));
+            throw new Error("Error in updating app components");
+        } else {
+            console.log("Updated app components successfully");
+            let appComponentsObj:AppComponents = await Util.getResultObj(appComponentsResult);
+            for(let guid in appComponentsObj.components){
+                let resourceId = appComponentsObj.components[guid]?.resourceId ?? "";
+                if(this.existingParams.appComponents.has(resourceId?.toLowerCase())) {
+                    let existingGuids = this.existingParams.appComponents.get(resourceId?.toLowerCase()) ?? [];
+                    existingGuids.push(guid);
+                    this.existingParams.appComponents.set(resourceId.toLowerCase(), existingGuids);
+                } else {
+                    this.existingParams.appComponents.set(resourceId.toLowerCase(), [guid]);
+                }
+            }
+            await this.getServerMetricsConfig();
+            await this.patchServerMetrics();
+        }
+    }
+
+    async patchServerMetrics() {
+        let urlSuffix = "tests/"+this.testId+"/server-metrics-config/"+"?api-version="+ ApiVersionConstants.latestVersion;
+        urlSuffix = this.baseURL+urlSuffix;
+        let serverMetricsData : ServerMetricConfig = {
+            metrics: this.yamlModel.serverMetricsConfig
+        }
+        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.patch);
+        let serverMetricsResult = await FetchUtil.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(serverMetricsData));
+        if(serverMetricsResult.message.statusCode != 200 && serverMetricsResult.message.statusCode != 201) {
+            let errorObj:any=await Util.getResultObj(serverMetricsResult);
+            console.log(errorObj ? errorObj : Util.ErrorCorrection(serverMetricsResult));
+            throw new Error("Error in updating server metrics");
+        } else {
+            console.log("Updated server metrics successfully");
+        }
+    }
+
     async uploadTestPlan() 
     {
-            let retry = 5;
-            let filepath = this.yamlModel.testPlan;
-            let filename = this.yamlModel.getFileName(filepath);
-            let urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version="+ ApiVersionConstants.tm2024Version;
-            
-            let fileType = FileType.TEST_SCRIPT;
-            if(this.yamlModel.kind == TestKind.URL){
-                fileType = FileType.URL_TEST_CONFIG;
-            }
-            urlSuffix = this.baseURL + urlSuffix + ("&fileType=" + fileType);
-            
-            let headers = await this.authContext.getDataPlaneHeader(CallTypeForDP.put)
-            let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
-            if(uploadresult.message.statusCode != 201){
-                let uploadObj:any = await Util.getResultObj(uploadresult);
-                console.log(uploadObj ? uploadObj : Util.ErrorCorrection(uploadresult));
-                throw new Error("Error in uploading TestPlan for the created test");
-            }
-            else {
-                console.log("Uploaded test plan for the test");
-                let minutesToAdd=10;
-                let startTime = new Date();
-                let maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
-                let validationStatus : string | undefined = "VALIDATION_INITIATED";
-                let testObj: TestModel | null = null;
-                while(maxAllowedTime>(new Date()) && (validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED" || validationStatus == null)) {
-                    try{
-                        [validationStatus, testObj] = await this.getTestAPI(true, true) as [string | undefined, TestModel];
-                    }
-                    catch(e) {
-                        retry--;
-                        if(retry == 0){
-                            throw new Error("Unable to validate the test plan. Please retry. Failed with error :" + e);
-                        }
-                    }
-                    await Util.sleep(5000);
+        let retry = 5;
+        let filepath = this.yamlModel.testPlan;
+        let filename = this.yamlModel.getFileName(filepath);
+        let urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version="+ ApiVersionConstants.latestVersion;
+        
+        let fileType = FileType.TEST_SCRIPT;
+        if(this.yamlModel.kind == TestKind.URL){
+            fileType = FileType.URL_TEST_CONFIG;
+        }
+        urlSuffix = this.baseURL + urlSuffix + ("&fileType=" + fileType);
+        
+        let headers = await this.authContext.getDataPlaneHeader(CallTypeForDP.put)
+        let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
+        if(uploadresult.message.statusCode != 201){
+            let errorObj:any = await Util.getResultObj(uploadresult);
+            console.log(errorObj ? errorObj : Util.ErrorCorrection(uploadresult));
+            throw new Error("Error in uploading TestPlan for the created test");
+        }
+        else {
+            console.log("Uploaded test plan for the test");
+            let minutesToAdd=10;
+            let startTime = new Date();
+            let maxAllowedTime = new Date(startTime.getTime() + minutesToAdd*60000);
+            let validationStatus : string | undefined = "VALIDATION_INITIATED";
+            let testObj: TestModel | null = null;
+            while(maxAllowedTime>(new Date()) && (validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED" || validationStatus == null)) {
+                try{
+                    [validationStatus, testObj] = await this.getTestAPI(true, true) as [string | undefined, TestModel];
                 }
-                console.log("Validation status of the test plan: "+ validationStatus);
-                if(validationStatus == null || validationStatus == "VALIDATION_SUCCESS" ){
-                    console.log(`Validated test plan for the test successfully.`);
-                    
-                    // Get errors from all files
-                    let fileErrors = Util.getAllFileErrors(testObj);
-    
-                    if (Object.keys(fileErrors).length > 0) {
-                        console.log("Validation failed for the following files:");
-                        for (const [file, error] of Object.entries(fileErrors)) {
-                            console.log(`File: ${file}, Error: ${error}`);
-                        }
-                        throw new Error("Validation of one or more files failed. Please correct the errors and try again.");
+                catch(e) {
+                    retry--;
+                    if(retry == 0){
+                        throw new Error("Unable to validate the test plan. Please retry. Failed with error :" + e);
                     }
-    
-                    await this.createTestRun();
                 }
-                else if(validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED")
-                    throw new Error("TestPlan validation timeout. Please try again.")
-                else
-                    throw new Error("TestPlan validation Failed.");
+                await Util.sleep(5000);
             }
+            await this.patchAppComponents();
+            console.log("Validation status of the test plan: "+ validationStatus);
+            if(validationStatus == null || validationStatus == "VALIDATION_SUCCESS" ){
+                console.log(`Validated test plan for the test successfully.`);
+                
+                // Get errors from all files
+                let fileErrors = Util.getAllFileErrors(testObj);
+
+                if (Object.keys(fileErrors).length > 0) {
+                    console.log("Validation failed for the following files:");
+                    for (const [file, error] of Object.entries(fileErrors)) {
+                        console.log(`File: ${file}, Error: ${error}`);
+                    }
+                    throw new Error("Validation of one or more files failed. Please correct the errors and try again.");
+                }
+
+                await this.createTestRun();
+            }
+            else if(validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED")
+                throw new Error("TestPlan validation timeout. Please try again.")
+            else
+                throw new Error("TestPlan validation Failed.");
+        }
     }
 
     async uploadConfigFile() 
@@ -244,13 +317,13 @@ export class APISupport {
         if(configFiles != undefined && configFiles.length > 0) {
             for(let filepath of configFiles){
                 let filename = this.yamlModel.getFileName(filepath);
-                let urlSuffix = "tests/"+ this.testId +"/files/"+filename+"?api-version="+ ApiVersionConstants.tm2024Version + ("&fileType=" + FileType.ADDITIONAL_ARTIFACTS);
+                let urlSuffix = "tests/"+ this.testId +"/files/"+filename+"?api-version="+ ApiVersionConstants.latestVersion + ("&fileType=" + FileType.ADDITIONAL_ARTIFACTS);
                 urlSuffix = this.baseURL+urlSuffix;
                 let headers = await this.authContext.getDataPlaneHeader(CallTypeForDP.put);
                 let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
                 if(uploadresult.message.statusCode != 201){
-                    let uploadObj:any = await Util.getResultObj(uploadresult);
-                    console.log(uploadObj ? uploadObj : Util.ErrorCorrection(uploadresult));
+                    let errorObj:any = await Util.getResultObj(uploadresult);
+                    console.log(errorObj ? errorObj : Util.ErrorCorrection(uploadresult));
                     throw new Error("Error in uploading config file for the created test");
                 }
             };
@@ -266,13 +339,13 @@ export class APISupport {
             console.log("Uploading and validating the zip artifacts");
             for(const filepath of zipFiles){
                 let filename = this.yamlModel.getFileName(filepath);
-                var urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version=" + ApiVersionConstants.tm2024Version+"&fileType="+FileType.ZIPPED_ARTIFACTS;
+                var urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version=" + ApiVersionConstants.latestVersion+"&fileType="+FileType.ZIPPED_ARTIFACTS;
                 urlSuffix = this.baseURL+urlSuffix;
                 let headers = await this.authContext.getDataPlaneHeader(CallTypeForDP.put);
                 let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
                 if(uploadresult.message.statusCode != 201){
-                    let uploadObj:any = await Util.getResultObj(uploadresult);
-                    console.log(uploadObj ? uploadObj : Util.ErrorCorrection(uploadresult));
+                    let errorObj:any = await Util.getResultObj(uploadresult);
+                    console.log(errorObj ? errorObj : Util.ErrorCorrection(uploadresult));
                     throw new Error("Error in uploading config file for the created test");
                 }
             }
@@ -288,13 +361,13 @@ export class APISupport {
         let propertyFile = this.yamlModel.propertyFile;
         if(propertyFile != undefined && propertyFile!= '') {
             let filename = this.yamlModel.getFileName(propertyFile);
-            let urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version="+ ApiVersionConstants.tm2024Version+"&fileType="+FileType.USER_PROPERTIES;
+            let urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version="+ ApiVersionConstants.latestVersion+"&fileType="+FileType.USER_PROPERTIES;
             urlSuffix = this.baseURL + urlSuffix;
             let headers = await this.authContext.getDataPlaneHeader(CallTypeForDP.put);
             let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,'put',3,propertyFile, true);
             if(uploadresult.message.statusCode != 201){
-                let uploadObj:any = await Util.getResultObj(uploadresult);
-                console.log(uploadObj ? uploadObj : Util.ErrorCorrection(uploadresult));
+                let errorObj:any = await Util.getResultObj(uploadresult);
+                console.log(errorObj ? errorObj : Util.ErrorCorrection(uploadresult));
                 throw new Error("Error in uploading TestPlan for the created test");
             }
             console.log(`Uploaded user properties file for the test successfully.`);
@@ -306,7 +379,7 @@ export class APISupport {
         try {
             var startData = this.yamlModel.getStartTestData();
             const testRunId = this.yamlModel.runTimeParams.testRunId;
-            let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.tm2024Version;
+            let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.latestVersion;
             urlSuffix = this.baseURL+urlSuffix;
 
             console.log("Creating and running a testRun for the test");
@@ -321,7 +394,7 @@ export class APISupport {
             let status = testRunDao.status;
             if(status == "ACCEPTED") {
                 console.log("\nView the load test run in Azure portal by following the steps:")
-                console.log("1. Go to your Azure Load Testing resource '"+this.resourceName+"' in subscription '"+this.subName+"'")
+                console.log("1. Go to your Azure Load Testing resource '"+Util.getResourceNameFromResourceId(this.authContext.resourceId)+"' in subscription '"+Util.getSubscriptionIdFromResourceId(this.authContext.resourceId)+"'")
                 console.log("2. On the Tests page, go to test '"+this.testId+"'")
                 console.log("3. Go to test run '"+testRunDao.displayName+"'\n");
                 await this.getTestRunAPI(testRunId, status, startTime);
@@ -336,7 +409,7 @@ export class APISupport {
 
     async getTestRunAPI(testRunId:string, testStatus:string, startTime : Date) 
     {   
-        let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.tm2024Version;
+        let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
         while(!Util.isTerminalTestStatus(testStatus)) 
         {

@@ -32,6 +32,37 @@ export const defaultYaml: any =
         'percentage(error) > 50',
         { GetCustomerDetails: 'avg(latency) >200' }
     ],
+    appComponents: [
+        {
+            resourceId: "/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Web/serverfarms/sampleApp",
+            kind: "app",
+            metrics:[
+                {
+                    name: "CpuPercentage",
+                    aggregation: "Average"
+                },
+                {
+                    name: "MemoryPercentage",
+                    aggregation: "Average",
+                    namespace: "Microsoft.Web/serverfarms"
+                }
+            ],
+        },
+        {
+            resourceId: "/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.KeyVault/vaults/sampleApp",
+            metrics:[
+                {
+                    name: "ServiceApiHit",
+                    aggregation: "Count",
+                    namespace: "Microsoft.KeyVault/vaults"
+                },
+                {
+                    name: "ServiceApiLatency",
+                    aggregation: "Average"
+                }
+            ]
+        }
+    ],
     autoStop: { errorPercentage: 80, timeWindow: 60 },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned',

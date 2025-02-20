@@ -6,8 +6,8 @@ import { TestKind } from "./engine/TestKind";
 import { BaseLoadTestFrameworkModel } from "./engine/BaseLoadTestFrameworkModel";
 const yaml = require('js-yaml');
 import * as fs from 'fs';
-import { AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI } from "./PayloadModels";
-import {  AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml,  ParamType, ReferenceIdentityKinds, RunTimeParams } from "./UtilModels";
+import { AppComponentDefinition, AppComponents, AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI, ResourceMetricModel, ServerMetricConfig } from "./PayloadModels";
+import { AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml, ParamType, ReferenceIdentityKinds, RunTimeParams, ServerMetricsClientModel } from "./UtilModels";
 import * as core from '@actions/core';
 import { PassFailMetric, ExistingParams, TestModel, CertificateMetadata, SecretMetadata, RegionConfiguration } from "./PayloadModels";
 
@@ -42,6 +42,11 @@ export class YamlConfig {
 
     regionalLoadTestConfig: RegionConfiguration[] | null = null;
     runTimeParams: RunTimeParams = {env: {}, secrets: {}, runDisplayName: '', runDescription: '', testId: '', testRunId: ''};
+
+    appComponents: { [key: string] : AppComponentDefinition | null } = {};
+    serverMetricsConfig: { [key: string] :  ResourceMetricModel | null } = {};
+
+    addDefaultsForAppComponents: { [key: string]: boolean } = {}; // when server components are not given for few app components, we need to add the defaults for this.
 
     constructor() {
         let yamlFile = core.getInput('loadTestConfigFile') ?? '';
@@ -125,6 +130,12 @@ export class YamlConfig {
         if(config.certificates != undefined){
             this.certificates = this.parseParameters(config.certificates, ParamType.cert) as CertificateMetadata | null;
         }
+
+        if(config.appComponents != undefined) {
+            let appcomponents = config.appComponents as Array<any>;
+            this.getAppComponentsAndServerMetricsConfig(appcomponents);
+        }
+
         if(config.keyVaultReferenceIdentity != undefined || config.keyVaultReferenceIdentityType != undefined) {
             this.keyVaultReferenceIdentityType = config.keyVaultReferenceIdentity ? ManagedIdentityTypeForAPI.UserAssigned : ManagedIdentityTypeForAPI.SystemAssigned;
             this.keyVaultReferenceIdentity = config.keyVaultReferenceIdentity ?? null;
@@ -137,18 +148,50 @@ export class YamlConfig {
         if(config.regionalLoadTestConfig != undefined) {
             this.regionalLoadTestConfig = this.getMultiRegionLoadTestConfig(config.regionalLoadTestConfig);
         }
-        // commenting out for now, will re-write this logic with the changed options.
-        // if(config.engineBuiltInIdentityType != undefined) {
-        //     engineBuiltInIdentityType = config.engineBuiltInIdentityType;
-        // }
-        // if(config.engineBuiltInIdentityIds != undefined) {
-        //     engineBuiltInIdentityIds = config.engineBuiltInIdentityIds;
-        // }
+
         if(this.testId === '' || isNullOrUndefined(this.testId) || this.testPlan === '' || isNullOrUndefined(this.testPlan)) {
             throw new Error("The required fields testId/testPlan are missing in "+yamlPath+".");
         }
         this.runTimeParams =  this.getRunTimeParams();
         Util.validateTestRunParamsFromPipeline(this.runTimeParams);
+    }
+
+    getAppComponentsAndServerMetricsConfig(appComponents: Array<any>) {
+        for(let value of appComponents) {
+            let resourceId = value.resourceId.toLowerCase();
+            this.appComponents[resourceId] = {
+                resourceName: (value.resourceName || Util.getResourceNameFromResourceId(resourceId)),
+                kind: value.kind ?? null,
+                resourceType: Util.getResourceTypeFromResourceId(resourceId) ?? '',
+                resourceId: resourceId,
+                subscriptionId: Util.getSubscriptionIdFromResourceId(resourceId) ?? '',
+                resourceGroup: Util.getResourceGroupFromResourceId(resourceId) ?? ''
+            };
+            let metrics = (value.metrics ?? []) as Array<ServerMetricsClientModel>;
+            
+            if(this.addDefaultsForAppComponents[resourceId] == undefined) {
+                this.addDefaultsForAppComponents[resourceId] = metrics.length == 0;
+            } else {
+                this.addDefaultsForAppComponents[resourceId] = this.addDefaultsForAppComponents[resourceId] && metrics.length == 0; 
+                // when the same resource has metrics at one place, but not at other, we dont need defaults anymore.
+            }
+
+            for(let serverComponent of metrics) {
+                let key : string = resourceId.toLowerCase() + '/' + (serverComponent.namespace ?? Util.getResourceTypeFromResourceId(resourceId)) + '/' + serverComponent.name;
+                if(!this.serverMetricsConfig.hasOwnProperty(key) || isNullOrUndefined(this.serverMetricsConfig[key])) {
+                    this.serverMetricsConfig[key] = {
+                        name: serverComponent.name,
+                        aggregation: serverComponent.aggregation,
+                        metricNamespace: serverComponent.namespace ?? Util.getResourceTypeFromResourceId(resourceId),
+                        resourceId: resourceId,
+                        resourceType: Util.getResourceTypeFromResourceId(resourceId) ?? '',
+                        id: key
+                    }
+                } else {
+                    this.serverMetricsConfig[key].aggregation = this.serverMetricsConfig[key].aggregation + "," + serverComponent.aggregation;
+                }
+            }
+        }
     }
 
     getReferenceIdentities(referenceIdentities: {[key: string]: string}[]) {
@@ -255,6 +298,36 @@ export class YamlConfig {
             if(!this.env.hasOwnProperty(key))
                 this.env[key] = null;
         }
+
+        for(let [resourceId, keys] of existingData.appComponents) {
+            if(!this.appComponents.hasOwnProperty(resourceId.toLowerCase())) {
+                for(let key of keys) {
+                    this.appComponents[key] = null;
+                }
+            } else {
+                for(let key of keys) {
+                    if(key != null && key != resourceId.toLowerCase()) {
+                        this.appComponents[key] = null;
+                    }
+                }
+            }
+        }
+    }
+
+    mergeExistingServerCriteria(existingServerCriteria: ServerMetricConfig) {
+        for(let key in existingServerCriteria.metrics) {
+            let resourceId = existingServerCriteria.metrics[key]?.resourceId?.toLowerCase() ?? "";
+            if(this.addDefaultsForAppComponents.hasOwnProperty(resourceId) && !this.addDefaultsForAppComponents[resourceId] && !this.serverMetricsConfig.hasOwnProperty(key)) {
+                this.serverMetricsConfig[key] = null;
+            }
+        }
+    }
+
+    getAppComponentsData() : AppComponents {
+        let appComponentsApiModel : AppComponents = {
+            components: this.appComponents
+        }
+        return appComponentsApiModel;
     }
 
     getCreateTestData(existingData:ExistingParams) {
