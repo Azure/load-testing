@@ -287,10 +287,10 @@ export class YamlConfig {
                 throw new Error(`Invalid format of ${InputConstants.envVarsLabel} in the pipeline file. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`); 
             }
         }
-        let runDisplayNameInput = core.getInput('loadTestRunName');
-        const runDisplayName = runDisplayNameInput ? runDisplayNameInput : Util.getDefaultTestRunName();
-        let runDescriptionInput = core.getInput('loadTestRunName');
-        const runDescription = runDescriptionInput ? runDescriptionInput : Util.getDefaultRunDescription();
+        let runDisplayNameInput = core.getInput(InputConstants.testRunName);
+        const runDisplayName = !isNullOrUndefined(runDisplayNameInput) && runDisplayNameInput != '' ? runDisplayNameInput : Util.getDefaultTestRunName();
+        let runDescriptionInput = core.getInput(InputConstants.runDescription);
+        const runDescription = !isNullOrUndefined(runDescriptionInput) && runDescriptionInput != '' ? runDescriptionInput : Util.getDefaultRunDescription();
 
         let runTimeParams : RunTimeParams = {env: envParsed, secrets: secretsParsed, runDisplayName, runDescription, testId: '', testRunId: ''};
         this.runTimeParams = runTimeParams;
