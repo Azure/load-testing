@@ -369,6 +369,7 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
     if(givenYaml.keyVaultReferenceIdentityType != undefined && givenYaml.keyVaultReferenceIdentityType != null && !isValidManagedIdentityType(givenYaml.keyVaultReferenceIdentityType)){
         return {valid : false, error : `The value "${givenYaml.keyVaultReferenceIdentityType}" for keyVaultReferenceIdentityType is invalid. Allowed values are "SystemAssigned" and "UserAssigned".`};
     }
+
     if(!isNullOrUndefined(givenYaml.referenceIdentities)) {
         if(!Array.isArray(givenYaml.referenceIdentities)){
             return {valid : false, error : `The value "${givenYaml.referenceIdentities.toString()}" for referenceIdentities is invalid. Provide a valid list of reference identities.`};
