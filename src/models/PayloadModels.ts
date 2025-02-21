@@ -86,12 +86,12 @@ export interface TestRunArtifacts {
 }
 
 export interface TestRunModel extends TestModel {
-    testRunId? : string;
+    testRunId: string;
     errorDetails? : any;
     testArtifacts?: TestRunArtifacts;
-    testResult: string;
-    status: string;
-    testRunStatistics : { [ key: string ] : Statistics };
+    testResult?: string;
+    status?: string;
+    testRunStatistics? : { [ key: string ] : Statistics };
     virtualUserHours?: number;
     virtualUsers?: number;
     startDateTime?: string;

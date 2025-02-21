@@ -1,6 +1,6 @@
 import { isNull, isNullOrUndefined } from "util";
 import { AuthenticationUtils } from "./AuthenticationUtils";
-import { ApiVersionConstants, CallTypeForDP, FileType, reportZipFileName, resultZipFileName } from "./UtilModels";
+import { ApiVersionConstants, FetchCallType, FileType, PostTaskParameters, reportZipFileName, resultZipFileName } from "./UtilModels";
 import { TestKind } from "./engine/TestKind";
 import * as Util from './util';
 import * as FileUtils from './FileUtils';
@@ -29,7 +29,7 @@ export class APISupport {
         let armEndpointSuffix = id + "?api-version=" + ApiVersionConstants.cp2022Version;
         let armEndpoint = new URL(armEndpointSuffix, armUrl);
         let header = await this.authContext.armTokenHeader();
-        let response = await FetchUtil.httpClientRetries(armEndpoint.toString(),header,'get',3,"");
+        let response = await FetchUtil.httpClientRetries(armEndpoint.toString(),header,FetchCallType.get,3,"");
         let resource_name: string | undefined = core.getInput(InputConstants.loadTestResource);
         if(response.message.statusCode == 404) {
             var message = `The Azure Load Testing resource ${resource_name} does not exist. Please provide an existing resource.`;
@@ -47,8 +47,8 @@ export class APISupport {
     async getTestAPI(validate:boolean, returnTestObj:boolean = false) : Promise<[string | undefined, TestModel] | string | undefined> {
         var urlSuffix = "tests/"+this.testId+"?api-version="+ ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
-        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.get);
-        let testResult = await FetchUtil.httpClientRetries(urlSuffix,header,'get',3,"");
+        let header = await this.authContext.getDataPlaneHeader(FetchCallType.get);
+        let testResult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.get,3,"");
         if(testResult.message.statusCode == 401 || testResult.message.statusCode == 403){
             var message = "Service Principal does not have sufficient permissions. Please assign " 
             +"the Load Test Contributor role to the service principal. Follow the steps listed at "
@@ -102,8 +102,8 @@ export class APISupport {
     async getAppComponents() {
         let urlSuffix = "tests/"+this.testId+"/app-components/"+"?api-version="+ ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
-        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.get);
-        let appComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,'get',3,"");
+        let header = await this.authContext.getDataPlaneHeader(FetchCallType.get);
+        let appComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.get,3,"");
         if(appComponentsResult.message.statusCode == 200) {
             let appComponentsObj:AppComponents = await Util.getResultObj(appComponentsResult);
             for(let guid in appComponentsObj.components){
@@ -122,8 +122,8 @@ export class APISupport {
     async getServerMetricsConfig() {
         let urlSuffix = "tests/"+this.testId+"/server-metrics-config/"+"?api-version="+ ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
-        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.get);
-        let serverComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,'get',3,"");
+        let header = await this.authContext.getDataPlaneHeader(FetchCallType.get);
+        let serverComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.get,3,"");
         if(serverComponentsResult.message.statusCode == 200) {
             let serverComponentsObj: ServerMetricConfig = await Util.getResultObj(serverComponentsResult);
             this.yamlModel.mergeExistingServerCriteria(serverComponentsObj);
@@ -133,8 +133,8 @@ export class APISupport {
     async deleteFileAPI(filename:string) {
         var urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version="+ ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
-        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.delete);
-        let delFileResult = await FetchUtil.httpClientRetries(urlSuffix,header,'del',3,"");
+        let header = await this.authContext.getDataPlaneHeader(FetchCallType.delete);
+        let delFileResult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.delete,3,"");
         if(delFileResult.message.statusCode != 204) {
             let errorObj:any=await Util.getResultObj(delFileResult);
             let Message: string = errorObj ? errorObj.message : Util.ErrorCorrection(delFileResult);
@@ -146,8 +146,8 @@ export class APISupport {
         let urlSuffix = "tests/"+this.testId+"?api-version="+ ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
         let createData = this.yamlModel.getCreateTestData(this.existingParams);
-        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.patch);
-        let createTestresult = await FetchUtil.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(createData));
+        let header = await this.authContext.getDataPlaneHeader(FetchCallType.patch);
+        let createTestresult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.patch,3,JSON.stringify(createData));
         if(createTestresult.message.statusCode != 200 && createTestresult.message.statusCode != 201) {
             let errorObj:any=await Util.getResultObj(createTestresult);
             console.log(errorObj ? errorObj : Util.ErrorCorrection(createTestresult));
@@ -207,8 +207,11 @@ export class APISupport {
         let urlSuffix = "tests/"+this.testId+"/app-components/"+"?api-version="+ ApiVersionConstants.latestVersion;
         urlSuffix = this.baseURL+urlSuffix;
         let appComponentsData : AppComponents = this.yamlModel.getAppComponentsData();
-        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.patch);
-        let appComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(appComponentsData));
+        let header = await this.authContext.getDataPlaneHeader(FetchCallType.patch);
+        let appComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.patch,3,JSON.stringify(appComponentsData));
+        if(Object.keys(appComponentsData.components).length == 0) {
+            return;
+        }
         if(appComponentsResult.message.statusCode != 200 && appComponentsResult.message.statusCode != 201) {
             let errorObj:any=await Util.getResultObj(appComponentsResult);
             console.log(errorObj ? errorObj : Util.ErrorCorrection(appComponentsResult));
@@ -227,8 +230,11 @@ export class APISupport {
         let serverMetricsData : ServerMetricConfig = {
             metrics: this.yamlModel.serverMetricsConfig
         }
-        let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.patch);
-        let serverMetricsResult = await FetchUtil.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(serverMetricsData));
+        if(Object.keys(serverMetricsData.metrics).length == 0) {
+            return;
+        }
+        let header = await this.authContext.getDataPlaneHeader(FetchCallType.patch);
+        let serverMetricsResult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.patch,3,JSON.stringify(serverMetricsData));
         if(serverMetricsResult.message.statusCode != 200 && serverMetricsResult.message.statusCode != 201) {
             let errorObj:any=await Util.getResultObj(serverMetricsResult);
             console.log(errorObj ? errorObj : Util.ErrorCorrection(serverMetricsResult));
@@ -251,8 +257,8 @@ export class APISupport {
         }
         urlSuffix = this.baseURL + urlSuffix + ("&fileType=" + fileType);
         
-        let headers = await this.authContext.getDataPlaneHeader(CallTypeForDP.put)
-        let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
+        let headers = await this.authContext.getDataPlaneHeader(FetchCallType.put)
+        let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,FetchCallType.put,3,filepath, true);
         if(uploadresult.message.statusCode != 201){
             let errorObj:any = await Util.getResultObj(uploadresult);
             console.log(errorObj ? errorObj : Util.ErrorCorrection(uploadresult));
@@ -291,7 +297,7 @@ export class APISupport {
                     }
                     throw new Error("Validation of one or more files failed. Please correct the errors and try again.");
                 }
-                
+
                 await this.patchAppComponents();
                 await this.createTestRun();
             }
@@ -310,8 +316,8 @@ export class APISupport {
                 let filename = this.yamlModel.getFileName(filepath);
                 let urlSuffix = "tests/"+ this.testId +"/files/"+filename+"?api-version="+ ApiVersionConstants.latestVersion + ("&fileType=" + FileType.ADDITIONAL_ARTIFACTS);
                 urlSuffix = this.baseURL+urlSuffix;
-                let headers = await this.authContext.getDataPlaneHeader(CallTypeForDP.put);
-                let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
+                let headers = await this.authContext.getDataPlaneHeader(FetchCallType.put);
+                let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,FetchCallType.put,3,filepath, true);
                 if(uploadresult.message.statusCode != 201){
                     let errorObj:any = await Util.getResultObj(uploadresult);
                     console.log(errorObj ? errorObj : Util.ErrorCorrection(uploadresult));
@@ -332,8 +338,8 @@ export class APISupport {
                 let filename = this.yamlModel.getFileName(filepath);
                 var urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version=" + ApiVersionConstants.latestVersion+"&fileType="+FileType.ZIPPED_ARTIFACTS;
                 urlSuffix = this.baseURL+urlSuffix;
-                let headers = await this.authContext.getDataPlaneHeader(CallTypeForDP.put);
-                let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,'put',3,filepath, true);
+                let headers = await this.authContext.getDataPlaneHeader(FetchCallType.put);
+                let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,FetchCallType.put,3,filepath, true);
                 if(uploadresult.message.statusCode != 201){
                     let errorObj:any = await Util.getResultObj(uploadresult);
                     console.log(errorObj ? errorObj : Util.ErrorCorrection(uploadresult));
@@ -354,8 +360,8 @@ export class APISupport {
             let filename = this.yamlModel.getFileName(propertyFile);
             let urlSuffix = "tests/"+this.testId+"/files/"+filename+"?api-version="+ ApiVersionConstants.latestVersion+"&fileType="+FileType.USER_PROPERTIES;
             urlSuffix = this.baseURL + urlSuffix;
-            let headers = await this.authContext.getDataPlaneHeader(CallTypeForDP.put);
-            let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,'put',3,propertyFile, true);
+            let headers = await this.authContext.getDataPlaneHeader(FetchCallType.put);
+            let uploadresult = await FetchUtil.httpClientRetries(urlSuffix,headers,FetchCallType.put,3,propertyFile, true);
             if(uploadresult.message.statusCode != 201){
                 let errorObj:any = await Util.getResultObj(uploadresult);
                 console.log(errorObj ? errorObj : Util.ErrorCorrection(uploadresult));
@@ -372,10 +378,10 @@ export class APISupport {
             const testRunId = this.yamlModel.runTimeParams.testRunId;
             let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.latestVersion;
             urlSuffix = this.baseURL+urlSuffix;
-
+            core.setTaskVariable(PostTaskParameters.runId, testRunId);
             console.log("Creating and running a testRun for the test");
-            let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.patch);
-            let startTestresult = await FetchUtil.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(startData));
+            let header = await this.authContext.getDataPlaneHeader(FetchCallType.patch);
+            let startTestresult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.patch,3,JSON.stringify(startData));
             let testRunDao:any=await Util.getResultObj(startTestresult);
             if(startTestresult.message.statusCode != 200 && startTestresult.message.statusCode != 201){
                 console.log(testRunDao ? testRunDao : Util.ErrorCorrection(startTestresult));
@@ -404,14 +410,14 @@ export class APISupport {
         urlSuffix = this.baseURL+urlSuffix;
         while(!Util.isTerminalTestStatus(testStatus)) 
         {
-            let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.get);
-            let testRunResult = await FetchUtil.httpClientRetries(urlSuffix,header,'get',3,"");
+            let header = await this.authContext.getDataPlaneHeader(FetchCallType.get);
+            let testRunResult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.get,3,"");
             let testRunObj: TestRunModel = await Util.getResultObj(testRunResult);
             if (testRunResult.message.statusCode != 200 && testRunResult.message.statusCode != 201) {
                 console.log(testRunObj ? testRunObj : Util.ErrorCorrection(testRunResult));
                 throw new Error("Error in getting the test run");
             }
-            testStatus = testRunObj.status;
+            testStatus = testRunObj.status ?? testStatus;
             if(Util.isTerminalTestStatus(testStatus)) {
                 let vusers = null;
                 let count = 0;
@@ -420,8 +426,8 @@ export class APISupport {
                 // Polling for max 3 min for statistics and pass fail criteria to populate
                 while((!reportsAvailable || isNullOrUndefined(vusers)) && count < 18){
                     await Util.sleep(10000);
-                    let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.get);
-                    let testRunResult = await FetchUtil.httpClientRetries(urlSuffix,header,'get',3,"");
+                    let header = await this.authContext.getDataPlaneHeader(FetchCallType.get);
+                    let testRunResult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.get,3,"");
                     testRunObj = await Util.getResultObj(testRunResult);
                     if(testRunObj == null){
                         throw new Error(Util.ErrorCorrection(testRunResult));
@@ -449,10 +455,10 @@ export class APISupport {
                     Util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
                 if(testRunObj.testRunStatistics != null && testRunObj.testRunStatistics != undefined)
                     Util.printClientMetrics(testRunObj.testRunStatistics);
-    
+                core.setTaskVariable(PostTaskParameters.isRunCompleted, 'true');
                 let testResultUrl = Util.getResultFolder(testRunObj.testArtifacts);
                 if(testResultUrl != null) {
-                    const response = await FetchUtil.httpClientRetries(testResultUrl,{},'get',3,"");
+                    const response = await FetchUtil.httpClientRetries(testResultUrl,{},FetchCallType.get,3,"");
                     if (response.message.statusCode != 200) {
                         let respObj:any = await Util.getResultObj(response);
                         console.log(respObj ? respObj : Util.ErrorCorrection(response));
@@ -464,7 +470,7 @@ export class APISupport {
                 }
                 let testReportUrl = Util.getReportFolder(testRunObj.testArtifacts);
                 if(testReportUrl != null) {
-                    const response = await FetchUtil.httpClientRetries(testReportUrl,{},'get',3,"");
+                    const response = await FetchUtil.httpClientRetries(testReportUrl,{},FetchCallType.get,3,"");
                     if (response.message.statusCode != 200) {
                         let respObj:any = await Util.getResultObj(response);
                         console.log(respObj ? respObj : Util.ErrorCorrection(response));
@@ -475,11 +481,11 @@ export class APISupport {
                     }
                 }
     
-                if(!isNull(testRunObj.testResult) && Util.isStatusFailed(testRunObj.testResult)) {
+                if(!isNull(testRunObj.testResult) && !isNullOrUndefined(testRunObj.testResult) && Util.isStatusFailed(testRunObj.testResult)) {
                     core.setFailed("TestResult: "+ testRunObj.testResult);
                     return;
                 }
-                if(!isNull(testRunObj.status) && Util.isStatusFailed(testRunObj.status)) {
+                if(!isNull(testRunObj.status) && !isNullOrUndefined(testRunObj.status) && Util.isStatusFailed(testRunObj.status)) {
                     console.log("Please go to the Portal for more error details: "+ testRunObj.portalUrl);
                     core.setFailed("TestStatus: "+ testRunObj.status);
                     return;
@@ -497,5 +503,12 @@ export class APISupport {
                 }
             }
         }
+    }
+
+    // this api is special case and doesnot use the yamlModels, instead uses the task variables for the same, this doesnot have the initialisation too.
+    async stopTestRunPostProcess(baseUri: string, runId: string) {
+        let urlSuffix = baseUri + "test-runs/"+runId+":stop?api-version=" + ApiVersionConstants.latestVersion;
+        let headers = await this.authContext.getDataPlaneHeader(FetchCallType.post);
+        await FetchUtil.httpClientRetries(urlSuffix,headers,FetchCallType.post,3,'');
     }
 }

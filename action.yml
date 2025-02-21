@@ -35,3 +35,4 @@ branding:
 runs:
   using: 'node20'
   main: 'lib/main.js'
+  post: 'lib/postProcessJob.js'

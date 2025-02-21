@@ -32,11 +32,12 @@ export enum TokenScope {
     ControlPlane
 }
 
-export enum CallTypeForDP {
+export enum FetchCallType {
     get,
     patch,
     put,
-    delete
+    delete,
+    post
 }
 
 export interface PassFailCount {
@@ -44,11 +45,12 @@ export interface PassFailCount {
     fail: number;
 }
 
-export const ContentTypeMap : { [key in CallTypeForDP]: string | null } = {
-    [CallTypeForDP.get]: null,
-    [CallTypeForDP.patch]: 'application/merge-patch+json',
-    [CallTypeForDP.put]: 'application/octet-stream',
-    [CallTypeForDP.delete]: 'application/json'
+export const ContentTypeMap : { [key in FetchCallType]: string | null } = {
+    [FetchCallType.get]: null,
+    [FetchCallType.patch]: 'application/merge-patch+json',
+    [FetchCallType.put]: 'application/octet-stream',
+    [FetchCallType.delete]: 'application/json',
+    [FetchCallType.post]: 'application/json'
 }
 
 export enum FileType{
@@ -110,6 +112,12 @@ export interface ValidationModel {
 
 export interface OutputVariableInterface {
     testRunId: string;
+}
+
+export module PostTaskParameters {
+    export const runId = 'LOADTEST_RUNID';
+    export const baseUri = 'LOADTEST_RESOURCE_URI';
+    export const isRunCompleted = 'LOADTEST_RUN_COMPLETED'; // this is set when the task is completed, to avoid get calls for the test again.
 }
 
 export module OutPutVariablesConstants {

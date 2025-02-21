@@ -6,8 +6,8 @@ import { TestKind } from "./engine/TestKind";
 import { BaseLoadTestFrameworkModel } from "./engine/BaseLoadTestFrameworkModel";
 const yaml = require('js-yaml');
 import * as fs from 'fs';
-import { AppComponentDefinition, AppComponents, AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI, ResourceMetricModel, ServerMetricConfig } from "./PayloadModels";
-import { AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml, ParamType, ReferenceIdentityKinds, RunTimeParams, ServerMetricsClientModel, ValidationModel } from "./UtilModels";
+import { AppComponentDefinition, AppComponents, AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI, ResourceMetricModel, ServerMetricConfig, TestRunModel } from "./PayloadModels";
+import {  AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml, ParamType, ReferenceIdentityKinds, RunTimeParams, ServerMetricsClientModel, ValidationModel } from "./UtilModels";
 import * as core from '@actions/core';
 import { PassFailMetric, ExistingParams, TestModel, CertificateMetadata, SecretMetadata, RegionConfiguration } from "./PayloadModels";
 import { autoStopDisable, OutputVariableName } from "./constants";
@@ -51,7 +51,10 @@ export class YamlConfig {
     addDefaultsForAppComponents: { [key: string]: boolean } = {}; // when server components are not given for few app components, we need to add the defaults for this.
     outputVariableName: string = OutputVariableName;
 
-    constructor() {
+    constructor(isPostProcess: boolean = false) {
+        if(isPostProcess) {
+            return;
+        }
         let yamlFile = core.getInput(InputConstants.loadTestConfigFile) ?? '';
         if(isNullOrUndefined(yamlFile) || yamlFile == ''){
             throw new Error(`The input field "${InputConstants.loadTestConfigFileLabel}" is empty. Provide the path to load test yaml file.`);
@@ -288,7 +291,7 @@ export class YamlConfig {
         const runDescription = core.getInput('loadTestRunDescription') ?? Util.getDefaultRunDescription();
 
         let runTimeParams : RunTimeParams = {env: envParsed, secrets: secretsParsed, runDisplayName, runDescription, testId: '', testRunId: ''};
-
+        this.runTimeParams = runTimeParams;
         let overRideParams = core.getInput(InputConstants.overRideParameters);
         let outputVarName = core.getInput(InputConstants.outputVariableName) ?? OutputVariableName;
 
@@ -410,10 +413,18 @@ export class YamlConfig {
         return data;
     }
 
-    getStartTestData() {
+    getStartTestData() : TestRunModel{
         this.runTimeParams.testId = this.testId;
         this.runTimeParams.testRunId = Util.getUniqueId();
-        return this.runTimeParams;
+        let startData : TestRunModel = {
+            testId: this.testId,
+            testRunId: this.runTimeParams.testRunId,
+            environmentVariables: this.runTimeParams.env,
+            secrets: this.runTimeParams.secrets,
+            displayName: this.runTimeParams.runDisplayName,
+            description: this.runTimeParams.runDescription
+        }
+        return startData;
     }
 
     getAutoStopCriteria(autoStopInput : AutoStopCriteriaObjYaml | string | null): AutoStopCriteria | null {

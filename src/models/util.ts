@@ -8,6 +8,7 @@ import { TestKind } from "./engine/TestKind";
 import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, ManagedIdentityTypeForAPI } from './PayloadModels';
 import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated, ValidationModel } from './UtilModels';
 import * as InputConstants from './InputConstants';
+import * as core from '@actions/core';
 
 export function checkFileType(filePath: string, fileExtToValidate: string): boolean{
     if(isNullOrUndefined(filePath)){
@@ -781,7 +782,8 @@ export function getDefaultTestRunName()
 
 export function getDefaultRunDescription()
 {
-    return "Started using GitHub Actions"
+    const pipelineName = core.getVariable("Build.DefinitionName") || core.getVariable("Release.DefinitionName");
+    return "Started using GH workflows" + (pipelineName ? "-" + pipelineName : "");
 }
 
 export function validateTestRunParamsFromPipeline(runTimeParams: RunTimeParams){    

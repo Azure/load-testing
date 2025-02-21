@@ -1,5 +1,5 @@
 import * as util from './models/FileUtils';
-import { OutputVariableInterface, OutPutVariablesConstants, resultFolder } from "./models/UtilModels";
+import { OutputVariableInterface, OutPutVariablesConstants, PostTaskParameters, resultFolder } from "./models/UtilModels";
 import * as fs from 'fs';
 import * as core from '@actions/core';
 import { AuthenticationUtils } from "./models/AuthenticationUtils";
@@ -15,6 +15,7 @@ async function run() {
 
         await authContext.authorize();
         await apiSupport.getResource();
+        core.setOutput(PostTaskParameters.baseUri, apiSupport.baseURL);
         await apiSupport.getTestAPI(false);
         if (fs.existsSync(resultFolder)){
             util.deleteFile(resultFolder);

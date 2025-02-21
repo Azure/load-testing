@@ -1,7 +1,7 @@
 import { isNullOrUndefined } from "util";
 import * as core from '@actions/core';
 import { execFile } from "child_process";
-import { CallTypeForDP, ContentTypeMap, TokenScope } from "./UtilModels";
+import { FetchCallType, ContentTypeMap, TokenScope } from "./UtilModels";
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { IHeaders } from "typed-rest-client/Interfaces";
 import * as InputConstants from "./InputConstants";
@@ -111,7 +111,7 @@ export class AuthenticationUtils {
         }
     }
 
-    async getDataPlaneHeader(apicallType : CallTypeForDP) : Promise<IHeaders> {
+    async getDataPlaneHeader(apicallType : FetchCallType) : Promise<IHeaders> {
         if(!this.isValid(TokenScope.Dataplane)) {
             let tokenRes:any = await this.getTokenAPI(TokenScope.Dataplane);
             this.dataPlanetoken = tokenRes;
