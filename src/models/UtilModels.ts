@@ -123,3 +123,18 @@ export module PostTaskParameters {
 export module OutPutVariablesConstants {
     export const testRunId = 'testRunId';
 }
+
+export enum ValidConditionsEnumValuesList {
+    GreaterThan = 'GreaterThan',
+    LessThan = 'LessThan'
+}
+
+export enum ValidCriteriaTypes {
+    clientMetrics = 'clientMetrics',
+    serverMetrics = 'serverMetrics'
+}
+
+export const ConditionEnumToSignMap : { [key in ValidConditionsEnumValuesList]: string } = {
+    [ValidConditionsEnumValuesList.GreaterThan]: '>',
+    [ValidConditionsEnumValuesList.LessThan]: '<'
+}

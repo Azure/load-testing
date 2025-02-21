@@ -11,7 +11,6 @@ async function run() {
         const runId = process.env[PostTaskParameters.runId];
         const baseUri = process.env[PostTaskParameters.baseUri];
         const isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
-        console.log(runId, baseUri, isRunCompleted);
         if(!isNullOrUndefined(runId) && !isNullOrUndefined(baseUri) && (isNullOrUndefined(isRunCompleted) || isRunCompleted != 'true')) {
             const yamlConfig = new YamlConfig(true);
             const authContext = new AuthenticationUtils();

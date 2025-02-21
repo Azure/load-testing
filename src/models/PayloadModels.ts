@@ -27,6 +27,15 @@ export interface PassFailMetric {
     result?: string | null;
 };
 
+export interface PassFailServerMetric {
+    metricNameSpace: string | null;
+    metricName: string;
+    resourceId: string;
+    aggregation: string;
+    condition: string;
+    value: string;
+}
+
 export interface AppComponentDefinition {
     resourceName: string;
     kind: string | null;
@@ -134,6 +143,7 @@ export interface LoadTestConfiguration {
 
 export interface PassFailCriteria {
     passFailMetrics?: { [key: string]: PassFailMetric | null };
+    passFailServerMetrics?: { [key: string]: PassFailServerMetric | null };
 };
 
 export interface InputArtifacts {
@@ -165,6 +175,7 @@ export interface ExistingParams {
     secrets: { [key: string]: SecretMetadata | null };
     env: { [key: string]: string | null };
     passFailCriteria: { [key: string]: PassFailMetric | null };
+    passFailServerMetrics: { [key: string]: PassFailServerMetric | null };
     appComponents: Map<string, string[]>; // key: resourceId, value: guids of the app components, so that we can make them null when the resourceId is removed from the config file.
 }
 

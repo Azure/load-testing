@@ -14,7 +14,7 @@ export class APISupport {
     authContext : AuthenticationUtils;
     yamlModel: YamlConfig;
     baseURL = '';
-    existingParams: ExistingParams = {secrets: {}, env: {}, passFailCriteria: {}, appComponents: new Map()};
+    existingParams: ExistingParams = {secrets: {}, env: {}, passFailCriteria: {}, passFailServerMetrics: {}, appComponents: new Map()};
     testId: string;
 
     constructor(authContext: AuthenticationUtils, yamlModel: YamlConfig) {
@@ -89,10 +89,12 @@ export class APISupport {
             {
                 if(!isNullOrUndefined(testObj.passFailCriteria) && !isNullOrUndefined(testObj.passFailCriteria.passFailMetrics))
                     this.existingParams.passFailCriteria = testObj.passFailCriteria.passFailMetrics;
-                if(testObj.secrets != null){
+                if(!isNullOrUndefined(testObj.passFailCriteria) && !isNullOrUndefined(testObj.passFailCriteria.passFailServerMetrics))
+                    this.existingParams.passFailServerMetrics = testObj.passFailCriteria.passFailServerMetrics;
+                if(!isNullOrUndefined(testObj.secrets)){
                     this.existingParams.secrets = testObj.secrets;
                 }
-                if(testObj.environmentVariables != null){
+                if(!isNullOrUndefined(testObj.environmentVariables)){
                     this.existingParams.env = testObj.environmentVariables;
                 }
             }

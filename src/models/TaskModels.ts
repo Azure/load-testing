@@ -6,8 +6,8 @@ import { TestKind } from "./engine/TestKind";
 import { BaseLoadTestFrameworkModel } from "./engine/BaseLoadTestFrameworkModel";
 const yaml = require('js-yaml');
 import * as fs from 'fs';
-import { AppComponentDefinition, AppComponents, AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI, ResourceMetricModel, ServerMetricConfig, TestRunModel } from "./PayloadModels";
-import {  AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml, ParamType, ReferenceIdentityKinds, RunTimeParams, ServerMetricsClientModel, ValidationModel } from "./UtilModels";
+import { AppComponentDefinition, AppComponents, AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI, PassFailServerMetric, ResourceMetricModel, ServerMetricConfig, TestRunModel } from "./PayloadModels";
+import {  AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml, ConditionEnumToSignMap, ParamType, ReferenceIdentityKinds, RunTimeParams, ServerMetricsClientModel, ValidationModel, ValidConditionsEnumValuesList } from "./UtilModels";
 import * as core from '@actions/core';
 import { PassFailMetric, ExistingParams, TestModel, CertificateMetadata, SecretMetadata, RegionConfiguration } from "./PayloadModels";
 import { autoStopDisable, OutputVariableName } from "./constants";
@@ -29,8 +29,12 @@ export class YamlConfig {
     env: { [key: string]: string | null } = {};
     certificates: CertificateMetadata| null = null;
     secrets: { [key: string] : SecretMetadata | null} = {};
+
     failureCriteria: { [key: string]: number } = {}; // this is yaml model.
+    serverFailureCriteria: PassFailServerMetric[]  = []; // this is yaml model.
+
     passFailApiModel : { [key: string]: PassFailMetric | null } = {}; // this is api model.
+    passFailServerModel : { [key: string]: PassFailServerMetric | null } = {}; // this is api model.
 
     keyVaultReferenceIdentityType: ManagedIdentityTypeForAPI = ManagedIdentityTypeForAPI.SystemAssigned;
     metricsReferenceIdentityType: ManagedIdentityTypeForAPI = ManagedIdentityTypeForAPI.SystemAssigned;
@@ -105,7 +109,12 @@ export class YamlConfig {
             this.splitAllCSVs = config.splitAllCSVs;
         }
         if(config.failureCriteria != undefined) {
-            this.failureCriteria = Util.getPassFailCriteriaFromString(config.failureCriteria);
+            if(Array.isArray(config.failureCriteria)) {
+                this.failureCriteria = Util.getPassFailCriteriaFromString(config.failureCriteria);
+            } else {
+                this.failureCriteria = Util.getPassFailCriteriaFromString(config.failureCriteria.clientMetrics ?? []);
+                this.serverFailureCriteria = Util.getServerCriteriaFromYaml(config.failureCriteria.serverMetrics ?? []);
+            }
         }
         if (config.autoStop != undefined) {
             this.autoStop = this.getAutoStopCriteria(config.autoStop);
@@ -298,7 +307,6 @@ export class YamlConfig {
         let outputVariableNameInput = core.getInput(InputConstants.outputVariableName);
         let overRideParams = !isNullOrUndefined(overRideParamsInput) && overRideParamsInput != '' ? overRideParamsInput : undefined;
         let outputVarName = !isNullOrUndefined(outputVariableNameInput) && outputVariableNameInput != '' ? outputVariableNameInput : OutputVariableName;
-        console.log(`overRideParams: ${overRideParams}`, `outputVarName: ${outputVarName}`);
         let validation = Util.validateOverRideParameters(overRideParams);
         if(validation.valid == false) {
             console.log(validation.error);
@@ -342,6 +350,27 @@ export class YamlConfig {
 
         for (; index < numberOfExistingCriteria; index++) {
             this.passFailApiModel[existingCriteriaIds[index]] = null;
+        }
+
+        let existingServerCriteria = existingData.passFailServerMetrics;
+        let existingServerCriteriaIds = Object.keys(existingServerCriteria);
+        let numberOfExistingServerCriteria = existingServerCriteriaIds.length;
+        let serverIndex = 0;
+
+        for(let serverCriteria of this.serverFailureCriteria) {
+            let criteriaId = serverIndex < numberOfExistingServerCriteria ? existingServerCriteriaIds[serverIndex++] : Util.getUniqueId();
+            this.passFailServerModel[criteriaId] = {
+                metricName: serverCriteria.metricName,
+                aggregation: serverCriteria.aggregation,
+                resourceId: serverCriteria.resourceId,
+                condition: ConditionEnumToSignMap[serverCriteria.condition as ValidConditionsEnumValuesList ?? ValidConditionsEnumValuesList.LessThan],
+                value: serverCriteria.value,
+                metricNameSpace: serverCriteria.metricNameSpace ?? Util.getResourceTypeFromResourceId(serverCriteria.resourceId),
+            };
+        }
+        
+        for (; serverIndex < numberOfExistingServerCriteria; serverIndex++) {
+            this.passFailServerModel[existingServerCriteriaIds[serverIndex]] = null;
         }
 
         let existingParams = existingCriteria.secrets;
@@ -402,7 +431,8 @@ export class YamlConfig {
             certificate: this.certificates,
             environmentVariables: this.env,
             passFailCriteria:{
-                passFailMetrics: this.passFailApiModel
+                passFailMetrics: this.passFailApiModel,
+                passFailServerMetrics: this.passFailServerModel
             },
             autoStopCriteria: this.autoStop,
             subnetId: this.subnetId,
