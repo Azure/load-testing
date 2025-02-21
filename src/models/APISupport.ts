@@ -457,7 +457,6 @@ export class APISupport {
                 if(testRunObj.testRunStatistics != null && testRunObj.testRunStatistics != undefined)
                     Util.printClientMetrics(testRunObj.testRunStatistics);
                 core.exportVariable(PostTaskParameters.isRunCompleted, 'true');
-                console.log(process.env[PostTaskParameters.runId], process.env[PostTaskParameters.isRunCompleted]);
                 let testResultUrl = Util.getResultFolder(testRunObj.testArtifacts);
                 if(testResultUrl != null) {
                     const response = await FetchUtil.httpClientRetries(testResultUrl,{},FetchCallType.get,3,"");

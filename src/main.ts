@@ -15,7 +15,7 @@ async function run() {
 
         await authContext.authorize();
         await apiSupport.getResource();
-        core.setOutput(PostTaskParameters.baseUri, apiSupport.baseURL);
+        core.exportVariable(PostTaskParameters.baseUri, apiSupport.baseURL);
         await apiSupport.getTestAPI(false);
         if (fs.existsSync(resultFolder)){
             util.deleteFile(resultFolder);
