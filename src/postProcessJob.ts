@@ -1,9 +1,8 @@
 import { PostTaskParameters } from "./models/UtilModels";
-import * as core from '@actions/core';
 import { AuthenticationUtils } from "./models/AuthenticationUtils";
-import { YamlConfig } from "./models/TaskModels";
-import { APISupport } from "./models/APISupport";
+import { APIService } from "./models/APIService";
 import { isNullOrUndefined } from "util";
+import * as CoreUtils from './models/CoreUtils';
 
 async function run() {
     try {
@@ -12,15 +11,13 @@ async function run() {
         const baseUri = process.env[PostTaskParameters.baseUri];
         const isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
         if(!isNullOrUndefined(runId) && !isNullOrUndefined(baseUri) && (isNullOrUndefined(isRunCompleted) || isRunCompleted != 'true')) {
-            const yamlConfig = new YamlConfig(true);
             const authContext = new AuthenticationUtils();
-            const apiSupport = new APISupport(authContext, yamlConfig);
-            await apiSupport.stopTestRunPostProcess(baseUri, runId);
+            const apiService = new APIService(authContext);
+            await apiService.stopTestRun(baseUri, runId);
         }
     }
-
     catch(err : any) {
-        core.debug("Failed to stop the test run:" + err.message);
+        CoreUtils.debug("Failed to stop the test run:" + err.message);
     }
 }
 

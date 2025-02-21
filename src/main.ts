@@ -1,37 +1,32 @@
 import * as util from './models/FileUtils';
-import { OutputVariableInterface, OutPutVariablesConstants, PostTaskParameters, resultFolder } from "./models/UtilModels";
+import { PostTaskParameters, resultFolder } from "./models/UtilModels";
 import * as fs from 'fs';
-import * as core from '@actions/core';
+import * as CoreUtils from './models/CoreUtils';
+import { createAndRunTest } from "./models/CreateAndRunTest";
 import { AuthenticationUtils } from "./models/AuthenticationUtils";
-import { YamlConfig } from "./models/TaskModels";
-import { APISupport } from "./models/APISupport";
+import { APIService } from './models/APIService';
 
 async function run() {
     try {
 
         let authContext = new AuthenticationUtils();
-        let yamlConfig = new YamlConfig();
-        let apiSupport = new APISupport(authContext, yamlConfig);
+        let apiService = new APIService(authContext);
 
         await authContext.authorize();
-        await apiSupport.getResource();
-        core.exportVariable(PostTaskParameters.baseUri, apiSupport.baseURL);
-        await apiSupport.getTestAPI(false);
+        let dataPlaneUrl = await apiService.getDataPlaneURL(authContext.resourceId);
+        
+        apiService.setBaseURL(dataPlaneUrl);
+        CoreUtils.exportVariable(PostTaskParameters.baseUri, apiService.baseURL);
+
         if (fs.existsSync(resultFolder)){
             util.deleteFile(resultFolder);
         }
-
         fs.mkdirSync(resultFolder);
-        await apiSupport.createTestAPI();
         
-        let outputVar: OutputVariableInterface = {
-            testRunId: yamlConfig.runTimeParams.testRunId
-        }
-
-        core.setOutput(`${yamlConfig.outputVariableName}.${OutPutVariablesConstants.testRunId}`, outputVar.testRunId);
+        await createAndRunTest(apiService);
     }
     catch (err:any) {
-        core.setFailed(err.message);
+        CoreUtils.setFailed(err.message);
     }
 }
 

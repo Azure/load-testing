@@ -53,15 +53,6 @@ export const ContentTypeMap : { [key in FetchCallType]: string | null } = {
     [FetchCallType.post]: 'application/json'
 }
 
-export enum FileType{
-    JMX_FILE = 'JMX_FILE',
-    USER_PROPERTIES = 'USER_PROPERTIES',
-    ADDITIONAL_ARTIFACTS = 'ADDITIONAL_ARTIFACTS',
-    ZIPPED_ARTIFACTS = "ZIPPED_ARTIFACTS",
-    URL_TEST_CONFIG = "URL_TEST_CONFIG",
-    TEST_SCRIPT = 'TEST_SCRIPT',
-}
-
 export const resultFolder = 'loadTest';
 export const reportZipFileName = 'report.zip';
 export const resultZipFileName = 'results.zip';
@@ -137,4 +128,9 @@ export enum ValidCriteriaTypes {
 export const ConditionEnumToSignMap : { [key in ValidConditionsEnumValuesList]: string } = {
     [ValidConditionsEnumValuesList.GreaterThan]: '>',
     [ValidConditionsEnumValuesList.LessThan]: '<'
+}
+
+export enum ValidationType {
+    test,
+    testrun
 }

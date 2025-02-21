@@ -1,10 +1,10 @@
 import { IHeaders, IHttpClientResponse } from 'typed-rest-client/Interfaces';
-import { ErrorCorrection, getResultObj, getUniqueId, sleep } from './util';
+import { errorCorrection, getResultObj, getUniqueId, sleep } from './util';
 import { FetchCallType, correlationHeader } from './UtilModels';
 import * as httpc from 'typed-rest-client/HttpClient';
 import { uploadFileData } from './FileUtils';
 const httpClient: httpc.HttpClient = new httpc.HttpClient('MALT-GHACTION');
-import * as core from '@actions/core'
+import * as CoreUtils from './CoreUtils';
 
 const methodEnumToString : { [key in FetchCallType] : string } = {
     [FetchCallType.get] : "get",
@@ -43,11 +43,11 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
             httpResponse = await httpClient.request(methodEnumToString[method], urlSuffix, data, header);
         }
         if(httpResponse.message.statusCode!= undefined && httpResponse.message.statusCode >= 300){
-            core.debug(`correlation id : ${correlationId}`);
+            CoreUtils.debug(`correlation id : ${correlationId}`);
         }
         if(httpResponse.message.statusCode!=undefined && [408,429,502,503,504].includes(httpResponse.message.statusCode)){
             let err = await getResultObj(httpResponse);
-            throw {message : (err && err.error && err.error.message) ? err.error.message : ErrorCorrection(httpResponse)}; // throwing as message to catch it as err.message
+            throw {message : (err && err.error && err.error.message) ? err.error.message : errorCorrection(httpResponse)}; // throwing as message to catch it as err.message
         }
         return httpResponse;
     }
