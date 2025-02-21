@@ -19,6 +19,7 @@ async function run() {
             await apiSupport.stopTestRunPostProcess(baseUri, runId);
         }
     }
+    
     catch(err : any) {
         core.debug("Failed to stop the test run:" + err.message);
     }

@@ -37,7 +37,6 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
             const pipelineName = process.env.GITHUB_WORKFLOW || "Unknown Pipeline";
             const pipelineUrl = `${githubBaseUrl}/${repository}/actions/runs/${runId}`;
             
-            console.log(pipelineUrl, pipelineName);
             header['x-ms-pipelineUrl'] = pipelineUrl;
             header['x-ms-pipelineName'] = pipelineName;   // setting these for patch calls.
 
