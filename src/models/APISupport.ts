@@ -1,4 +1,4 @@
-import { isNull, isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "util";
 import { AuthenticationUtils } from "./AuthenticationUtils";
 import { ApiVersionConstants, FetchCallType, FileType, PostTaskParameters, reportZipFileName, resultZipFileName } from "./UtilModels";
 import { TestKind } from "./engine/TestKind";
@@ -209,7 +209,7 @@ export class APISupport {
         let appComponentsData : AppComponents = this.yamlModel.getAppComponentsData();
         let header = await this.authContext.getDataPlaneHeader(FetchCallType.patch);
         let appComponentsResult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.patch,3,JSON.stringify(appComponentsData));
-        if(Object.keys(appComponentsData.components).length == 0) {
+        if(!isNullOrUndefined(appComponentsData?.components) && Object.keys(appComponentsData.components).length == 0) {
             return;
         }
         if(appComponentsResult.message.statusCode != 200 && appComponentsResult.message.statusCode != 201) {
@@ -230,7 +230,7 @@ export class APISupport {
         let serverMetricsData : ServerMetricConfig = {
             metrics: this.yamlModel.serverMetricsConfig
         }
-        if(Object.keys(serverMetricsData.metrics).length == 0) {
+        if(!isNullOrUndefined(serverMetricsData?.metrics) && Object.keys(serverMetricsData.metrics).length == 0) {
             return;
         }
         let header = await this.authContext.getDataPlaneHeader(FetchCallType.patch);
@@ -481,11 +481,11 @@ export class APISupport {
                     }
                 }
     
-                if(!isNull(testRunObj.testResult) && !isNullOrUndefined(testRunObj.testResult) && Util.isStatusFailed(testRunObj.testResult)) {
+                if(!isNullOrUndefined(testRunObj.testResult) && Util.isStatusFailed(testRunObj.testResult)) {
                     core.setFailed("TestResult: "+ testRunObj.testResult);
                     return;
                 }
-                if(!isNull(testRunObj.status) && !isNullOrUndefined(testRunObj.status) && Util.isStatusFailed(testRunObj.status)) {
+                if(!isNullOrUndefined(testRunObj.status) && Util.isStatusFailed(testRunObj.status)) {
                     console.log("Please go to the Portal for more error details: "+ testRunObj.portalUrl);
                     core.setFailed("TestStatus: "+ testRunObj.status);
                     return;

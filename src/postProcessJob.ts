@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import { AuthenticationUtils } from "./models/AuthenticationUtils";
 import { YamlConfig } from "./models/TaskModels";
 import { APISupport } from "./models/APISupport";
-import { isNull, isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "util";
 
 async function run() {
     try {
