@@ -15,6 +15,8 @@ export class APISupport {
     baseURL = '';
     existingParams: ExistingParams = {secrets: {}, env: {}, passFailCriteria: {}};
     testId: string;
+    resourceName: string | undefined;
+    subName: string | undefined;
 
     constructor(authContext: AuthenticationUtils, yamlModel: YamlConfig) {
         this.authContext = authContext;
@@ -30,6 +32,8 @@ export class APISupport {
         let header = await this.authContext.armTokenHeader();
         let response = await FetchUtil.httpClientRetries(armEndpoint.toString(),header,'get',3,"");
         let resource_name: string | undefined = core.getInput('loadTestResource');
+        this.resourceName = resource_name;
+        this.subName = this.authContext.subscriptionId;
         if(response.message.statusCode == 404) {
             var message = `The Azure Load Testing resource ${resource_name} does not exist. Please provide an existing resource.`;
             throw new Error(message);
@@ -299,11 +303,12 @@ export class APISupport {
     }
 
     async createTestRun() {
-        const testRunId = Util.getUniqueId();
-        let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.tm2024Version;
-        urlSuffix = this.baseURL+urlSuffix;
         try {
             var startData = this.yamlModel.getStartTestData();
+            const testRunId = this.yamlModel.runTimeParams.testRunId;
+            let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.tm2024Version;
+            urlSuffix = this.baseURL+urlSuffix;
+
             console.log("Creating and running a testRun for the test");
             let header = await this.authContext.getDataPlaneHeader(CallTypeForDP.patch);
             let startTestresult = await FetchUtil.httpClientRetries(urlSuffix,header,'patch',3,JSON.stringify(startData));
@@ -313,10 +318,12 @@ export class APISupport {
                 throw new Error("Error in running the test");
             }
             let startTime = new Date();
-            let portalUrl = testRunDao.portalUrl;
             let status = testRunDao.status;
             if(status == "ACCEPTED") {
-                console.log("View the load test run in progress at: "+ portalUrl)
+                console.log("\nView the load test run in Azure portal by following the steps:")
+                console.log("1. Go to your Azure Load Testing resource '"+this.resourceName+"' in subscription '"+this.subName+"'")
+                console.log("2. On the Tests page, go to test '"+this.testId+"'")
+                console.log("3. Go to test run '"+testRunDao.displayName+"'\n");
                 await this.getTestRunAPI(testRunId, status, startTime);
             }
         }

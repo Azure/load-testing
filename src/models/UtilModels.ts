@@ -21,6 +21,12 @@ export interface RunTimeParams {
     testId: string;
 }
 
+export enum ReferenceIdentityKinds {
+    KeyVault = "KeyVault",
+    Metrics = "Metrics",
+    Engine = "Engine"
+}
+
 export enum TokenScope {
     Dataplane,
     ControlPlane
@@ -85,4 +91,9 @@ export const ValidConditionList = {
 export enum ManagedIdentityType {
     SystemAssigned = "SystemAssigned",
     UserAssigned = "UserAssigned",
+}
+
+export interface AllManagedIdentitiesSegregated {
+    referenceIdentityValuesUAMIMap: { [key in ReferenceIdentityKinds]: string[] },
+    referenceIdentiesSystemAssignedCount : { [key in ReferenceIdentityKinds]: number }
 }

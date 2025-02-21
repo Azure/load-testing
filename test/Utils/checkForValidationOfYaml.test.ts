@@ -1,5 +1,6 @@
 import { checkValidityYaml, getAllFileErrors } from '../../src/models/util'
 import * as constants from './testYamls';
+import * as referenceIdentityConstants from './ReferenceIdentityYamls';
 
 describe('invalid Yaml tests', () =>{
   describe('basic scenarios for invalid cases', ()=>{
@@ -148,8 +149,98 @@ describe('valid yaml tests', () => {
   test('subnet id and PIP is true', () => {
     expect(checkValidityYaml(constants.subnetIdPIPDisabledTrue)).toStrictEqual({valid : true, error : ""});
   });
-})
+});
+describe('reference identity validations', () => {
+  test('Basic test with UAMI for all the refIds', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesBasicYaml)).toStrictEqual({valid : true, error : ""});
+  });
 
+  test('Basic test with SAMI for all the refIds', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesSystemAssignedBasicYaml)).toStrictEqual({valid : true, error : ""});
+  });
+
+  test('Basic test with UAMI and SAMI for few of the refIds', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesSystemAssignedAndUserAssignedYaml)).toStrictEqual({valid : true, error : ""});
+  });
+
+  test('no refIds', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.noReferenceIdentities)).toStrictEqual({valid : true, error : ""});
+  });
+
+  test('keyVault is given outside of the refIds', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.keyVaultGivenOutOfRefIds)).toStrictEqual({valid : true, error : ''});
+  });
+
+  // invalid scenarios.
+  test('2 system assigned ids on the KeyVault', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentities2SystemAssignedForKeyVault)).toStrictEqual({valid : false, error : 'Only one KeyVault reference identity should be provided in the referenceIdentities array.'});
+  });
+
+  test('2 system assigned on the Metrics', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentities2SystemAssignedForMetrics)).toStrictEqual({valid : false, error : 'Only one Metrics reference identity should be provided in the referenceIdentities array.'});
+  });
+
+  test('2 system assigned on the Engine', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentities2SystemAssignedForEngine)).toStrictEqual({valid : false, error : 'Only one Engine reference identity with SystemAssigned should be provided in the referenceIdentities array.'});
+  });
+
+  test('2 UAMI ids on the KeyVault', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentities2UAMIForKeyVault)).toStrictEqual({valid : false, error : 'Only one KeyVault reference identity should be provided in the referenceIdentities array.'});
+  });
+
+  test('2 UAMI on the Metrics', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentities2UAMIForMetrics)).toStrictEqual({valid : false, error : 'Only one Metrics reference identity should be provided in the referenceIdentities array.'});
+  });
+
+  test('UAMI and SAMI for KeyVault', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesSystemAssignedAndUAMIForKeyVault)).toStrictEqual({valid : false, error : 'KeyVault reference identity should be either SystemAssigned or UserAssigned but not both.'});
+  });
+
+  test('UAMI and SAMI for Metrics', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesSystemAssignedAndUAMIForMetrics)).toStrictEqual({valid : false, error : 'Metrics reference identity should be either SystemAssigned or UserAssigned but not both.'});
+  });
+
+  test('UAMI and SAMI for Engine', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesSystemAssignedAndUAMIForEngine)).toStrictEqual({valid : false, error : 'Engine reference identity should be either SystemAssigned or UserAssigned but not both.'});
+  });
+
+  test('KeyVault inside and outside', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesGivenInKeyVaultOutsideAndInside)).toStrictEqual({valid : false, error : 'KeyVault reference identity should not be provided in the referenceIdentities array if keyVaultReferenceIdentity is provided.'});
+  });
+
+  test('reference identities is not an array', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesNotAnArray)).toStrictEqual({valid : false, error : `The value "${referenceIdentityConstants.referenceIdentitiesNotAnArray.referenceIdentities.toString()}" for referenceIdentities is invalid. Provide a valid list of reference identities.`});
+  });
+
+  test('reference identities has wrong kind', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesWithImproperKind)).toStrictEqual({valid : false, error : `The value "MetricsDummy" for kind in referenceIdentity is invalid. Allowed values are 'Metrics', 'Keyvault' and 'Engine'.`});
+  });
+
+  test('reference identities has wrong type', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesWithImproperType)).toStrictEqual({valid : false, error : 'The value "Dummy" for type in referenceIdentities is invalid. Allowed values are "SystemAssigned" and "UserAssigned".'});
+  });
+
+  test('system assigned with value given', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentityWithValueButSystemAssigned)).toStrictEqual({valid : false, error : 'The "reference identity value" should omitted or set to null when using the "SystemAssigned" identity type.'});
+  });
+
+  test('system assigned with value given', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentityWithNoValueButUserAssigned)).toStrictEqual({valid : false, error : `The value for 'referenceIdentity value' cannot be null when using the 'UserAssigned' identity type. Provide a valid identity reference for 'reference identity value'.`});
+  });
+
+  test('invalid kvid', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitywithInvalidKVID)).toStrictEqual({valid : false, error : `The value "dummy" for reference identity is invalid. The value should be a string of the format: "/subscriptions/{subsId}/resourceGroups/{rgName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}".`});
+  });
+  test('invalid values for kvid', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitywithInvalidKVIDAsStringItself)).toStrictEqual({valid : false, error : `The value "hi123,123" for id in referenceIdentities is invalid. Provide a valid string.`});
+  });
+  test('invalid values as string', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitywithInvalidDict)).toStrictEqual({valid : false, error : `The value "mohit1" for referenceIdentities is invalid. Provide a valid dictionary with kind, value and type.`});
+  });
+  test('invalid type as string', () => {
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentityTypewithInvalidStringInKVID)).toStrictEqual({valid : false, error : `The value "UserAssigned,SystemAssigned" for type in referenceIdentities is invalid. Allowed values are "SystemAssigned" and "UserAssigned".`});
+  });
+});
 describe('file errors', () => {
   test('Test object with no file validation errors', () => {
     // https://learn.microsoft.com/en-us/rest/api/loadtesting/dataplane/load-test-administration/get-test?view=rest-loadtesting-dataplane-2022-11-01&tabs=HTTP

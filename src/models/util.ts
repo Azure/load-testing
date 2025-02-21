@@ -5,8 +5,8 @@ import { defaultYaml } from './constants';
 import * as EngineUtil from './engine/Util';
 import { BaseLoadTestFrameworkModel } from './engine/BaseLoadTestFrameworkModel';
 import { TestKind } from "./engine/TestKind";
-import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel } from './PayloadModels';
-import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount } from './UtilModels';
+import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, ManagedIdentityTypeForAPI } from './PayloadModels';
+import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated } from './UtilModels';
 
 export function checkFileType(filePath: string, fileExtToValidate: string): boolean{
     if(isNullOrUndefined(filePath)){
@@ -243,11 +243,16 @@ function isInValidSubnet(uri: string): boolean {
     return !(pattern.test(uri));
 }
 
-function isInValidKVId(uri: string): boolean {
+function isInvalidManagedIdentityId(uri: string): boolean {
     const pattern = /^\/subscriptions\/[a-f0-9-]+\/resourceGroups\/[a-zA-Z0-9\u0080-\uFFFF()._-]+\/providers\/Microsoft\.ManagedIdentity\/userAssignedIdentities\/[a-zA-Z0-9._-]+$/i;
 
     return !(pattern.test(uri));
 }
+
+function isValidReferenceIdentityKind(value: string): value is ManagedIdentityType {
+    return Object.values(ReferenceIdentityKinds).includes(value as ReferenceIdentityKinds);
+}
+
 
 function isValidTestKind(value: string): value is TestKind {
     return Object.values(TestKind).includes(value as TestKind);
@@ -328,11 +333,29 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
     if(givenYaml.subnetId && (typeof givenYaml.subnetId!= 'string' || isInValidSubnet(givenYaml.subnetId))){
         return {valid : false, error : `The value "${givenYaml.subnetId}" for subnetId is invalid. The value should be a string of the format: "/subscriptions/{subscriptionId}/resourceGroups/{rgName}/providers/Microsoft.Network/virtualNetworks/{vnetName}/subnets/{subnetName}".`};
     }
-    if(givenYaml.keyVaultReferenceIdentity && (typeof givenYaml.keyVaultReferenceIdentity!= 'string' || isInValidKVId(givenYaml.keyVaultReferenceIdentity))){
+    if(givenYaml.keyVaultReferenceIdentity && (typeof givenYaml.keyVaultReferenceIdentity!= 'string' || isInvalidManagedIdentityId(givenYaml.keyVaultReferenceIdentity))){
         return {valid : false, error : `The value "${givenYaml.keyVaultReferenceIdentity}" for keyVaultReferenceIdentity is invalid. The value should be a string of the format: "/subscriptions/{subsId}/resourceGroups/{rgName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}".`};
     }
     if(givenYaml.keyVaultReferenceIdentityType != undefined && givenYaml.keyVaultReferenceIdentityType != null && !isValidManagedIdentityType(givenYaml.keyVaultReferenceIdentityType)){
         return {valid : false, error : `The value "${givenYaml.keyVaultReferenceIdentityType}" for keyVaultReferenceIdentityType is invalid. Allowed values are "SystemAssigned" and "UserAssigned".`};
+    }
+    if(!isNullOrUndefined(givenYaml.referenceIdentities)) {
+        if(!Array.isArray(givenYaml.referenceIdentities)){
+            return {valid : false, error : `The value "${givenYaml.referenceIdentities.toString()}" for referenceIdentities is invalid. Provide a valid list of reference identities.`};
+        }
+        let result = validateReferenceIdentities(givenYaml.referenceIdentities);
+        if(result?.valid == false){
+            return result;
+        }
+        try {
+            if(givenYaml.keyVaultReferenceIdentityType || givenYaml.keyVaultReferenceIdentity){
+                validateAndGetSegregatedManagedIdentities(givenYaml.referenceIdentities as Array<{[key: string] : string}>, true);
+            } else {
+                validateAndGetSegregatedManagedIdentities(givenYaml.referenceIdentities as Array<{[key: string] : string}>);
+            }
+        } catch (error : any) {
+            return {valid : false, error : error.message};
+        }
     }
     if(!isNullOrUndefined(givenYaml.keyVaultReferenceIdentity) && givenYaml.keyVaultReferenceIdentityType == ManagedIdentityType.SystemAssigned){
         return {valid : false, error : `The "keyVaultReferenceIdentity" should omitted or set to null when using the "SystemAssigned" identity type.`};
@@ -395,6 +418,86 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
         let engineInstances = givenYaml.engineInstances ?? 1;
         if(totalEngineCount != givenYaml.engineInstances){
             return {valid : false, error : `The sum of engineInstances in regionalLoadTestConfig should be equal to the value of totalEngineInstances "${engineInstances}" in the test configuration.`};
+        }
+    }
+    return {valid : true, error : ""};
+}
+
+export function validateAndGetSegregatedManagedIdentities(referenceIdentities: {[key: string]: string}[], keyVaultGivenOutOfReferenceIdentities: boolean = false) : AllManagedIdentitiesSegregated {
+        
+    let referenceIdentityValuesUAMIMap: { [key in ReferenceIdentityKinds]: string[] } = {
+        [ReferenceIdentityKinds.KeyVault]: [],
+        [ReferenceIdentityKinds.Metrics]: [],
+        [ReferenceIdentityKinds.Engine]: []
+    };
+
+    let referenceIdentiesSystemAssignedCount : { [key in ReferenceIdentityKinds]: number } = {
+        [ReferenceIdentityKinds.KeyVault]: 0,
+        [ReferenceIdentityKinds.Metrics]: 0,
+        [ReferenceIdentityKinds.Engine]: 0
+    }
+
+    for (let referenceIdentity of referenceIdentities) {
+        // the value has check proper check in the utils, so we can decide the Type based on the value.
+        if(referenceIdentity.value) {
+            referenceIdentityValuesUAMIMap[referenceIdentity.kind as ReferenceIdentityKinds].push(referenceIdentity.value);
+        } else {
+            referenceIdentiesSystemAssignedCount[referenceIdentity.kind as ReferenceIdentityKinds]++;
+        }
+    }
+    
+    // key-vault which needs back-compat.
+    if(keyVaultGivenOutOfReferenceIdentities) {
+        if(referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.KeyVault].length > 0 || referenceIdentiesSystemAssignedCount[ReferenceIdentityKinds.KeyVault] > 0) {
+            throw new Error("KeyVault reference identity should not be provided in the referenceIdentities array if keyVaultReferenceIdentity is provided.");
+        }
+        // this will be assigned above if the given is outside the refIds so no need to assign again.
+    }
+
+    for(let key in ReferenceIdentityKinds) {
+        if(key != ReferenceIdentityKinds.Engine) {
+            if(referenceIdentityValuesUAMIMap[key as ReferenceIdentityKinds].length > 1 || referenceIdentiesSystemAssignedCount[key as ReferenceIdentityKinds] > 1) {
+                throw new Error(`Only one ${key} reference identity should be provided in the referenceIdentities array.`);
+            } else if(referenceIdentityValuesUAMIMap[key as ReferenceIdentityKinds].length == 1 && referenceIdentiesSystemAssignedCount[key as ReferenceIdentityKinds] > 0) {
+                throw new Error(`${key} reference identity should be either SystemAssigned or UserAssigned but not both.`);
+            }
+        }
+    }
+    
+    // engines check, this can have multiple values too check is completely different.
+    if(referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.Engine].length > 0 && referenceIdentiesSystemAssignedCount[ReferenceIdentityKinds.Engine] > 0) {
+        throw new Error("Engine reference identity should be either SystemAssigned or UserAssigned but not both.");
+    } else if(referenceIdentiesSystemAssignedCount[ReferenceIdentityKinds.Engine] > 1) {
+        throw new Error("Only one Engine reference identity with SystemAssigned should be provided in the referenceIdentities array.");
+    }
+    return {referenceIdentityValuesUAMIMap, referenceIdentiesSystemAssignedCount};
+}
+
+function validateReferenceIdentities(referenceIdentities: Array<any>) : {valid : boolean, error : string} {
+    for(let referenceIdentity of referenceIdentities){        
+        if(!isDictionary(referenceIdentity)){
+            return {valid : false, error : `The value "${referenceIdentity.toString()}" for referenceIdentities is invalid. Provide a valid dictionary with kind, value and type.`};
+        }
+        if(referenceIdentity.value != undefined && typeof referenceIdentity.value != 'string'){
+            return {valid : false, error : `The value "${referenceIdentity.value.toString()}" for id in referenceIdentities is invalid. Provide a valid string.`};
+        }
+        if(referenceIdentity.type != undefined && typeof referenceIdentity.type != 'string'){
+            return {valid : false, error : `The value "${referenceIdentity.type.toString()}" for type in referenceIdentities is invalid. Allowed values are "SystemAssigned" and "UserAssigned".`};
+        }
+        if(!isValidReferenceIdentityKind(referenceIdentity.kind)){
+            return {valid : false, error : `The value "${referenceIdentity.kind}" for kind in referenceIdentity is invalid. Allowed values are 'Metrics', 'Keyvault' and 'Engine'.`};
+        }
+        if(referenceIdentity.type && !isValidManagedIdentityType(referenceIdentity.type)){
+            return {valid : false, error : `The value "${referenceIdentity.type}" for type in referenceIdentities is invalid. Allowed values are "SystemAssigned" and "UserAssigned".`};
+        }
+        if(!isNullOrUndefined(referenceIdentity.value) && referenceIdentity.type == ManagedIdentityType.SystemAssigned){
+            return {valid : false, error : `The "reference identity value" should omitted or set to null when using the "SystemAssigned" identity type.`};
+        }
+        if(isNullOrUndefined(referenceIdentity.value) && referenceIdentity.type == ManagedIdentityType.UserAssigned){
+            return {valid : false, error : `The value for 'referenceIdentity value' cannot be null when using the 'UserAssigned' identity type. Provide a valid identity reference for 'reference identity value'.`};
+        }
+        if(referenceIdentity.value && isInvalidManagedIdentityId(referenceIdentity.value)){
+            return {valid : false, error : `The value "${referenceIdentity.value}" for reference identity is invalid. The value should be a string of the format: "/subscriptions/{subsId}/resourceGroups/{rgName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}".`};
         }
     }
     return {valid : true, error : ""};

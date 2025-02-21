@@ -47,9 +47,9 @@ export interface TestModel {
     keyvaultReferenceIdentityType?: string;
     keyvaultReferenceIdentityId?: string| null;
     metricsReferenceIdentityType?: string;
-    metricsReferenceIdentityId?: string;
+    metricsReferenceIdentityId?: string | null;
     engineBuiltinIdentityType?: string;
-    engineBuiltinIdentityIds?: string[];
+    engineBuiltinIdentityIds?: string[] | null;
     baselineTestRunId?: string;
     kind?: TestKind;
 };
@@ -139,4 +139,10 @@ export interface ExistingParams {
     secrets: { [key: string]: SecretMetadata | null };
     env: { [key: string]: string | null };
     passFailCriteria: { [key: string]: PassFailMetric | null };
+}
+
+export enum ManagedIdentityTypeForAPI {
+    SystemAssigned = "SystemAssigned",
+    UserAssigned = "UserAssigned",
+    None = "None"
 }
