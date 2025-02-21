@@ -78,13 +78,17 @@ jobs:
 
     - name: 'Azure Load Testing'
       uses: ./
+      id: alt
       with:
         loadTestConfigFile: ${{ matrix.configFile }}
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
         overRideParameters: ${{ env.OVERRIDE_PARAMS  }}
-
+        outputVariableName: 'loadTestRunId'
       continue-on-error: true
+
+    - name: Print the Output
+      run: echo "The Test ID is ${{ steps.alt.outputs.loadTestRunId.testRunId }}"
 
     - name: Check for results and report files
       run: |
