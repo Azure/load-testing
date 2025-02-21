@@ -443,6 +443,7 @@ export class APISupport {
                         reportsAvailable = true;
                     }
                 }
+                
                 if(testRunObj && testRunObj.startDateTime){
                     startTime = new Date(testRunObj.startDateTime);
                 }
