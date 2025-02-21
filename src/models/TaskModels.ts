@@ -292,8 +292,10 @@ export class YamlConfig {
 
         let runTimeParams : RunTimeParams = {env: envParsed, secrets: secretsParsed, runDisplayName, runDescription, testId: '', testRunId: ''};
         this.runTimeParams = runTimeParams;
-        let overRideParams = core.getInput(InputConstants.overRideParameters) ?? undefined;
+        let overRideParamsInput = core.getInput(InputConstants.overRideParameters);
+        let overRideParams = !isNullOrUndefined(overRideParamsInput) && overRideParamsInput != '' ? overRideParamsInput : undefined;
         let outputVarName = core.getInput(InputConstants.outputVariableName) ?? OutputVariableName;
+        console.log(overRideParams, outputVarName, eRun, secretRun);
 
         let validation = Util.validateOverRideParameters(overRideParams);
         if(validation.valid == false) {
