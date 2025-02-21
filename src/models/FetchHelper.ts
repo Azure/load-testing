@@ -30,16 +30,17 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
             let fileContent = uploadFileData(data);
             httpResponse = await httpClient.request(methodEnumToString[method], urlSuffix, fileContent, header);
         } else{
-            const organization = process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI;
-            const project = process.env.SYSTEM_TEAMPROJECT;
-            const buildId = process.env.BUILD_BUILDID;
-            console.log(organization, project, buildId);
-            const pipelineName = tl.getVariable("Build.DefinitionName") || tl.getVariable("Release.DefinitionName") || "Unavailable";
-            const pipelineUrl = `${organization}${project}/_build/results?buildId=${buildId}`;
-
+            const githubBaseUrl = process.env.GITHUB_SERVER_URL;
+            const repository = process.env.GITHUB_REPOSITORY;
+            const runId = process.env.GITHUB_RUN_ID;
+            
+            const pipelineName = process.env.GITHUB_WORKFLOW || "Unknown Pipeline";
+            const pipelineUrl = `${githubBaseUrl}/${repository}/actions/runs/${runId}`;
+            
+            console.log(pipelineUrl, pipelineName);
             header['x-ms-pipelineUrl'] = pipelineUrl;
             header['x-ms-pipelineName'] = pipelineName;   // setting these for patch calls.
-            console.log(pipelineUrl, pipelineName, tl.getVariable("Build.DefinitionName"), tl.getVariable("Release.DefinitionName"));
+
             httpResponse = await httpClient.request(methodEnumToString[method], urlSuffix, data, header);
         }
         if(httpResponse.message.statusCode!= undefined && httpResponse.message.statusCode >= 300){

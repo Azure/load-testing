@@ -378,7 +378,7 @@ export class APISupport {
             const testRunId = this.yamlModel.runTimeParams.testRunId;
             let urlSuffix = "test-runs/"+testRunId+"?api-version=" + ApiVersionConstants.latestVersion;
             urlSuffix = this.baseURL+urlSuffix;
-            core.setTaskVariable(PostTaskParameters.runId, testRunId);
+            core.exportVariable(PostTaskParameters.runId, testRunId);
             console.log("Creating and running a testRun for the test");
             let header = await this.authContext.getDataPlaneHeader(FetchCallType.patch);
             let startTestresult = await FetchUtil.httpClientRetries(urlSuffix,header,FetchCallType.patch,3,JSON.stringify(startData));
@@ -455,7 +455,8 @@ export class APISupport {
                     Util.printCriteria(testRunObj.passFailCriteria.passFailMetrics)
                 if(testRunObj.testRunStatistics != null && testRunObj.testRunStatistics != undefined)
                     Util.printClientMetrics(testRunObj.testRunStatistics);
-                core.setTaskVariable(PostTaskParameters.isRunCompleted, 'true');
+                core.exportVariable(PostTaskParameters.isRunCompleted, 'true');
+                console.log(process.env[PostTaskParameters.runId], process.env[PostTaskParameters.isRunCompleted]);
                 let testResultUrl = Util.getResultFolder(testRunObj.testArtifacts);
                 if(testResultUrl != null) {
                     const response = await FetchUtil.httpClientRetries(testResultUrl,{},FetchCallType.get,3,"");

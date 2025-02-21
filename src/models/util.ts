@@ -782,7 +782,7 @@ export function getDefaultTestRunName()
 
 export function getDefaultRunDescription()
 {
-    const pipelineName = core.getVariable("Build.DefinitionName") || core.getVariable("Release.DefinitionName");
+    const pipelineName = process.env.GITHUB_WORKFLOW || "Unknown Pipeline";
     return "Started using GH workflows" + (pipelineName ? "-" + pipelineName : "");
 }
 

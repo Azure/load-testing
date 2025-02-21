@@ -8,9 +8,10 @@ import { isNullOrUndefined } from "util";
 async function run() {
     try {
 
-        const runId = core.getTaskVariable(PostTaskParameters.runId);
-        const baseUri = core.getTaskVariable(PostTaskParameters.baseUri);
-        const isRunCompleted = core.getTaskVariable(PostTaskParameters.isRunCompleted);
+        const runId = process.env[PostTaskParameters.runId];
+        const baseUri = process.env[PostTaskParameters.baseUri];
+        const isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+
         if(!isNullOrUndefined(runId) && !isNullOrUndefined(baseUri) && (isNullOrUndefined(isRunCompleted) || isRunCompleted != 'true')) {
             const yamlConfig = new YamlConfig(true);
             const authContext = new AuthenticationUtils();
