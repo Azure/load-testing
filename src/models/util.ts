@@ -613,6 +613,7 @@ export function getPassFailCriteriaFromString(passFailCriteria: (string | {[key:
             criteriaString = criteria[request]
         }
         let tempStr: string = "";
+        
         for(let i=0; i<criteriaString.length; i++){
             if(criteriaString[i] == '('){
                 data.aggregate = tempStr.trim();
