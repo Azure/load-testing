@@ -16,13 +16,14 @@ export class AuthenticationUtils {
     armEndpoint='https://management.azure.com';
 
     resourceId : string = '';
+    subscriptionName: string = '';
 
     constructor() {}
 
     async authorize() {
         // NOTE: This will set the subscription id
         await this.getTokenAPI(TokenScope.ControlPlane);
-
+        this.subscriptionName = await this.getSubName();
         const rg: string | undefined = core.getInput(InputConstants.resourceGroup);
         const ltres: string | undefined = core.getInput(InputConstants.loadTestResource);
         if(isNullOrUndefined(rg) || rg == ''){
@@ -121,6 +122,20 @@ export class AuthenticationUtils {
             'Authorization': 'Bearer '+ this.dataPlanetoken
         };
         return headers;
+    }
+    
+    async getSubName() {
+        try {
+            const cmdArguments = ["account", "show"];
+            var result: any = await this.execAz(cmdArguments);
+            let name = result.name;
+            return name;
+        } catch (err: any) {
+            const message =
+            `An error occurred while getting credentials from ` +
+            `Azure CLI for getting subscription name: ${err.message}`; 
+            throw new Error(message);
+        }
     }
 
     async armTokenHeader() {
