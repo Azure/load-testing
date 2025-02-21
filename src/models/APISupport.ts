@@ -390,9 +390,9 @@ export class APISupport {
             let startTime = new Date();
             let status = testRunDao.status;
             if(status == "ACCEPTED") {
-                console.log("\nView the load test run in Azure portal by following the steps:")
+                console.log("\nView the load test run in Azure portal by following the steps:");
                 console.log("1. Go to your Azure Load Testing resource '"+Util.getResourceNameFromResourceId(this.authContext.resourceId)+"' in subscription '"+Util.getSubscriptionIdFromResourceId(this.authContext.resourceId)+"'")
-                console.log("2. On the Tests page, go to test '"+this.testId+"'")
+                console.log("2. On the Tests page, go to test '"+this.yamlModel.displayName+"'");
                 console.log("3. Go to test run '"+testRunDao.displayName+"'\n");
                 await this.getTestRunAPI(testRunId, status, startTime);
             }
@@ -443,7 +443,7 @@ export class APISupport {
                         reportsAvailable = true;
                     }
                 }
-                
+
                 if(testRunObj && testRunObj.startDateTime){
                     startTime = new Date(testRunObj.startDateTime);
                 }
