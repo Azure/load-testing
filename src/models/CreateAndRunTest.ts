@@ -56,7 +56,7 @@ export async function createAndRunTest(apiService: APIService) {
     let runTimeParamsofTestRun : RunTimeParams = ValidateAndGetRunTimeParamsForTestRun(yamlConfig.testId);
     let createTestrunPayLoad : TestRunModel = getTestRunPayload(runTimeParamsofTestRun);
     let testRunResult = await apiService.createTestRun(createTestrunPayLoad);
-    printPortalUrl(testRunResult.displayName || '', yamlConfig.displayName, apiService.authContext.subscriptionName, apiService.authContext.resourceId);
+    testRunResult.status && printPortalUrl(testRunResult.displayName || '', yamlConfig.displayName, apiService.authContext.subscriptionName, apiService.authContext.resourceId);
 
     CoreUtils.exportVariable(PostTaskParameters.runId, testRunResult.testRunId);
 
@@ -119,13 +119,10 @@ async function uploadTestScriptFile(yamlModel: YamlConfig, apiService: APIServic
 }
 
 function printPortalUrl(testRunDisplayName: string, testDisplayName: string, subscriptionName: string, resourceId: string) : void {
-    console.log("Creating and running a testRun for the test");
-    if(status) {
-        console.log("\nView the load test run in Azure portal by following the steps:");
-        console.log("1. Go to your Azure Load Testing resource '"+Util.getResourceNameFromResourceId(resourceId)+"' in subscription '"+subscriptionName+"'");
-        console.log("2. On the Tests page, go to test '"+testDisplayName+"'");
-        console.log("3. Go to test run '"+testRunDisplayName+"'\n");
-    }
+    console.log("\nView the load test run in Azure portal by following the steps:");
+    console.log("1. Go to your Azure Load Testing resource '"+Util.getResourceNameFromResourceId(resourceId)+"' in subscription '"+subscriptionName+"'");
+    console.log("2. On the Tests page, go to test '"+testDisplayName+"'");
+    console.log("3. Go to test run '"+testRunDisplayName+"'\n");
 }
 
 /*
