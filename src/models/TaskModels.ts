@@ -298,7 +298,7 @@ export class YamlConfig {
         let outputVariableNameInput = core.getInput(InputConstants.outputVariableName);
         let overRideParams = !isNullOrUndefined(overRideParamsInput) && overRideParamsInput != '' ? overRideParamsInput : undefined;
         let outputVarName = !isNullOrUndefined(outputVariableNameInput) && outputVariableNameInput != '' ? outputVariableNameInput : OutputVariableName;
-
+        console.log(`overRideParams: ${overRideParams}`, `outputVarName: ${outputVarName}`);
         let validation = Util.validateOverRideParameters(overRideParams);
         if(validation.valid == false) {
             console.log(validation.error);
