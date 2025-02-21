@@ -71,9 +71,6 @@ jobs:
             echo "::set-output name=GUID::$(uuidgen)"
           fi
       shell : bash
-
-    - name: Set Override Parameters
-      run: echo "OVERRIDE_PARAMS_${{ matrix.os }}_${{ matrix.configFile }}={\"testId\":\"${{ steps.guid.outputs.GUID }}\"}" >> $GITHUB_ENV
   
     - name: 'Azure Load Testing'
       uses: ./
@@ -82,7 +79,7 @@ jobs:
         loadTestConfigFile: ${{ matrix.configFile }}
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
-        overRideParameters: ${{ env[format('OVERRIDE_PARAMS_{0}_{1}', matrix.os, matrix.configFile)] }}
+        overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
         outputVariableName: 'loadTestRunId'
       continue-on-error: true
 
