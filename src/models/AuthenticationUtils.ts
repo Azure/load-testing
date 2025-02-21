@@ -1,9 +1,10 @@
 import { isNullOrUndefined } from "util";
 import * as core from '@actions/core';
 import { execFile } from "child_process";
-import { CallTypeForDP, ContentTypeMap, TokenScope } from "./UtilModels";
+import { FetchCallType, ContentTypeMap, TokenScope } from "./UtilModels";
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { IHeaders } from "typed-rest-client/Interfaces";
+import * as InputConstants from "./InputConstants";
 
 export class AuthenticationUtils {
     dataPlanetoken : string = '';
@@ -15,20 +16,21 @@ export class AuthenticationUtils {
     armEndpoint='https://management.azure.com';
 
     resourceId : string = '';
+    subscriptionName: string = '';
 
     constructor() {}
 
     async authorize() {
         // NOTE: This will set the subscription id
         await this.getTokenAPI(TokenScope.ControlPlane);
-
-        const rg: string | undefined = core.getInput('resourceGroup');
-        const ltres: string | undefined = core.getInput('loadTestResource');
+        this.subscriptionName = await this.getSubName();
+        const rg: string | undefined = core.getInput(InputConstants.resourceGroup);
+        const ltres: string | undefined = core.getInput(InputConstants.loadTestResource);
         if(isNullOrUndefined(rg) || rg == ''){
-            throw new Error(`The input field "resourceGroup" is empty. Provide an existing resource group name.`);
+            throw new Error(`The input field "${InputConstants.resourceGroupLabel}" is empty. Provide an existing resource group name.`);
         }
         if(isNullOrUndefined(ltres) || ltres == ''){
-            throw new Error(`The input field "loadTestResource" is empty. Provide an existing load test resource name.`);
+            throw new Error(`The input field "${InputConstants.loadTestResourceLabel}" is empty. Provide an existing load test resource name.`);
         }
         this.resourceId = "/subscriptions/"+this.subscriptionId+"/resourcegroups/"+rg+"/providers/microsoft.loadtestservice/loadtests/"+ltres;
 
@@ -110,7 +112,7 @@ export class AuthenticationUtils {
         }
     }
 
-    async getDataPlaneHeader(apicallType : CallTypeForDP) : Promise<IHeaders> {
+    async getDataPlaneHeader(apicallType : FetchCallType) : Promise<IHeaders> {
         if(!this.isValid(TokenScope.Dataplane)) {
             let tokenRes:any = await this.getTokenAPI(TokenScope.Dataplane);
             this.dataPlanetoken = tokenRes;
@@ -120,6 +122,20 @@ export class AuthenticationUtils {
             'Authorization': 'Bearer '+ this.dataPlanetoken
         };
         return headers;
+    }
+    
+    async getSubName() {
+        try {
+            const cmdArguments = ["account", "show"];
+            var result: any = await this.execAz(cmdArguments);
+            let name = result.name;
+            return name;
+        } catch (err: any) {
+            const message =
+            `An error occurred while getting credentials from ` +
+            `Azure CLI for getting subscription name: ${err.message}`; 
+            throw new Error(message);
+        }
     }
 
     async armTokenHeader() {

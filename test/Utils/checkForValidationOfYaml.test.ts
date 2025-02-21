@@ -1,6 +1,7 @@
 import { checkValidityYaml, getAllFileErrors } from '../../src/models/util'
 import * as constants from './testYamls';
 import * as referenceIdentityConstants from './ReferenceIdentityYamls';
+import * as appCompsConstants from './AppComponentsAndServerConfigYamls';
 
 describe('invalid Yaml tests', () =>{
   describe('basic scenarios for invalid cases', ()=>{
@@ -205,7 +206,7 @@ describe('reference identity validations', () => {
   });
 
   test('KeyVault inside and outside', () => {
-    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesGivenInKeyVaultOutsideAndInside)).toStrictEqual({valid : false, error : 'KeyVault reference identity should not be provided in the referenceIdentities array if keyVaultReferenceIdentity is provided.'});
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesGivenInKeyVaultOutsideAndInside)).toStrictEqual({valid : false, error : 'Two KeyVault references are defined in the YAML config file. Use either the keyVaultReferenceIdentity field or the referenceIdentities section to specify the KeyVault reference identity.'});
   });
 
   test('reference identities is not an array', () => {
@@ -239,6 +240,47 @@ describe('reference identity validations', () => {
   });
   test('invalid type as string', () => {
     expect(checkValidityYaml(referenceIdentityConstants.referenceIdentityTypewithInvalidStringInKVID)).toStrictEqual({valid : false, error : `The value "UserAssigned,SystemAssigned" for type in referenceIdentities is invalid. Allowed values are "SystemAssigned" and "UserAssigned".`});
+  });
+});
+describe('app components and server config tests', () => {
+  test('app components with metrics', () => {
+    expect(checkValidityYaml(appCompsConstants.appComponentsWithMetrics)).toStrictEqual({valid : true, error : ''});
+  });
+  test('without metrics and kind', () => {
+    expect(checkValidityYaml(appCompsConstants.appComponentsWithoutMetricsAndKind)).toStrictEqual({valid : true, error : ''});
+  });
+
+  // invalid starts
+  test('invalid resource id as string', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidResourceIdString)).toStrictEqual({valid : false, error : 'The value "/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Web/serverfarms/sample-web" for resourceId in appComponents is invalid. Provide a valid resourceId.'});
+  });
+  // above one returns as it is string and this retuns the lowercase.
+  test('invalid resource id', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidResourceId)).toStrictEqual({valid : false, error : 'The value "/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourcegroups/sample-rg/providers/microsoft.web/serverfarms" for resourceId in appComponents is invalid. Provide a valid resourceId.'});
+  });
+  test('invalid kind', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidKind)).toStrictEqual({valid : false, error : 'The value "test,test2" for kind in appComponents is invalid. Provide a valid string.'});
+  });
+  test('invalid resource name', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidResourceName)).toStrictEqual({valid : false, error : 'The value "test,test2" for resourceName in appComponents is invalid. Provide a valid string.'});
+  });
+  test('invalid metrics array', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidMetricsArray)).toStrictEqual({valid : false, error : 'The value "dummy" for metrics in the appComponent with resourceName "test" is invalid. Provide a valid list of metrics.'});
+  });
+  test('invalid metrics dictionary', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidMetricDict)).toStrictEqual({valid : false, error : 'The value "hi,123" for metrics in the appComponent with resourceName "test" is invalid. Provide a valid dictionary.'});
+  });
+  test('invalid metric name', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidMetricName)).toStrictEqual({valid : false, error : 'The value "123" for name in the appComponent with resourceName "test" is invalid. Provide a valid string.'});
+  });
+  test('invalid metric aggregation', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidMetricAggregation)).toStrictEqual({valid : false, error : 'The value "Average,Min" for aggregation in the appComponent with resourceName "test" is invalid. Provide a valid string.'});
+  });
+  test('invalid metric namepspace', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidMetricNameSpace)).toStrictEqual({valid : false, error : 'The value "dummy,dummy2" for namespace in the appComponent with resourceName "test" is invalid. Provide a valid string.'});
+  });
+  test('invalid app component dictionary', () => {
+    expect(checkValidityYaml(appCompsConstants.appCompsInvalidAppComponentDictionary)).toStrictEqual({valid : false, error : 'The value "hi,123" for AppComponents in the index "1" is invalid. Provide a valid dictionary.'});
   });
 });
 describe('file errors', () => {

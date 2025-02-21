@@ -32,11 +32,12 @@ export enum TokenScope {
     ControlPlane
 }
 
-export enum CallTypeForDP {
+export enum FetchCallType {
     get,
     patch,
     put,
-    delete
+    delete,
+    post
 }
 
 export interface PassFailCount {
@@ -44,11 +45,12 @@ export interface PassFailCount {
     fail: number;
 }
 
-export const ContentTypeMap : { [key in CallTypeForDP]: string | null } = {
-    [CallTypeForDP.get]: null,
-    [CallTypeForDP.patch]: 'application/merge-patch+json',
-    [CallTypeForDP.put]: 'application/octet-stream',
-    [CallTypeForDP.delete]: 'application/json'
+export const ContentTypeMap : { [key in FetchCallType]: string | null } = {
+    [FetchCallType.get]: null,
+    [FetchCallType.patch]: 'application/merge-patch+json',
+    [FetchCallType.put]: 'application/octet-stream',
+    [FetchCallType.delete]: 'application/json',
+    [FetchCallType.post]: 'application/json'
 }
 
 export enum FileType{
@@ -66,8 +68,7 @@ export const resultZipFileName = 'results.zip';
 export const correlationHeader = 'x-ms-correlation-request-id';
 
 export module ApiVersionConstants {
-    export const tm2024Version = '2024-05-01-preview';
-    export const tm2023Version = '2023-04-01-preview';
+    export const latestVersion = '2024-12-01-preview';
     export const tm2022Version = '2022-11-01';
     export const cp2022Version = '2022-12-01'
 }
@@ -93,7 +94,32 @@ export enum ManagedIdentityType {
     UserAssigned = "UserAssigned",
 }
 
+export interface ServerMetricsClientModel {
+    name: string;
+    aggregation: string;
+    namespace?: string;
+}
+
 export interface AllManagedIdentitiesSegregated {
     referenceIdentityValuesUAMIMap: { [key in ReferenceIdentityKinds]: string[] },
     referenceIdentiesSystemAssignedCount : { [key in ReferenceIdentityKinds]: number }
+}
+
+export interface ValidationModel {
+    valid: boolean;
+    error: string;
+}
+
+export interface OutputVariableInterface {
+    testRunId: string;
+}
+
+export module PostTaskParameters {
+    export const runId = 'LOADTEST_RUNID';
+    export const baseUri = 'LOADTEST_RESOURCE_URI';
+    export const isRunCompleted = 'LOADTEST_RUN_COMPLETED'; // this is set when the task is completed, to avoid get calls for the test again.
+}
+
+export module OutPutVariablesConstants {
+    export const testRunId = 'testRunId';
 }

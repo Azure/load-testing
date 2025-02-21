@@ -1,12 +1,14 @@
 import { IHttpClientResponse } from 'typed-rest-client/Interfaces';
 const { v4: uuidv4 } = require('uuid');
 import { isNull, isNullOrUndefined } from 'util';
-import { defaultYaml } from './constants';
+import { autoStopDisable, DefaultYamlModel, OverRideParametersModel } from './constants';
 import * as EngineUtil from './engine/Util';
 import { BaseLoadTestFrameworkModel } from './engine/BaseLoadTestFrameworkModel';
 import { TestKind } from "./engine/TestKind";
 import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, ManagedIdentityTypeForAPI } from './PayloadModels';
-import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated } from './UtilModels';
+import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated, ValidationModel } from './UtilModels';
+import * as InputConstants from './InputConstants';
+import * as core from '@actions/core';
 
 export function checkFileType(filePath: string, fileExtToValidate: string): boolean{
     if(isNullOrUndefined(filePath)){
@@ -266,6 +268,13 @@ function isArrayOfStrings(variable: any): variable is string[] {
     return Array.isArray(variable) && variable.every((item) => typeof item === 'string');
 }
 
+function isInvalidString(variable: any, allowNull : boolean = false): variable is string[] {
+    if(allowNull){
+        return !isNullOrUndefined(variable) && (typeof variable != 'string' || variable == "");
+    }
+    return isNullOrUndefined(variable) || typeof variable != 'string' || variable == "";
+}
+
 function inValidEngineInstances(engines : number) : boolean{
     if(engines > 400 || engines < 1){
         return true;
@@ -273,12 +282,33 @@ function inValidEngineInstances(engines : number) : boolean{
     return false;
 }
 
+export function getResourceTypeFromResourceId(resourceId:string){
+    return resourceId && resourceId.split("/").length > 7 ? resourceId.split("/")[6] + "/" + resourceId.split("/")[7] : null
+}
+
+export function getResourceNameFromResourceId(resourceId:string){
+    return resourceId  && resourceId.split("/").length > 8 ? resourceId.split("/")[8] : null
+}
+
+export function getResourceGroupFromResourceId(resourceId:string){
+    return resourceId  && resourceId.split("/").length > 4 ? resourceId.split("/")[4] : null
+}
+
+export function getSubscriptionIdFromResourceId(resourceId:string){
+    return resourceId  && resourceId.split("/").length > 2 ? resourceId.split("/")[2] : null
+}
+
+function isValidGUID(guid: string): boolean {
+    const guidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    return guidRegex.test(guid);
+}
+
 export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : string} {
     if(!isDictionary(givenYaml)) {
         return {valid : false,error :`Invalid YAML syntax.`};
     }
     let unSupportedKeys : string[] = [];
-    let supportedKeys : string[] = Object.keys(defaultYaml);
+    let supportedKeys : string[] = Object.keys(new DefaultYamlModel());
     Object.keys(givenYaml).forEach(element => {
         if(supportedKeys.indexOf(element) == -1){
             unSupportedKeys.push(element);
@@ -339,6 +369,7 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
     if(givenYaml.keyVaultReferenceIdentityType != undefined && givenYaml.keyVaultReferenceIdentityType != null && !isValidManagedIdentityType(givenYaml.keyVaultReferenceIdentityType)){
         return {valid : false, error : `The value "${givenYaml.keyVaultReferenceIdentityType}" for keyVaultReferenceIdentityType is invalid. Allowed values are "SystemAssigned" and "UserAssigned".`};
     }
+
     if(!isNullOrUndefined(givenYaml.referenceIdentities)) {
         if(!Array.isArray(givenYaml.referenceIdentities)){
             return {valid : false, error : `The value "${givenYaml.referenceIdentities.toString()}" for referenceIdentities is invalid. Provide a valid list of reference identities.`};
@@ -383,17 +414,19 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
             return {valid : false, error : `The value "${givenYaml.properties.userPropertyFile}" for userPropertyFile is invalid. Provide a valid file path of type ${framework.ClientResources.userPropertyFileExtensionsFriendly}. Refer to the YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml#properties-configuration.`}
         }
     }
-    if(givenYaml.autoStop){
-        if(typeof givenYaml.autoStop != 'string'){
-            if(isNullOrUndefined(givenYaml.autoStop.errorPercentage) || isNaN(givenYaml.autoStop.errorPercentage) || givenYaml.autoStop.errorPercentage > 100 || givenYaml.autoStop.errorPercentage < 0) {
-                return {valid : false, error : `The value "${givenYaml.autoStop.errorPercentage}" for errorPercentage of auto-stop criteria is invalid. The value should be valid decimal number from 0 to 100.`};
-            }
-            if(isNullOrUndefined(givenYaml.autoStop.timeWindow) || isNaN(givenYaml.autoStop.timeWindow) || givenYaml.autoStop.timeWindow <= 0 || !Number.isInteger(givenYaml.autoStop.timeWindow)){
-                return {valid : false, error : `The value "${givenYaml.autoStop.timeWindow}" for timeWindow of auto-stop criteria is invalid. The value should be valid integer greater than 0.`};
-            }
+    if(givenYaml.appComponents) {
+        if(!Array.isArray(givenYaml.appComponents)){
+            return {valid : false, error : `The value "${givenYaml.appComponents}" for appComponents is invalid. Provide a valid list of application components.`};
         }
-        else if(givenYaml.autoStop != "disable"){
-            return {valid : false, error : 'Invalid value for "autoStop", for disabling auto stop use "autoStop: disable"'};
+        let validationAppComponents = validateAppComponentAndServerMetricsConfig(givenYaml.appComponents);
+        if(validationAppComponents.valid == false){
+            return validationAppComponents;
+        }
+    }
+    if(givenYaml.autoStop){
+        let validation = validateAutoStop(givenYaml.autoStop);
+        if(validation.valid == false){
+            return validation;
         }
     }
     if(givenYaml.regionalLoadTestConfig){
@@ -419,6 +452,30 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
         if(totalEngineCount != givenYaml.engineInstances){
             return {valid : false, error : `The sum of engineInstances in regionalLoadTestConfig should be equal to the value of totalEngineInstances "${engineInstances}" in the test configuration.`};
         }
+    }
+    return {valid : true, error : ""};
+}
+
+export function validateAutoStop(autoStop: any, isPipelineParam: boolean = false): ValidationModel {
+    if(typeof autoStop != 'string'){
+        if(isNullOrUndefined(autoStop.errorPercentage) || isNaN(autoStop.errorPercentage) || autoStop.errorPercentage > 100 || autoStop.errorPercentage < 0) {
+            let errorMessage = isPipelineParam 
+                                ? `The value "${autoStop.errorPercentage}" for errorPercentage of auto-stop criteria is invalid in the overrideParameters provided. The value should be valid decimal number from 0 to 100.`
+                                : `The value "${autoStop.errorPercentage}" for errorPercentage of auto-stop criteria is invalid. The value should be valid decimal number from 0 to 100.`;
+            return {valid : false, error : errorMessage};
+        }
+        if(isNullOrUndefined(autoStop.timeWindow) || isNaN(autoStop.timeWindow) || autoStop.timeWindow <= 0 || !Number.isInteger(autoStop.timeWindow)){
+            let errorMessage = isPipelineParam
+                                ? `The value "${autoStop.timeWindow}" for timeWindow of auto-stop criteria is invalid in the overrideParameters provided. The value should be valid integer greater than 0.`
+                                : `The value "${autoStop.timeWindow}" for timeWindow of auto-stop criteria is invalid. The value should be valid integer greater than 0.`
+            return {valid : false, error : errorMessage};
+        }
+    }
+    else if(autoStop != autoStopDisable){
+        let errorMessage = isPipelineParam
+                            ? 'Invalid value for "autoStop" in the overrideParameters provided, for disabling auto stop use "autoStop: disable"'
+                            : 'Invalid value for "autoStop", for disabling auto stop use "autoStop: disable"'
+        return {valid : false, error : errorMessage};
     }
     return {valid : true, error : ""};
 }
@@ -449,7 +506,7 @@ export function validateAndGetSegregatedManagedIdentities(referenceIdentities: {
     // key-vault which needs back-compat.
     if(keyVaultGivenOutOfReferenceIdentities) {
         if(referenceIdentityValuesUAMIMap[ReferenceIdentityKinds.KeyVault].length > 0 || referenceIdentiesSystemAssignedCount[ReferenceIdentityKinds.KeyVault] > 0) {
-            throw new Error("KeyVault reference identity should not be provided in the referenceIdentities array if keyVaultReferenceIdentity is provided.");
+            throw new Error("Two KeyVault references are defined in the YAML config file. Use either the keyVaultReferenceIdentity field or the referenceIdentities section to specify the KeyVault reference identity.");
         }
         // this will be assigned above if the given is outside the refIds so no need to assign again.
     }
@@ -471,6 +528,59 @@ export function validateAndGetSegregatedManagedIdentities(referenceIdentities: {
         throw new Error("Only one Engine reference identity with SystemAssigned should be provided in the referenceIdentities array.");
     }
     return {referenceIdentityValuesUAMIMap, referenceIdentiesSystemAssignedCount};
+}
+
+function validateAppComponentAndServerMetricsConfig(appComponents: Array<any>) : ValidationModel {
+    let appComponentsParsed = appComponents;
+    for(let i = 0; i < appComponentsParsed.length; i++){
+        if(!isDictionary(appComponentsParsed[i])){
+            return {valid : false, error : `The value "${appComponentsParsed[i].toString()}" for AppComponents in the index "${i}" is invalid. Provide a valid dictionary.`};
+        }
+        let resourceId = appComponentsParsed[i].resourceId;
+        if(isInvalidString(resourceId)){
+            return {valid : false, error : `The value "${appComponentsParsed[i].resourceId}" for resourceId in appComponents is invalid. Provide a valid resourceId.`};
+        }
+        resourceId = resourceId.toLowerCase();
+        let subscriptionId = getSubscriptionIdFromResourceId(resourceId);
+        let resourceType = getResourceTypeFromResourceId(resourceId);
+        let name = getResourceNameFromResourceId(resourceId);
+        let resourceGroup = getResourceGroupFromResourceId(resourceId);
+        if(isNullOrUndefined(resourceGroup) || isNullOrUndefined(subscriptionId) 
+            || isNullOrUndefined(resourceType) || isNullOrUndefined(name) 
+            || !isValidGUID(subscriptionId)){
+            return {valid : false, error : `The value "${resourceId}" for resourceId in appComponents is invalid. Provide a valid resourceId.`};
+        }
+        if(isInvalidString(appComponentsParsed[i].kind, true)){
+            return {valid : false, error : `The value "${appComponentsParsed[i].kind?.toString()}" for kind in appComponents is invalid. Provide a valid string.`};
+        }
+        if(isInvalidString(appComponentsParsed[i].resourceName, true)){
+            return {valid : false, error : `The value "${appComponentsParsed[i].resourceName?.toString()}" for resourceName in appComponents is invalid. Provide a valid string.`};
+        }
+        let resourceName = appComponentsParsed[i].resourceName || name;
+        if(!isNullOrUndefined(appComponentsParsed[i].metrics)) {
+            let metrics = appComponentsParsed[i].metrics;
+            if(!Array.isArray(metrics)){
+                return {valid : false, error : `The value "${metrics?.toString()}" for metrics in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid list of metrics.`};
+            }
+            for(let metric of metrics){
+                if(!isDictionary(metric)){
+                    return {valid : false, error : `The value "${metric?.toString()}" for metrics in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid dictionary.`};
+                }
+                if(metric && isInvalidString(metric.name)){
+                    return {valid : false, error : `The value "${metric.name?.toString()}" for name in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid string.`};
+                }
+                if(isInvalidString(metric.aggregation)){
+                    return {valid : false, error : `The value "${metric.aggregation?.toString()}" for aggregation in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid string.`};
+                }
+                if(isInvalidString(metric.namespace, true)){
+                    return {valid : false, error : `The value "${metric.namespace?.toString()}" for namespace in the appComponent with resourceName "${resourceName}" is invalid. Provide a valid string.`};
+                }
+            }
+        } else {
+            console.log(`Metrics not provided for the appComponent "${resourceName}", default metrics will be enabled for the same.`);
+        }
+    }
+    return {valid : true, error : ""};
 }
 
 function validateReferenceIdentities(referenceIdentities: Array<any>) : {valid : boolean, error : string} {
@@ -499,6 +609,68 @@ function validateReferenceIdentities(referenceIdentities: Array<any>) : {valid :
         if(referenceIdentity.value && isInvalidManagedIdentityId(referenceIdentity.value)){
             return {valid : false, error : `The value "${referenceIdentity.value}" for reference identity is invalid. The value should be a string of the format: "/subscriptions/{subsId}/resourceGroups/{rgName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}".`};
         }
+    }
+    return {valid : true, error : ""};
+}
+
+export function validateOverRideParameters(overRideParams: string | undefined): ValidationModel {
+    try {
+        if(!isNullOrUndefined(overRideParams)) {
+            let overRideParamsObj : any;
+            try{
+                overRideParamsObj = JSON.parse(overRideParams);
+            }
+            catch(error) {
+                return { valid: false, error:`Invalid format provided in the ${InputConstants.overRideParametersLabel} field in pipeline, provide a valid json string.` };
+            };
+            let unSupportedKeys : string[] = [];
+            let supportedKeys : string[] = Object.keys(new OverRideParametersModel());
+            Object.keys(overRideParamsObj).forEach(element => {
+                if(supportedKeys.indexOf(element) == -1){
+                    unSupportedKeys.push(element);
+                }
+            });
+            if(unSupportedKeys.length) {
+                const result = unSupportedKeys.map(element => `${element}`).join(", ");
+                return {valid : false, error : `The ${InputConstants.overRideParametersLabel} provided has unsupported field(s) "${result}".`};
+            }
+            if(overRideParamsObj.testId != undefined) {
+                if(typeof overRideParamsObj.testId != 'string') {
+                    return {valid : false, error : `The testId provided in the overrideParameters is not a string.`};
+                }
+            }
+            if(overRideParamsObj.displayName != undefined) {
+                if(typeof overRideParamsObj.displayName != 'string') {
+                    return {valid : false, error : `The displayName provided in the overrideParameters is not a string.`};
+                }
+            }
+            if(overRideParamsObj.description != undefined) {
+                if(typeof overRideParamsObj.description != 'string') {
+                    return {valid : false, error : `The description provided in the overrideParameters is not a string.`};
+                }
+            }
+            if(overRideParamsObj.engineInstances != undefined) {
+                if(typeof overRideParamsObj.engineInstances != 'number') {
+                    return {valid : false, error : `The engineInstances provided in the overrideParameters is not a number.`};
+                }
+            }
+            if(!isNullOrUndefined(overRideParamsObj.autoStop)) {
+                let validation = validateAutoStop(overRideParamsObj.autoStop, true);
+                if(validation.valid == false){
+                    return validation;
+                }
+            }
+        }
+    }
+    catch (error) {
+        return {valid: false, error: (error ?? '').toString()};
+    }
+    return {valid : true, error : ""};
+}
+
+export function validateOutputParametervariableName(outputVarName: string): ValidationModel {
+    if(isNullOrUndefined(outputVarName) || typeof outputVarName != 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(outputVarName)){
+        return { valid: false, error: `Invalid output variable name '${outputVarName}'. Use only letters, numbers, and underscores.`};
     }
     return {valid : true, error : ""};
 }
@@ -611,7 +783,8 @@ export function getDefaultTestRunName()
 
 export function getDefaultRunDescription()
 {
-    return "Started using GitHub Actions"
+    const pipelineName = process.env.GITHUB_WORKFLOW || "Unknown Pipeline";
+    return "Started using GH workflows" + (pipelineName ? "-" + pipelineName : "");
 }
 
 export function validateTestRunParamsFromPipeline(runTimeParams: RunTimeParams){    

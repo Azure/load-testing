@@ -53,9 +53,7 @@ jobs:
       run: |
         npm install --include=dev -f
         npm ci
-        npm install typescript -g 
-        tsc
-      # (note:mohit) - generally typescript is ignored somehow in the installation and now we want to ignore the js files for main branch hence we need tsc and npm install seperately.
+
     - name: Azure authentication
       uses: azure/login@v1
       continue-on-error: false
@@ -73,22 +71,20 @@ jobs:
             echo "::set-output name=GUID::$(uuidgen)"
           fi
       shell : bash
-
-    - name: Set up testName
-      shell: bash
-      run: |
-        # copying the files to a new file and editing the testId for each file in the copied file.
-        # replacing 'testId'(the thing present in the file.) with the new testId ('${{ steps.guid.outputs.GUID }}') in the copied file.
-        cp ${{ matrix.configFile }} test-config-${{ steps.guid.outputs.GUID }}.yaml
-        sed -i 's/testId/${{ steps.guid.outputs.GUID }}/g' test-config-${{ steps.guid.outputs.GUID }}.yaml
-
+  
     - name: 'Azure Load Testing'
       uses: ./
+      id: alt
       with:
-        loadTestConfigFile: test-config-${{ steps.guid.outputs.GUID }}.yaml
+        loadTestConfigFile: ${{ matrix.configFile }}
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
+        overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
+        outputVariableName: 'loadTestRunId'
       continue-on-error: true
+
+    - name: Print the Output
+      run: echo "The Test ID is ${{ steps.alt.outputs['loadTestRunId.testRunId'] }}"
 
     - name: Check for results and report files
       run: |
