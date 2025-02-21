@@ -4,6 +4,7 @@ import { execFile } from "child_process";
 import { CallTypeForDP, ContentTypeMap, TokenScope } from "./UtilModels";
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { IHeaders } from "typed-rest-client/Interfaces";
+import * as InputConstants from "./InputConstants";
 
 export class AuthenticationUtils {
     dataPlanetoken : string = '';
@@ -22,13 +23,13 @@ export class AuthenticationUtils {
         // NOTE: This will set the subscription id
         await this.getTokenAPI(TokenScope.ControlPlane);
 
-        const rg: string | undefined = core.getInput('resourceGroup');
-        const ltres: string | undefined = core.getInput('loadTestResource');
+        const rg: string | undefined = core.getInput(InputConstants.resourceGroup);
+        const ltres: string | undefined = core.getInput(InputConstants.loadTestResource);
         if(isNullOrUndefined(rg) || rg == ''){
-            throw new Error(`The input field "resourceGroup" is empty. Provide an existing resource group name.`);
+            throw new Error(`The input field "${InputConstants.resourceGroupLabel}" is empty. Provide an existing resource group name.`);
         }
         if(isNullOrUndefined(ltres) || ltres == ''){
-            throw new Error(`The input field "loadTestResource" is empty. Provide an existing load test resource name.`);
+            throw new Error(`The input field "${InputConstants.loadTestResourceLabel}" is empty. Provide an existing load test resource name.`);
         }
         this.resourceId = "/subscriptions/"+this.subscriptionId+"/resourcegroups/"+rg+"/providers/microsoft.loadtestservice/loadtests/"+ltres;
 

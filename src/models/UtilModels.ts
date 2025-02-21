@@ -107,3 +107,11 @@ export interface ValidationModel {
     valid: boolean;
     error: string;
 }
+
+export interface OutputVariableInterface {
+    testRunId: string;
+}
+
+export module OutPutVariablesConstants {
+    export const testRunId = 'testRunId';
+}

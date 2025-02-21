@@ -206,7 +206,7 @@ describe('reference identity validations', () => {
   });
 
   test('KeyVault inside and outside', () => {
-    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesGivenInKeyVaultOutsideAndInside)).toStrictEqual({valid : false, error : 'KeyVault reference identity should not be provided in the referenceIdentities array if keyVaultReferenceIdentity is provided.'});
+    expect(checkValidityYaml(referenceIdentityConstants.referenceIdentitiesGivenInKeyVaultOutsideAndInside)).toStrictEqual({valid : false, error : 'Two KeyVault references are defined in the YAML config file. Use either the keyVaultReferenceIdentity field or the referenceIdentities section to specify the KeyVault reference identity.'});
   });
 
   test('reference identities is not an array', () => {

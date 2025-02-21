@@ -8,6 +8,7 @@ import * as core from '@actions/core';
 import { FileInfo, TestModel, ExistingParams, TestRunModel, AppComponents, ServerMetricConfig } from "./PayloadModels";
 import { YamlConfig } from "./TaskModels";
 import * as FetchUtil from './FetchHelper';
+import * as InputConstants from './InputConstants';
 
 export class APISupport {
     authContext : AuthenticationUtils;
@@ -29,7 +30,7 @@ export class APISupport {
         let armEndpoint = new URL(armEndpointSuffix, armUrl);
         let header = await this.authContext.armTokenHeader();
         let response = await FetchUtil.httpClientRetries(armEndpoint.toString(),header,'get',3,"");
-        let resource_name: string | undefined = core.getInput('loadTestResource');
+        let resource_name: string | undefined = core.getInput(InputConstants.loadTestResource);
         if(response.message.statusCode == 404) {
             var message = `The Azure Load Testing resource ${resource_name} does not exist. Please provide an existing resource.`;
             throw new Error(message);
@@ -214,17 +215,7 @@ export class APISupport {
             throw new Error("Error in updating app components");
         } else {
             console.log("Updated app components successfully");
-            let appComponentsObj:AppComponents = await Util.getResultObj(appComponentsResult);
-            for(let guid in appComponentsObj.components){
-                let resourceId = appComponentsObj.components[guid]?.resourceId ?? "";
-                if(this.existingParams.appComponents.has(resourceId?.toLowerCase())) {
-                    let existingGuids = this.existingParams.appComponents.get(resourceId?.toLowerCase()) ?? [];
-                    existingGuids.push(guid);
-                    this.existingParams.appComponents.set(resourceId.toLowerCase(), existingGuids);
-                } else {
-                    this.existingParams.appComponents.set(resourceId.toLowerCase(), [guid]);
-                }
-            }
+
             await this.getServerMetricsConfig();
             await this.patchServerMetrics();
         }
@@ -286,7 +277,6 @@ export class APISupport {
                 }
                 await Util.sleep(5000);
             }
-            await this.patchAppComponents();
             console.log("Validation status of the test plan: "+ validationStatus);
             if(validationStatus == null || validationStatus == "VALIDATION_SUCCESS" ){
                 console.log(`Validated test plan for the test successfully.`);
@@ -301,7 +291,8 @@ export class APISupport {
                     }
                     throw new Error("Validation of one or more files failed. Please correct the errors and try again.");
                 }
-
+                
+                await this.patchAppComponents();
                 await this.createTestRun();
             }
             else if(validationStatus == "VALIDATION_INITIATED" || validationStatus == "NOT_VALIDATED")

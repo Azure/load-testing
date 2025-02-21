@@ -22,6 +22,13 @@ inputs:
   env:
     description: 'Enter env in JSON'
     required: false
+  overrideParameters:
+    description: 'Override parameters in the YAML config file using the JSON format with testId, displayName, description, engineInstances, autoStop supported.'
+    required: false
+  outputVariableName:
+    description: 'Name of the output variable that stores the test run ID for use in subsequent tasks.'
+    required: false
+
 branding:
     icon: 'extension-icon.svg'
     color: 'blue'

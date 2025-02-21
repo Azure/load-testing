@@ -7,9 +7,11 @@ import { BaseLoadTestFrameworkModel } from "./engine/BaseLoadTestFrameworkModel"
 const yaml = require('js-yaml');
 import * as fs from 'fs';
 import { AppComponentDefinition, AppComponents, AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI, ResourceMetricModel, ServerMetricConfig } from "./PayloadModels";
-import { AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml, ParamType, ReferenceIdentityKinds, RunTimeParams, ServerMetricsClientModel } from "./UtilModels";
+import { AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml, ParamType, ReferenceIdentityKinds, RunTimeParams, ServerMetricsClientModel, ValidationModel } from "./UtilModels";
 import * as core from '@actions/core';
 import { PassFailMetric, ExistingParams, TestModel, CertificateMetadata, SecretMetadata, RegionConfiguration } from "./PayloadModels";
+import { autoStopDisable, OutputVariableName } from "./constants";
+import * as InputConstants from "./InputConstants";
 
 export class YamlConfig {
     testId:string = '';
@@ -47,18 +49,19 @@ export class YamlConfig {
     serverMetricsConfig: { [key: string] :  ResourceMetricModel | null } = {};
 
     addDefaultsForAppComponents: { [key: string]: boolean } = {}; // when server components are not given for few app components, we need to add the defaults for this.
+    outputVariableName: string = OutputVariableName;
 
     constructor() {
-        let yamlFile = core.getInput('loadTestConfigFile') ?? '';
+        let yamlFile = core.getInput(InputConstants.loadTestConfigFile) ?? '';
         if(isNullOrUndefined(yamlFile) || yamlFile == ''){
-            throw new Error(`The input field "loadTestConfigFile" is empty. Provide the path to load test yaml file.`);
+            throw new Error(`The input field "${InputConstants.loadTestConfigFileLabel}" is empty. Provide the path to load test yaml file.`);
         }
 
         let yamlPath = yamlFile;
         if(!(pathLib.extname(yamlPath) === ".yaml" || pathLib.extname(yamlPath) === ".yml"))
             throw new Error("The Load Test configuration file should be of type .yaml or .yml");
         const config: any = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
-        let validConfig : {valid : boolean, error :string} = Util.checkValidityYaml(config);
+        let validConfig : ValidationModel = Util.checkValidityYaml(config);
         if(!validConfig.valid){
             throw new Error(validConfig.error + ` Refer to the load test YAML syntax at https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml`);
         }
@@ -188,7 +191,7 @@ export class YamlConfig {
                         id: key
                     }
                 } else {
-                    this.serverMetricsConfig[key].aggregation = this.serverMetricsConfig[key].aggregation + "," + serverComponent.aggregation;
+                    this.serverMetricsConfig[key]!.aggregation = this.serverMetricsConfig[key]!.aggregation + "," + serverComponent.aggregation;
                 }
             }
         }
@@ -214,8 +217,36 @@ export class YamlConfig {
         }
     }
 
+    getOverRideParams() {
+        let overRideParams = core.getInput(InputConstants.overRideParameters);
+        if(overRideParams) {
+            let overRideParamsObj = JSON.parse(overRideParams);
+
+            if(overRideParamsObj.testId != undefined) {
+                this.testId = overRideParamsObj.testId;
+            }
+            if(overRideParamsObj.displayName != undefined) {
+                this.displayName = overRideParamsObj.displayName;
+            }
+            if(overRideParamsObj.description != undefined) {
+                this.description = overRideParamsObj.description;
+            }
+            if(overRideParamsObj.engineInstances != undefined) {
+                this.engineInstances = overRideParamsObj.engineInstances;
+            }
+            if(overRideParamsObj.autoStop != undefined) {
+                this.autoStop = this.getAutoStopCriteria(overRideParamsObj.autoStop);
+            }
+        }
+    }
+
+    getOutPutVarName() {
+        let outputVarName = core.getInput(InputConstants.outputVariableName) ?? OutputVariableName;
+        this.outputVariableName = outputVarName;
+    }
+
     getRunTimeParams() {
-        var secretRun = core.getInput('secrets');
+        var secretRun = core.getInput(InputConstants.secrets);
         let secretsParsed : {[key: string] : SecretMetadata} = {};
         let envParsed : {[key: string] : string} = {};
         if(secretRun) {
@@ -232,10 +263,10 @@ export class YamlConfig {
             }
             catch (error) {
                 console.log(error);
-                throw new Error("Invalid format of secrets in the pipeline yaml file. Refer to the pipeline YAML syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-test-secured-endpoints?tabs=pipelines#reference-the-secret-in-the-load-test-configuration");
+                throw new Error(`Invalid format of ${InputConstants.secretsLabel} in the pipeline file. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`);
             }
         }
-        var eRun = core.getInput('env');
+        var eRun = core.getInput(InputConstants.envVars);
         if(eRun) {
             try {
                 var obj = JSON.parse(eRun);
@@ -250,13 +281,31 @@ export class YamlConfig {
             }
             catch (error) {
                 console.log(error);
-                throw new Error("Invalid format of env in the pipeline yaml file. Refer to the pipeline YAML syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-test-secured-endpoints?tabs=pipelines#reference-the-secret-in-the-load-test-configuration"); 
+                throw new Error(`Invalid format of ${InputConstants.envVarsLabel} in the pipeline file. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`); 
             }
         }
         const runDisplayName = core.getInput('loadTestRunName') ?? Util.getDefaultTestRunName();
         const runDescription = core.getInput('loadTestRunDescription') ?? Util.getDefaultRunDescription();
 
         let runTimeParams : RunTimeParams = {env: envParsed, secrets: secretsParsed, runDisplayName, runDescription, testId: '', testRunId: ''};
+
+        let overRideParams = core.getInput(InputConstants.overRideParameters);
+        let outputVarName = core.getInput(InputConstants.outputVariableName) ?? OutputVariableName;
+
+        let validation = Util.validateOverRideParameters(overRideParams);
+        if(validation.valid == false) {
+            console.log(validation.error);
+            throw new Error(`Invalid ${InputConstants.overRideParametersLabel}. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`);
+        }
+
+        validation = Util.validateOutputParametervariableName(outputVarName);
+        if(validation.valid == false) {
+            console.log(validation.error);
+            throw new Error(`Invalid ${InputConstants.outputVariableNameLabel}. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`);
+        }
+
+        this.getOverRideParams();
+        this.getOutPutVarName();
         return runTimeParams;
     }
 
@@ -371,7 +420,7 @@ export class YamlConfig {
         let autoStop: AutoStopCriteria | null;
         if (autoStopInput == null) {autoStop = null; return autoStop;}
         if (typeof autoStopInput == "string") {
-            if (autoStopInput == "disable") {
+            if (autoStopInput == autoStopDisable) {
                 let data = {
                     autoStopDisabled : true,
                     errorRate: 90,
