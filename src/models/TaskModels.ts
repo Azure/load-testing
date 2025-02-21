@@ -298,6 +298,7 @@ export class YamlConfig {
             if(!this.env.hasOwnProperty(key))
                 this.env[key] = null;
         }
+        
 
         for(let [resourceId, keys] of existingData.appComponents) {
             if(!this.appComponents.hasOwnProperty(resourceId.toLowerCase())) {
