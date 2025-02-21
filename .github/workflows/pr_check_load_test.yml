@@ -72,20 +72,18 @@ jobs:
           fi
       shell : bash
 
-    - name: Set up testName
-      shell: bash
-      run: |
-        # copying the files to a new file and editing the testId for each file in the copied file.
-        # replacing 'testId'(the thing present in the file.) with the new testId ('${{ steps.guid.outputs.GUID }}') in the copied file.
-        cp ${{ matrix.configFile }} test-config-${{ steps.guid.outputs.GUID }}.yaml
-        sed -i 's/testId/${{ steps.guid.outputs.GUID }}/g' test-config-${{ steps.guid.outputs.GUID }}.yaml
+    - name: Set Override Parameters
+      run: echo "OVERRIDE_PARAMS={\"testId\":\"${{ steps.guid.outputs.GUID }}\"}" >> $GITHUB_ENV
+
 
     - name: 'Azure Load Testing'
       uses: ./
       with:
-        loadTestConfigFile: test-config-${{ steps.guid.outputs.GUID }}.yaml
+        loadTestConfigFile: ${{ matrix.configFile }}
         loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
         resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
+        overRideParameters: ${{ env.OVERRIDE_PARAMS  }}
+
       continue-on-error: true
 
     - name: Check for results and report files
