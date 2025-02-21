@@ -2,6 +2,7 @@ import { checkValidityYaml, getAllFileErrors } from '../../src/models/util'
 import * as constants from './testYamls';
 import * as referenceIdentityConstants from './ReferenceIdentityYamls';
 import * as appCompsConstants from './AppComponentsAndServerConfigYamls';
+import * as passFailCriteriaConstants from './FailureCriteriaYamls';
 
 describe('invalid Yaml tests', () =>{
   describe('basic scenarios for invalid cases', ()=>{
@@ -283,6 +284,66 @@ describe('app components and server config tests', () => {
     expect(checkValidityYaml(appCompsConstants.appCompsInvalidAppComponentDictionary)).toStrictEqual({valid : false, error : 'The value "hi,123" for AppComponents in the index "1" is invalid. Provide a valid dictionary.'});
   });
 });
+
+describe('pass fail criteria tests', () => {
+  test('Basic Valid failure criteria tests with new model.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ClientAndServerPFDefaultMetrics)).toStrictEqual({valid : true, error : ''});
+  });
+  test('Basic Valid failure criteria tests with old model.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ClientPFDefaultMetrics)).toStrictEqual({valid : true, error : ''});
+  });
+  test('Basic Valid failure criteria tests with new model.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsNoNameSpace)).toStrictEqual({valid : true, error : ''});
+  });
+  // invalid starts
+  test('invalid pf criteria dictionary for client side', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ClientPFInvalidFailureEnum)).toStrictEqual({valid : false, error : 'The value "dummy" for failureCriteria is invalid. Provide a valid dictionary with keys as clientMetrics and serverMetrics.'});
+  });
+  test('invalid pf criteria as an array for client side', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ClientPFInvalidFailureNonArray)).toStrictEqual({valid : false, error : 'The value "GetCustomerName,avg(response_time_ms) > 3000" for clientMetrics in failureCriteria is invalid. Provide a valid criteria.'});
+  });
+  test('invalid pf criteria as non array for server side', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ClientPFInvalidFailureCriteriaServerNonArray)).toStrictEqual({valid : false, error : 'The value "1:2" for serverMetrics in failureCriteria is invalid. Provide a valid list of criteria.'});
+  });
+  test('invalid pf criteria as an array for client side in old model.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ClientPFInvalidString)).toStrictEqual({valid : false, error : 'The value "GetCustomerName,avg(response_time_ms) > 3000" for failureCriteria is invalid. Provide a valid criteria.'});
+  });
+  test('invalid pf criteria condition for serever side.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsWrongCondition)).toStrictEqual({valid : false, error : 'The value "Dummy" for condition in serverMetrics in failureCriteria is invalid. Provide a valid condition from "GreaterThan", "LessThan".'});
+  });
+  test('invalid pf wrong dictionary for serever side.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsWrongDictionary)).toStrictEqual({valid : false, error : 'The value "test-123" for serverMetrics in failureCriteria is invalid. Provide a valid dictionary with metricName, aggregation, condition, value and optionally metricNamespace.'});
+  });
+  test('invalid pf for server side with no resourceId.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsNoResourceId)).toStrictEqual({valid : false, error : 'The value "undefined" for resourceId in serverMetrics in failureCriteria is invalid. Provide a valid string.'});
+  });
+  test('invalid pf for server side with no metric name.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsNoMetricName)).toStrictEqual({valid : false, error : 'The value "undefined" for metricName in serverMetrics in failureCriteria is invalid. Provide a valid string.'});
+  });
+  test('invalid pf for server side with no aggregation.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsNoaggregation)).toStrictEqual({valid : false, error : 'The value "undefined" for aggregation in serverMetrics in failureCriteria is invalid. Provide a valid string.'});
+  });
+  test('invalid pf for server side with no value.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsNoValue)).toStrictEqual({valid : false, error : 'The value "undefined" for value in serverMetrics in failureCriteria is invalid. Provide a valid number.'});
+  });
+
+  test('invalid pf for server side with wrong resourceId.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsWrongResourceId)).toStrictEqual({valid : false, error : 'The value "test1,test2" for resourceId in serverMetrics in failureCriteria is invalid. Provide a valid string.'});
+  });
+  test('invalid pf for server side with wrong metricNameSpace.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsWrongNameSpace)).toStrictEqual({valid : false, error : 'The value "test1,test2" for metricNameSpace in serverMetrics in failureCriteria is invalid. Provide a valid string.'});
+  });
+  test('invalid pf for server side with wrong metric name.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsWrongMetricName)).toStrictEqual({valid : false, error : 'The value "test1,test2" for metricName in serverMetrics in failureCriteria is invalid. Provide a valid string.'});
+  });
+  test('invalid pf for server side with wrong aggregation.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsWrongaggregation)).toStrictEqual({valid : false, error : 'The value "test1,test2" for aggregation in serverMetrics in failureCriteria is invalid. Provide a valid string.'});
+  });
+  test('invalid pf for server side with wrong value.', () => {
+    expect(checkValidityYaml(passFailCriteriaConstants.ServerPFMetricsWrongValue)).toStrictEqual({valid : false, error : 'The value "80" for value in serverMetrics in failureCriteria is invalid. Provide a valid number.'});
+  });
+});
+
 describe('file errors', () => {
   test('Test object with no file validation errors', () => {
     // https://learn.microsoft.com/en-us/rest/api/loadtesting/dataplane/load-test-administration/get-test?view=rest-loadtesting-dataplane-2022-11-01&tabs=HTTP

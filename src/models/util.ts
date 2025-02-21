@@ -5,8 +5,8 @@ import { autoStopDisable, DefaultYamlModel, OverRideParametersModel } from './co
 import * as EngineUtil from './engine/Util';
 import { BaseLoadTestFrameworkModel } from './engine/BaseLoadTestFrameworkModel';
 import { TestKind } from "./engine/TestKind";
-import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, ManagedIdentityTypeForAPI } from './PayloadModels';
-import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated, ValidationModel } from './UtilModels';
+import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, ManagedIdentityTypeForAPI, PassFailServerMetric } from './PayloadModels';
+import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated, ValidationModel, ValidConditionsEnumValuesList, ValidCriteriaTypes } from './UtilModels';
 import * as InputConstants from './InputConstants';
 import * as core from '@actions/core';
 
@@ -260,6 +260,14 @@ function isValidTestKind(value: string): value is TestKind {
     return Object.values(TestKind).includes(value as TestKind);
 }
 
+function isValidConditionEnumString(value: string): value is ManagedIdentityType {
+    return Object.values(ValidConditionsEnumValuesList).includes(value as ValidConditionsEnumValuesList);
+}
+
+function isValidFailureCriteriaType(value: string): value is ValidCriteriaTypes {
+    return Object.values(ValidCriteriaTypes).includes(value as ValidCriteriaTypes);
+}
+
 function isValidManagedIdentityType(value: string): value is ManagedIdentityType {
     return Object.values(ManagedIdentityType).includes(value as ManagedIdentityType);
 }
@@ -429,9 +437,15 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
             return validation;
         }
     }
+    if(givenYaml.failureCriteria != undefined) {
+        let result = validateFailureCriteria(givenYaml.failureCriteria);
+        if(result.valid == false){
+            return result;
+        }
+    }
     if(givenYaml.regionalLoadTestConfig){
         if(!Array.isArray(givenYaml.regionalLoadTestConfig)){
-            return {valid : false, error : `The value "${givenYaml.regionalLoadTestConfig}" for regionalLoadTestConfig is invalid. Provide a valid list of region configuration for Multi-region load test.`};
+            return {valid : false, error : `The value "${givenYaml.regionalLoadTestConfig?.toString()}" for regionalLoadTestConfig is invalid. Provide a valid list of region configuration for Multi-region load test.`};
         }
         
         if(givenYaml.regionalLoadTestConfig.length < 2){
@@ -451,6 +465,69 @@ export function checkValidityYaml(givenYaml : any) : {valid : boolean, error : s
         let engineInstances = givenYaml.engineInstances ?? 1;
         if(totalEngineCount != givenYaml.engineInstances){
             return {valid : false, error : `The sum of engineInstances in regionalLoadTestConfig should be equal to the value of totalEngineInstances "${engineInstances}" in the test configuration.`};
+        }
+    }
+    return {valid : true, error : ""};
+}
+
+function validateFailureCriteria(failureCriteria: any) : ValidationModel {
+    if(!Array.isArray(failureCriteria)) {
+        if(!isDictionary(failureCriteria)){
+            return {valid : false, error : `The value "${failureCriteria?.toString()}" for failureCriteria is invalid. Provide a valid dictionary with keys as ${ValidCriteriaTypes.clientMetrics} and ${ValidCriteriaTypes.serverMetrics}.`};
+        }
+        let keys = Object.keys(failureCriteria);
+        for(let i = 0; i < keys.length; i++){
+            let key = keys[i];
+            if(!isValidFailureCriteriaType(key)){
+                return {valid : false, error : `The value "${key}" for failureCriteria is invalid. Provide a valid dictionary with keys as ${ValidCriteriaTypes.clientMetrics} and ${ValidCriteriaTypes.serverMetrics}.`};
+            }
+            if(!Array.isArray(failureCriteria[key])){
+                return {valid : false, error : `The value "${failureCriteria[key]?.toString()}" for ${key} in failureCriteria is invalid. Provide a valid list of criteria.`};
+            }
+        }
+        if(failureCriteria[ValidCriteriaTypes.serverMetrics]){
+            let serverMetrics = failureCriteria[ValidCriteriaTypes.serverMetrics];
+            for(let i = 0; i < serverMetrics.length; i++){
+                let serverMetric = serverMetrics[i];
+                if(!isDictionary(serverMetric)){
+                    return {valid : false, error : `The value "${serverMetric?.toString()}" for ${ValidCriteriaTypes.serverMetrics} in failureCriteria is invalid. Provide a valid dictionary with metricName, aggregation, condition, value and optionally metricNamespace.`};
+                }
+                if(isInvalidString(serverMetric.resourceId)){
+                    return {valid : false, error : `The value "${serverMetric.resourceId?.toString()}" for resourceId in ${ValidCriteriaTypes.serverMetrics} in failureCriteria is invalid. Provide a valid string.`};
+                }
+                if(isInvalidString(serverMetric.metricNameSpace, true)){
+                    return {valid : false, error : `The value "${serverMetric.metricNameSpace?.toString()}" for metricNameSpace in ${ValidCriteriaTypes.serverMetrics} in failureCriteria is invalid. Provide a valid string.`};
+                }
+                if(isInvalidString(serverMetric.metricName)){
+                    return {valid : false, error : `The value "${serverMetric.metricName?.toString()}" for metricName in ${ValidCriteriaTypes.serverMetrics} in failureCriteria is invalid. Provide a valid string.`};
+                }
+                if(isInvalidString(serverMetric.aggregation)){
+                    return {valid : false, error : `The value "${serverMetric.aggregation?.toString()}" for aggregation in ${ValidCriteriaTypes.serverMetrics} in failureCriteria is invalid. Provide a valid string.`};
+                }
+                if(isInvalidString(serverMetric.condition)){
+                    return {valid : false, error : `The value "${serverMetric.condition?.toString()}" for condition in ${ValidCriteriaTypes.serverMetrics} in failureCriteria is invalid. Provide a valid condition from "${ValidConditionsEnumValuesList.GreaterThan}", "${ValidConditionsEnumValuesList.LessThan}".`};
+                }
+                if(isNullOrUndefined(serverMetric.value) || typeof serverMetric.value != 'number' || isNaN(serverMetric.value)){
+                    return {valid : false, error : `The value "${serverMetric.value?.toString()}" for value in ${ValidCriteriaTypes.serverMetrics} in failureCriteria is invalid. Provide a valid number.`};
+                }
+                if(!isValidConditionEnumString(serverMetric.condition)){
+                    return {valid : false, error : `The value "${serverMetric.condition?.toString()}" for condition in ${ValidCriteriaTypes.serverMetrics} in failureCriteria is invalid. Provide a valid condition from "${ValidConditionsEnumValuesList.GreaterThan}", "${ValidConditionsEnumValuesList.LessThan}".`};
+                }
+            }
+        }
+        if(failureCriteria[ValidCriteriaTypes.clientMetrics]) {
+            let clientMetrics = failureCriteria[ValidCriteriaTypes.clientMetrics];
+            for(let clientMetric of clientMetrics){
+                if(!isDictionary(clientMetric) && typeof clientMetric != 'string'){
+                    return {valid : false, error : `The value "${clientMetric?.toString()}" for ${ValidCriteriaTypes.clientMetrics} in failureCriteria is invalid. Provide a valid criteria.`};
+                } 
+            }
+        }
+    } else {
+        for(let criteria of failureCriteria){
+            if(!isDictionary(criteria) && typeof criteria != 'string'){
+                return {valid : false, error : `The value "${criteria?.toString()}" for failureCriteria is invalid. Provide a valid criteria.`};
+            }
         }
     }
     return {valid : true, error : ""};
@@ -752,6 +829,22 @@ export function ValidateCriteriaAndConvertToWorkingStringModel(data: any, failur
     else{
         failureCriteriaValue[key] = (val>currVal) ? val : currVal;
     }
+}
+
+export function getServerCriteriaFromYaml(serverMetricsCriteria: any) {
+    let serverPFCriteriaValue: PassFailServerMetric[] = [];
+    serverMetricsCriteria.forEach((criteria: any) => {
+        let data : PassFailServerMetric = {
+            resourceId: criteria.resourceId,
+            metricName: criteria.metricName,
+            aggregation: criteria.aggregation,
+            condition: criteria.condition,
+            value: criteria.value,
+            metricNameSpace: criteria.metricNamespace
+        }
+        serverPFCriteriaValue.push(data);
+    });
+    return serverPFCriteriaValue;
 }
 
 export function validateUrl(url:string) 
