@@ -40,9 +40,10 @@ jobs:
         id: set-os
         run: |
           os_options=('ubuntu-latest' 'windows-latest')
-          rand_os=${os_options[$((RANDOM % 2))]}  # Randomly choose an OS
+          rand_os=${os_options[$((RANDOM % 2))]}
           echo "Selected OS: $rand_os"
-          echo "os=$rand_os" >> $GITHUB_ENV
+          echo "::set-output name=os::$rand_os"
+        shell: bash
 
   run-integration-test:
     environment: automation test
