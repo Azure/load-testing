@@ -50,7 +50,7 @@ jobs:
     strategy:
       matrix:
         configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml', 'sample-test-locust.yaml']
-        
+    needs: setup-os-for-tests
     runs-on: ${{ needs.setup-os-for-tests.outputs.os }}
     steps:
       - name: Checkout
