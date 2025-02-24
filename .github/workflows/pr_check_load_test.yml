@@ -44,7 +44,7 @@ jobs:
           configs=$(echo '${{ env.CONFIG_FILES }}' | jq -r '.[]')
           matrix_json="{\"include\":["
 
-          for config in "${configs[@]}"; do
+          for config in $configs; do
             rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
             matrix_json+="{\"configFile\":\"$config\",\"os\":\"$rand_os\"},"
           done
