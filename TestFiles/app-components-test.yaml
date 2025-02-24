@@ -1,7 +1,7 @@
 version: v0.1
 testName: basicAppComponentsTest-edit
 displayName: E2E test for app components
-testPlan: ../TestFiles/BasicTest.jmx
+testPlan: ./../ConfigFiles/BasicTest.jmx
 testType: JMX
 description: 'E2E for the build pipeline (JMX)'
 autoStop:
