@@ -25,7 +25,7 @@ on:
 env:
   LOAD_TEST_RESOURCE: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
   LOAD_TEST_RESOURCE_GROUP: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
-  CONFIG_FILES: '["sample-test-url.yaml", "sample-test-jmx.yaml", "sample-test-locust.yaml", "app-components-test.yaml"]'
+  CONFIG_FILES: '["basic-test-url.yaml", "basic-test-jmx.yaml", "basic-test-locust.yaml", "app-components-test.yaml"]'
 
 permissions:
   id-token: write # This is required for requesting the JWT

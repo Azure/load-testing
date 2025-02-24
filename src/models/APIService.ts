@@ -105,6 +105,7 @@ export class APIService {
         let url = new URL(urlSuffix, this.baseURL);
         let headers = await this.authContext.getDataPlaneHeader(FetchCallType.put);
         let uploadresult = await FetchUtil.httpClientRetries(url.toString(),headers,FetchCallType.put,retries,filepath, true);
+        console.log(filepath, filename);
         if(uploadresult.message.statusCode != 201){
             let errorObj:any = await Util.getResultObj(uploadresult);
             console.log(errorObj ? errorObj : Util.errorCorrection(uploadresult));

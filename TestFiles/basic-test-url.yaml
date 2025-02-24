@@ -1,5 +1,5 @@
 version: v0.1
 testName: testId
-testPlan: ./../ConfigFiles/basic-url-test.json
+testPlan: ./../ConfigFiles/BasicURLTest.json
 testType: URL
 description: 'E2E for the build pipeline (URL)'
