@@ -31,31 +31,35 @@ permissions:
   contents : read # This is required for actions/checkout
 
 jobs:
-  setup-os-for-tests:
+  generate-matrix:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml', 'sample-test-locust.yaml']
     outputs:
-      os: ${{ steps.set-os.outputs.os }}
-      configFile: ${{ steps.set-os.outputs.configFile }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Generate Random OS
-        id: set-os
+      - name: Generate Dynamic Matrix
+        id: set-matrix
         run: |
           os_options=('ubuntu-latest' 'windows-latest')
-          rand_os=${os_options[$((RANDOM % 2))]}
-          echo "Selected OS: $rand_os"
-          echo "::set-output name=os::$rand_os"
-          echo "Selected configFile: $matrix.configFile"
-          echo "::set-output name=configGile::$matrix.configFile"
-        shell: bash
+          configs=('sample-test-url.yaml' 'sample-test-jmx.yaml' 'sample-test-locust.yaml')
+          matrix_json="{\"include\":["
+
+          for config in "${configs[@]}"; do
+            rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
+            matrix_json+="{\"configFile\":\"$config\",\"os\":\"$rand_os\"},"
+          done
+
+          matrix_json="${matrix_json::-1}]}"  # Remove trailing comma
+          
+          echo "Generated Matrix: $matrix_json"
+          echo "::set-output name=matrix::$matrix_json"  # Set matrix output
 
   run-integration-test:
     environment: automation test
     name: Validate PR
-    needs: setup-os-for-tests
-    runs-on: ${{ needs.setup-os-for-tests.outputs.os }}
+    needs: generate-matrix
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -93,7 +97,7 @@ jobs:
         uses: ./
         id: alt
         with:
-          loadTestConfigFile: ${{ needs.setup-os-for-tests.outputs.configFile }}
+          loadTestConfigFile: ${{ matrix.configFile }}
           loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
           resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
           overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
