@@ -4,6 +4,22 @@ inputs:
   configFile: 
     description: "Load test configuration file"
     required: true
+  subscriptionId:
+    description: "Azure subscription ID"
+    required: true
+  resourceGroup:
+    description: "Azure resource group"
+    required: true
+  resourceName:
+    description: "Azure resource name"
+    required: true
+  clientId:
+    description: "Azure client ID"
+    required: true
+  tenantId:
+    description: "Azure tenant ID"
+    required: true
+
 runs:
   using: "composite"
   steps:
@@ -25,9 +41,9 @@ runs:
       uses: azure/login@v1
       continue-on-error: false
       with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        client-id: ${{ inputs.clientId }}
+        tenant-id: ${{ inputs.tenantId }}
+        subscription-id: ${{ inputs.subscriptionId }}
 
     - name: Generate GUID
       id: guid
@@ -44,8 +60,8 @@ runs:
       id: alt
       with:
         loadTestConfigFile: ${{ inputs.configFile }}
-        loadTestResource: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
-        resourceGroup: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
+        loadTestResource: ${{ inputs.resourceName }}
+        resourceGroup: ${{ inputs.resourceGroup }}
         overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
         outputVariableName: 'loadTestRunId'
       continue-on-error: true
