@@ -9,10 +9,12 @@ import * as CoreUtils from './CoreUtils';
 
 export function addExistingParameters(testObj: TestModel, appcomponents: AppComponents | null): ExistingParams {
     let existingParams: ExistingParams = { secrets: {}, env: {}, passFailCriteria: {}, passFailServerMetrics: {}, appComponents: new Map() };
-    if(!isNullOrUndefined(testObj.passFailCriteria) && !isNullOrUndefined(testObj.passFailCriteria.passFailMetrics))
+    if(!isNullOrUndefined(testObj.passFailCriteria) && !isNullOrUndefined(testObj.passFailCriteria.passFailMetrics)) {
         existingParams.passFailCriteria = testObj.passFailCriteria.passFailMetrics;
-    if(!isNullOrUndefined(testObj.passFailCriteria) && !isNullOrUndefined(testObj.passFailCriteria.passFailServerMetrics))
+    }
+    if(!isNullOrUndefined(testObj.passFailCriteria) && !isNullOrUndefined(testObj.passFailCriteria.passFailServerMetrics)) {
         existingParams.passFailServerMetrics = testObj.passFailCriteria.passFailServerMetrics;
+    }
     if(!isNullOrUndefined(testObj.secrets)){
         existingParams.secrets = testObj.secrets;
     }
@@ -34,7 +36,7 @@ export function addExistingParameters(testObj: TestModel, appcomponents: AppComp
     return existingParams;
 }
 
-export function getPayLoadForTest(yamlModel: YamlConfig ,existingParams: ExistingParams) {
+export function getPayloadForTest(yamlModel: YamlConfig ,existingParams: ExistingParams) {
     let passFailCriteria = mergePassFailCriteria(yamlModel, existingParams);
     let passFailServerCriteria = mergePassFailServerCriteria(yamlModel, existingParams);
     let secrets = mergeSecrets(yamlModel, existingParams);
@@ -145,7 +147,7 @@ export function getAllFileNamesTobeDeleted(yamlModel: YamlConfig, testFiles: Inp
     return filesToDelete;
 }
 
-export function ValidateAndGetRunTimeParamsForTestRun(testId: string) {
+export function validateAndGetRuntimeParamsForTestRun(testId: string) {
     var secretRun = CoreUtils.getInput(InputConstants.secrets);
     let secretsParsed : {[key: string] : SecretMetadata} = {};
     let envParsed : {[key: string] : string} = {};
@@ -163,7 +165,7 @@ export function ValidateAndGetRunTimeParamsForTestRun(testId: string) {
         }
         catch (error) {
             console.log(error);
-            throw new Error(`Invalid format of ${InputConstants.secretsLabel} in the pipeline file. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`);
+            throw new Error(`Invalid format of ${InputConstants.secretsLabel} in the pipeline file. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=github#update-the-azure-pipelines-workflow`);
         }
     }
     var eRun = CoreUtils.getInput(InputConstants.envVars);
@@ -181,7 +183,7 @@ export function ValidateAndGetRunTimeParamsForTestRun(testId: string) {
         }
         catch (error) {
             console.log(error);
-            throw new Error(`Invalid format of ${InputConstants.envVarsLabel} in the pipeline file. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`); 
+            throw new Error(`Invalid format of ${InputConstants.envVarsLabel} in the pipeline file. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=github#update-the-azure-pipelines-workflow`); 
         }
     }
     const runDisplayName = CoreUtils.getInput(InputConstants.testRunName) ?? Util.getDefaultTestRunName();
@@ -207,23 +209,23 @@ export function getTestRunPayload(runTimeParams : RunTimeParams) : TestRunModel 
     return testRunPayload;
 }
 
-export function ValidateAndGetOutPutVarName() : string{
+export function validateAndGetOutputVarName() : string{
     let outputVarName = CoreUtils.getInput(InputConstants.outputVariableName) ?? OutputVariableName; // for now keeping the validations here, later shift to the tasklib class when written.
     let validation = Util.validateOutputParametervariableName(outputVarName);
     if(validation.valid == false) {
         console.log(validation.error);
-        throw new Error(`Invalid ${InputConstants.outputVariableNameLabel}. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`);
+        throw new Error(`Invalid ${InputConstants.outputVariableNameLabel}. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=github#update-the-azure-pipelines-workflow`);
     }
     return outputVarName;
 }
 
-export function validateAndSetOverRideParams(yamlModel: YamlConfig) : void {
+export function validateAndSetOverrideParams(yamlModel: YamlConfig) : void {
     let overRideParams = CoreUtils.getInput(InputConstants.overRideParameters);
 
     let validation = Util.validateOverRideParameters(overRideParams);
     if(validation.valid == false) {
         console.log(validation.error);
-        throw new Error(`Invalid ${InputConstants.overRideParametersLabel}. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`);
+        throw new Error(`Invalid ${InputConstants.overRideParametersLabel}. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=github#update-the-azure-pipelines-workflow`);
     }
     if(overRideParams) {
         let overRideParamsObj = JSON.parse(overRideParams);

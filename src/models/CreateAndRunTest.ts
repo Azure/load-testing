@@ -2,7 +2,7 @@ import { isNullOrUndefined } from "util";
 import { APIService } from "./APIService";
 import { AppComponents, FileType, ExistingParams, FileInfo, TestModel, TestRunModel, FileStatus } from "./PayloadModels";
 import { YamlConfig } from "./TaskModels";
-import { addExistingParameters, getAllFileNamesTobeDeleted, ValidateAndGetOutPutVarName, getPayloadForAppcomponents, getPayLoadForTest, ValidateAndGetRunTimeParamsForTestRun, getTestRunPayload, mergeExistingServerCriteria, validateAndSetOverRideParams } from "./CreateAndRunHelper";
+import { addExistingParameters, getAllFileNamesTobeDeleted, validateAndGetOutputVarName, getPayloadForAppcomponents, getPayloadForTest, validateAndGetRuntimeParamsForTestRun, getTestRunPayload, mergeExistingServerCriteria, validateAndSetOverrideParams } from "./CreateAndRunHelper";
 import { FetchCallType, OutputVariableInterface, OutPutVariablesConstants, PostTaskParameters, reportZipFileName, resultZipFileName, RunTimeParams, ValidationType } from "./UtilModels";
 import { TestKind } from "./engine/TestKind";
 import * as Util from "./util";
@@ -12,7 +12,7 @@ import * as CoreUtils from './CoreUtils';
 
 export async function createAndRunTest(apiService: APIService) {
     let yamlConfig = new YamlConfig();
-    validateAndSetOverRideParams(yamlConfig);
+    validateAndSetOverrideParams(yamlConfig);
     apiService.setTestId(yamlConfig.testId);
     let testObj : TestModel | null = await apiService.getTestAPI(true);
     let isCreateTest = true;
@@ -23,7 +23,7 @@ export async function createAndRunTest(apiService: APIService) {
         let appComponentsObj: AppComponents | null = await apiService.getAppComponents();
         existingParams = addExistingParameters(testObj, appComponentsObj);
     }
-    let testModel = getPayLoadForTest(yamlConfig, existingParams);
+    let testModel = getPayloadForTest(yamlConfig, existingParams);
     if(isCreateTest) {
         console.log("Creating a new load test "+yamlConfig.testId);
     }
@@ -53,7 +53,7 @@ export async function createAndRunTest(apiService: APIService) {
     serverMetricsConfig && console.log("Updated server metrics successfully");
 
     console.log("Creating and running a testRun for the test");
-    let runTimeParamsofTestRun : RunTimeParams = ValidateAndGetRunTimeParamsForTestRun(yamlConfig.testId);
+    let runTimeParamsofTestRun : RunTimeParams = validateAndGetRuntimeParamsForTestRun(yamlConfig.testId);
     let createTestrunPayLoad : TestRunModel = getTestRunPayload(runTimeParamsofTestRun);
     let testRunResult = await apiService.createTestRun(createTestrunPayLoad);
     testRunResult.status && printPortalUrl(testRunResult.displayName || '', yamlConfig.displayName, apiService.authContext.subscriptionName, apiService.authContext.resourceId);
@@ -261,7 +261,7 @@ function setTaskResults(testRunObj: TestRunModel) : void {
 }
 
 function setOutputVariable(testRunObj: TestRunModel) {
-    let outputVarName = ValidateAndGetOutPutVarName();
+    let outputVarName = validateAndGetOutputVarName();
     let outputVar: OutputVariableInterface = {
         testRunId: testRunObj.testRunId
     }

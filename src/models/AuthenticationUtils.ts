@@ -4,7 +4,7 @@ import { FetchCallType, ContentTypeMap, TokenScope } from "./UtilModels";
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { IHeaders } from "typed-rest-client/Interfaces";
 import * as InputConstants from "./InputConstants";
-import * as CoreUtils from '@actions/core';
+import * as CoreUtils from './CoreUtils';
 
 export class AuthenticationUtils {
     dataPlanetoken : string = '';
