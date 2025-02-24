@@ -1,6 +1,6 @@
 version: v0.1
 testName: testId
-testPlan: SampleApp.py
+testPlan: ./../ConfigFiles/SampleApp.py
 testType: Locust
 description: 'E2E for the build pipeline (Locust)'
 env:
