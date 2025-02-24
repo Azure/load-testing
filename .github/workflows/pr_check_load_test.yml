@@ -43,8 +43,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-        
+
       - name: run basic e2e
-        uses: ./../setup-template
+        uses: ./github/actions/setup-template
         with:
           configFile: ${{ matrix.configFile }}
