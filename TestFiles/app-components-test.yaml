@@ -1,0 +1,36 @@
+version: v0.1
+testName: basicAppComponentsTest-edit
+displayName: E2E test for app components
+testPlan: ../TestFiles/SampleApp.jmx
+testType: JMX
+description: 'E2E for the build pipeline (JMX)'
+env:
+- name: domain
+  value: example.com
+- name: protocol
+  value: https
+- name: threads_per_engine
+  value: 1
+- name: ramp_up_time
+  value: 60
+- name: duration_in_sec
+  value: 60
+autoStop:
+  errorPercentage: 10
+  timeWindow: 20
+appComponents:
+- resourceId: "/subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/adonew-sampleapp-rg/providers/Microsoft.Web/serverfarms/adonew-sampleapp-host"
+  kind: app # Optional
+  metrics:
+    - name: "CpuPercentage"
+      aggregation: "Average"
+    - name: "MemoryPercentage"
+      aggregation: "Average"
+      namespace: Microsoft.Web/serverfarms
+- resourceId: "/subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/kc-aci-rg/providers/Microsoft.KeyVault/vaults/acisextension"
+  metrics:
+    - name: "ServiceApiHit"
+      aggregation: "Count"
+      namespace: microsoft.keyvault/vaults
+    - name: "ServiceApiLatency"
+      aggregation: "Average"
