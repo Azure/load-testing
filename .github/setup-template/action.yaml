@@ -1,0 +1,70 @@
+name: "Setup Node.js Environment"
+description: "Sets up Node.js with caching"
+inputs:
+  configFile: 
+    description: "Load test configuration file"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20'
+
+    - name: Installing dependencies and building latest changes
+      run: |
+        npm install --include=dev -f
+        npm ci
+      shell: bash
+
+    - name: Azure authentication
+      uses: azure/login@v1
+      continue-on-error: false
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Generate GUID
+      id: guid
+      run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "::set-output name=GUID::$(powershell -Command "[guid]::NewGuid().ToString()")"
+          else
+            echo "::set-output name=GUID::$(uuidgen)"
+          fi
+      shell : bash
+  
+    - name: 'Azure Load Testing'
+      uses: ./
+      id: alt
+      with:
+        loadTestConfigFile: ${{ inputs.configFile }}
+        loadTestResource: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
+        resourceGroup: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
+        overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
+        outputVariableName: 'loadTestRunId'
+      continue-on-error: true
+
+    - name: Print the Output
+      run: echo "The Test ID is ${{ steps.alt.outputs['loadTestRunId.testRunId'] }}"
+      shell: bash
+
+    - name: Check for results and report files
+      run: |
+        if [[ -d "./loadTest" ]]; then
+          if [[ -f "./loadTest/results.zip" && -f "./loadTest/report.zip" ]]; then
+            echo "Both results.zip and report.zip files are present."
+          else
+            echo "One or both of the files are missing."
+            exit 1
+          fi
+        else
+          echo "loadTest directory is missing."
+          exit 1
+        fi
+      shell: bash
