@@ -25,6 +25,7 @@ on:
 env:
   LOAD_TEST_RESOURCE: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
   LOAD_TEST_RESOURCE_GROUP: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
+  CONFIG_FILES: '["sample-test-url.yaml", "sample-test-jmx.yaml", "sample-test-locust.yaml"]'
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -40,7 +41,7 @@ jobs:
         id: set-matrix
         run: |
           os_options=('ubuntu-latest' 'windows-latest')
-          configs=('sample-test-url.yaml' 'sample-test-jmx.yaml' 'sample-test-locust.yaml')
+          configs=$(echo '${{ env.CONFIG_FILES }}' | jq -r '.[]')
           matrix_json="{\"include\":["
 
           for config in "${configs[@]}"; do
