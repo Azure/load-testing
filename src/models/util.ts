@@ -5,10 +5,11 @@ import { autoStopDisable, DefaultYamlModel, OverRideParametersModel } from './co
 import * as EngineUtil from './engine/Util';
 import { BaseLoadTestFrameworkModel } from './engine/BaseLoadTestFrameworkModel';
 import { TestKind } from "./engine/TestKind";
-import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, ManagedIdentityTypeForAPI, PassFailServerMetric } from './PayloadModels';
+import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, PassFailServerMetric, FileStatus } from './PayloadModels';
 import { RunTimeParams, ValidAggregateList, ValidConditionList, ManagedIdentityType, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated, ValidationModel, ValidConditionsEnumValuesList, ValidCriteriaTypes } from './UtilModels';
 import * as InputConstants from './InputConstants';
 import * as core from '@actions/core';
+import * as path from 'path';
 
 export function checkFileType(filePath: string, fileExtToValidate: string): boolean{
     if(isNullOrUndefined(filePath)){
@@ -66,7 +67,7 @@ export function printCriteria(criteria:{ [key: string]: PassFailMetric | null })
     console.log("\n");
 }
 
-export function ErrorCorrection(result : IHttpClientResponse){
+export function errorCorrection(result : IHttpClientResponse){
     return "Unable to fetch the response. Please re-run or contact support if the issue persists. " + "Status code :" + result.message.statusCode ;
 }
 
@@ -84,7 +85,10 @@ function printTestResult(criteria:{ [key: string] :PassFailMetric | null}) : Pas
     return {pass, fail}; // returning so that we can use this in the UTs later.
 }
 
-
+export function getFileName(filepath:string) {
+    const filename = path.basename(filepath);
+    return filename;
+}
 
 function printMetrics(data: Statistics, key : string | null = null) {
     let samplerName : string | null = data.transaction ?? key;
@@ -156,6 +160,22 @@ export function removeUnits(input:string)
 
 export function isTerminalTestStatus(testStatus: string){
     if(testStatus == "DONE" || testStatus === "FAILED" || testStatus === "CANCELLED"){
+        return true;
+    }
+    return false;
+}
+
+export function isTerminalFileStatus(fileStatus: string){
+    let fileStatusEnum = fileStatus as FileStatus;
+    if(fileStatusEnum == FileStatus.VALIDATION_INITIATED){
+        return false;
+    }
+    return true;
+}
+
+export function isTerminalFileStatusSucceeded(fileStatus: string){
+    let fileStatusEnum = fileStatus as FileStatus;
+    if(isNullOrUndefined(fileStatusEnum) || fileStatusEnum == FileStatus.VALIDATION_SUCCESS || fileStatusEnum == FileStatus.NOT_VALIDATED){
         return true;
     }
     return false;

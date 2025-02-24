@@ -1,5 +1,29 @@
 import { TestKind } from "./engine/TestKind";
 
+export interface LoadTestResource {
+    readonly id: string;
+    readonly name: string;
+    readonly type: string;
+    readonly location: string;
+    readonly properties?: {
+        readonly dataPlaneURI?: string;
+        readonly provisioningState?: string;
+    }
+    readonly identity?: Identity;
+}
+
+interface Identity {
+    readonly principalId: string;
+    readonly tenantId: string;
+    readonly type: string;
+    readonly userAssignedIdentities: {[key: string]: UserAssigned};
+}
+
+interface UserAssigned {
+    readonly clientId: string;
+    readonly principalId: string;
+}
+
 export class CertificateMetadata {
     type?: string;
     value?: string;
@@ -89,6 +113,15 @@ export interface TestModel {
     kind?: TestKind;
 };
 
+export enum FileType{
+    JMX_FILE = 'JMX_FILE',
+    USER_PROPERTIES = 'USER_PROPERTIES',
+    ADDITIONAL_ARTIFACTS = 'ADDITIONAL_ARTIFACTS',
+    ZIPPED_ARTIFACTS = "ZIPPED_ARTIFACTS",
+    URL_TEST_CONFIG = "URL_TEST_CONFIG",
+    TEST_SCRIPT = 'TEST_SCRIPT',
+}
+
 export interface TestRunArtifacts {
     inputArtifacts: InputArtifacts;
     outputArtifacts: OutputArtifacts;
@@ -164,7 +197,7 @@ export interface OutputArtifacts {
 
 export interface FileInfo {
     url?: string;
-    fileName?: string;
+    fileName: string;
     expireDateTime?: string;
     fileType?: string;
     validationStatus?: string;
@@ -183,4 +216,12 @@ export enum ManagedIdentityTypeForAPI {
     SystemAssigned = "SystemAssigned",
     UserAssigned = "UserAssigned",
     None = "None"
+}
+
+export enum FileStatus {
+    NOT_VALIDATED = "NOT_VALIDATED",
+    VALIDATION_SUCCESS = "VALIDATION_SUCCESS",
+    VALIDATION_FAILURE = "VALIDATION_FAILURE",
+    VALIDATION_INITIATED = "VALIDATION_INITIATED",
+    VALIDATION_NOT_REQUIRED = "VALIDATION_NOT_REQUIRED"
 }

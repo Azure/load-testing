@@ -1,10 +1,10 @@
 import { isNullOrUndefined } from "util";
-import * as core from '@actions/core';
 import { execFile } from "child_process";
 import { FetchCallType, ContentTypeMap, TokenScope } from "./UtilModels";
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { IHeaders } from "typed-rest-client/Interfaces";
 import * as InputConstants from "./InputConstants";
+import * as CoreUtils from './CoreUtils';
 
 export class AuthenticationUtils {
     dataPlanetoken : string = '';
@@ -24,8 +24,8 @@ export class AuthenticationUtils {
         // NOTE: This will set the subscription id
         await this.getTokenAPI(TokenScope.ControlPlane);
         this.subscriptionName = await this.getSubName();
-        const rg: string | undefined = core.getInput(InputConstants.resourceGroup);
-        const ltres: string | undefined = core.getInput(InputConstants.loadTestResource);
+        const rg: string | undefined = CoreUtils.getInput(InputConstants.resourceGroup);
+        const ltres: string | undefined = CoreUtils.getInput(InputConstants.loadTestResource);
         if(isNullOrUndefined(rg) || rg == ''){
             throw new Error(`The input field "${InputConstants.resourceGroupLabel}" is empty. Provide an existing resource group name.`);
         }

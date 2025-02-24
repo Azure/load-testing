@@ -6,12 +6,12 @@ import { TestKind } from "./engine/TestKind";
 import { BaseLoadTestFrameworkModel } from "./engine/BaseLoadTestFrameworkModel";
 const yaml = require('js-yaml');
 import * as fs from 'fs';
-import { AppComponentDefinition, AppComponents, AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI, PassFailServerMetric, ResourceMetricModel, ServerMetricConfig, TestRunModel } from "./PayloadModels";
-import {  AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml, ConditionEnumToSignMap, ParamType, ReferenceIdentityKinds, RunTimeParams, ServerMetricsClientModel, ValidationModel, ValidConditionsEnumValuesList } from "./UtilModels";
-import * as core from '@actions/core';
-import { PassFailMetric, ExistingParams, TestModel, CertificateMetadata, SecretMetadata, RegionConfiguration } from "./PayloadModels";
+import { AppComponentDefinition, AutoStopCriteria, AutoStopCriteria as autoStopCriteriaObjOut, ManagedIdentityTypeForAPI, PassFailServerMetric, ResourceMetricModel, ServerMetricConfig, TestRunModel } from "./PayloadModels";
+import {  AllManagedIdentitiesSegregated, AutoStopCriteriaObjYaml, ParamType, ReferenceIdentityKinds, RunTimeParams, ServerMetricsClientModel, ValidationModel, ValidConditionsEnumValuesList } from "./UtilModels";
+import { PassFailMetric, CertificateMetadata, SecretMetadata, RegionConfiguration } from "./PayloadModels";
 import { autoStopDisable, OutputVariableName } from "./constants";
 import * as InputConstants from "./InputConstants";
+import * as CoreUtils from './CoreUtils';
 
 export class YamlConfig {
     testId:string = '';
@@ -59,7 +59,7 @@ export class YamlConfig {
         if(isPostProcess) {
             return;
         }
-        let yamlFile = core.getInput(InputConstants.loadTestConfigFile) ?? '';
+        let yamlFile = CoreUtils.getInput(InputConstants.loadTestConfigFile) ?? '';
         if(isNullOrUndefined(yamlFile) || yamlFile == ''){
             throw new Error(`The input field "${InputConstants.loadTestConfigFileLabel}" is empty. Provide the path to load test yaml file.`);
         }
@@ -167,8 +167,6 @@ export class YamlConfig {
         if(this.testId === '' || isNullOrUndefined(this.testId) || this.testPlan === '' || isNullOrUndefined(this.testPlan)) {
             throw new Error("The required fields testId/testPlan are missing in "+yamlPath+".");
         }
-        this.runTimeParams =  this.getRunTimeParams();
-        Util.validateTestRunParamsFromPipeline(this.runTimeParams);
     }
 
     getAppComponentsAndServerMetricsConfig(appComponents: Array<any>) {
@@ -227,238 +225,6 @@ export class YamlConfig {
         } else {
             this.engineReferenceIdentityType = ManagedIdentityTypeForAPI.None;
         }
-    }
-
-    getOverRideParams() {
-        let overRideParams = core.getInput(InputConstants.overRideParameters);
-        if(overRideParams) {
-            let overRideParamsObj = JSON.parse(overRideParams);
-
-            if(overRideParamsObj.testId != undefined) {
-                this.testId = overRideParamsObj.testId;
-            }
-            if(overRideParamsObj.displayName != undefined) {
-                this.displayName = overRideParamsObj.displayName;
-            }
-            if(overRideParamsObj.description != undefined) {
-                this.description = overRideParamsObj.description;
-            }
-            if(overRideParamsObj.engineInstances != undefined) {
-                this.engineInstances = overRideParamsObj.engineInstances;
-            }
-            if(overRideParamsObj.autoStop != undefined) {
-                this.autoStop = this.getAutoStopCriteria(overRideParamsObj.autoStop);
-            }
-        }
-    }
-
-    getOutPutVarName() {
-        let outputVarName = core.getInput(InputConstants.outputVariableName) ?? OutputVariableName;
-        this.outputVariableName = outputVarName;
-    }
-
-    getRunTimeParams() {
-        var secretRun = core.getInput(InputConstants.secrets);
-        let secretsParsed : {[key: string] : SecretMetadata} = {};
-        let envParsed : {[key: string] : string} = {};
-        if(secretRun) {
-            try {
-                var obj = JSON.parse(secretRun);
-                for (var index in obj) {
-                    var val = obj[index];
-                    let str : string =  `name : ${val.name}, value : ${val.value}`;
-                    if(isNullOrUndefined(val.name)){
-                        throw new Error(`Invalid secret name at pipeline parameters at ${str}`);
-                    }
-                    secretsParsed[val.name] = {type: 'SECRET_VALUE',value: val.value};
-                }
-            }
-            catch (error) {
-                console.log(error);
-                throw new Error(`Invalid format of ${InputConstants.secretsLabel} in the pipeline file. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`);
-            }
-        }
-        var eRun = core.getInput(InputConstants.envVars);
-        if(eRun) {
-            try {
-                var obj = JSON.parse(eRun);
-                for (var index in obj) {
-                    var val = obj[index];
-                    let str : string =  `name : ${val.name}, value : ${val.value}`;
-                    if(isNullOrUndefined(val.name)){
-                        throw new Error(`Invalid environment name at pipeline parameters at ${str}`);
-                    }
-                    envParsed[val.name] = val.value;
-                }
-            }
-            catch (error) {
-                console.log(error);
-                throw new Error(`Invalid format of ${InputConstants.envVarsLabel} in the pipeline file. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`); 
-            }
-        }
-        let runDisplayNameInput = core.getInput(InputConstants.testRunName);
-        const runDisplayName = !isNullOrUndefined(runDisplayNameInput) && runDisplayNameInput != '' ? runDisplayNameInput : Util.getDefaultTestRunName();
-        let runDescriptionInput = core.getInput(InputConstants.runDescription);
-        const runDescription = !isNullOrUndefined(runDescriptionInput) && runDescriptionInput != '' ? runDescriptionInput : Util.getDefaultRunDescription();
-
-        let runTimeParams : RunTimeParams = {env: envParsed, secrets: secretsParsed, runDisplayName, runDescription, testId: '', testRunId: ''};
-        this.runTimeParams = runTimeParams;
-        let overRideParamsInput = core.getInput(InputConstants.overRideParameters);
-        let outputVariableNameInput = core.getInput(InputConstants.outputVariableName);
-        let overRideParams = !isNullOrUndefined(overRideParamsInput) && overRideParamsInput != '' ? overRideParamsInput : undefined;
-        let outputVarName = !isNullOrUndefined(outputVariableNameInput) && outputVariableNameInput != '' ? outputVariableNameInput : OutputVariableName;
-        let validation = Util.validateOverRideParameters(overRideParams);
-        if(validation.valid == false) {
-            console.log(validation.error);
-            throw new Error(`Invalid ${InputConstants.overRideParametersLabel}. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`);
-        }
-
-        validation = Util.validateOutputParametervariableName(outputVarName);
-        if(validation.valid == false) {
-            console.log(validation.error);
-            throw new Error(`Invalid ${InputConstants.outputVariableNameLabel}. Refer to the pipeline syntax at : https://learn.microsoft.com/en-us/azure/load-testing/how-to-configure-load-test-cicd?tabs=pipelines#update-the-azure-pipelines-workflow`);
-        }
-
-        this.getOverRideParams();
-        this.getOutPutVarName();
-        return runTimeParams;
-    }
-
-    getFileName(filepath:string) {
-        var filename = pathLib.basename(filepath);
-        return filename;
-    }
-    
-    mergeExistingData(existingData:ExistingParams) {
-        let existingCriteria = existingData.passFailCriteria;
-        let existingCriteriaIds = Object.keys(existingCriteria);
-        var numberOfExistingCriteria = existingCriteriaIds.length;
-        var index = 0;
-
-        for(var key in this.failureCriteria) {
-            var splitted = key.split(" ");
-            var criteriaId = index < numberOfExistingCriteria ? existingCriteriaIds[index++] : Util.getUniqueId();
-            this.passFailApiModel[criteriaId] = {
-                clientMetric: splitted[0],
-                aggregate: splitted[1],
-                condition: splitted[2],
-                action : splitted[3],
-                value: this.failureCriteria[key],
-                requestName: splitted.length > 4 ? splitted.slice(4).join(' ') : null 
-            };
-        }
-
-        for (; index < numberOfExistingCriteria; index++) {
-            this.passFailApiModel[existingCriteriaIds[index]] = null;
-        }
-
-        let existingServerCriteria = existingData.passFailServerMetrics;
-        let existingServerCriteriaIds = Object.keys(existingServerCriteria);
-        let numberOfExistingServerCriteria = existingServerCriteriaIds.length;
-        let serverIndex = 0;
-
-        for(let serverCriteria of this.serverFailureCriteria) {
-            let criteriaId = serverIndex < numberOfExistingServerCriteria ? existingServerCriteriaIds[serverIndex++] : Util.getUniqueId();
-            this.passFailServerModel[criteriaId] = {
-                metricName: serverCriteria.metricName,
-                aggregation: serverCriteria.aggregation,
-                resourceId: serverCriteria.resourceId,
-                condition: ConditionEnumToSignMap[serverCriteria.condition as ValidConditionsEnumValuesList ?? ValidConditionsEnumValuesList.LessThan],
-                value: serverCriteria.value,
-                metricNameSpace: serverCriteria.metricNameSpace ?? Util.getResourceTypeFromResourceId(serverCriteria.resourceId),
-            };
-        }
-        
-        for (; serverIndex < numberOfExistingServerCriteria; serverIndex++) {
-            this.passFailServerModel[existingServerCriteriaIds[serverIndex]] = null;
-        }
-
-        let existingParams = existingCriteria.secrets;
-        for(var key in existingParams) {
-            if(!this.secrets.hasOwnProperty(key))
-                this.secrets[key] = null;
-        }
-        var existingEnv = existingCriteria.env;
-        for(var key in existingEnv) {
-            if(!this.env.hasOwnProperty(key))
-                this.env[key] = null;
-        }
-
-        for(let [resourceId, keys] of existingData.appComponents) {
-            if(!this.appComponents.hasOwnProperty(resourceId.toLowerCase())) {
-                for(let key of keys) {
-                    this.appComponents[key] = null;
-                }
-            } else {
-                for(let key of keys) {
-                    if(key != null && key != resourceId.toLowerCase()) {
-                        this.appComponents[key] = null;
-                    }
-                }
-            }
-        }
-    }
-
-    mergeExistingServerCriteria(existingServerCriteria: ServerMetricConfig) {
-        for(let key in existingServerCriteria.metrics) {
-            let resourceId = existingServerCriteria.metrics[key]?.resourceId?.toLowerCase() ?? "";
-            if(this.addDefaultsForAppComponents.hasOwnProperty(resourceId) && !this.addDefaultsForAppComponents[resourceId] && !this.serverMetricsConfig.hasOwnProperty(key)) {
-                this.serverMetricsConfig[key] = null;
-            }
-        }
-    }
-
-    getAppComponentsData() : AppComponents {
-        let appComponentsApiModel : AppComponents = {
-            components: this.appComponents
-        }
-        return appComponentsApiModel;
-    }
-
-    getCreateTestData(existingData:ExistingParams) {
-        this.mergeExistingData(existingData);
-        var data : TestModel = {
-            testId: this.testId,
-            description: this.description,
-            displayName: this.displayName,
-            loadTestConfiguration: {
-                engineInstances: this.engineInstances,
-                splitAllCSVs: this.splitAllCSVs,
-                regionalLoadTestConfig : this.regionalLoadTestConfig,
-            },
-            secrets: this.secrets,
-            kind : this.kind,
-            certificate: this.certificates,
-            environmentVariables: this.env,
-            passFailCriteria:{
-                passFailMetrics: this.passFailApiModel,
-                passFailServerMetrics: this.passFailServerModel
-            },
-            autoStopCriteria: this.autoStop,
-            subnetId: this.subnetId,
-            publicIPDisabled : this.publicIPDisabled,
-            keyvaultReferenceIdentityType: this.keyVaultReferenceIdentityType,
-            keyvaultReferenceIdentityId: this.keyVaultReferenceIdentity,
-            engineBuiltinIdentityIds: this.engineReferenceIdentities,
-            engineBuiltinIdentityType: this.engineReferenceIdentityType,
-            metricsReferenceIdentityType: this.metricsReferenceIdentityType,
-            metricsReferenceIdentityId: this.metricsReferenceIdentity
-        };
-        return data;
-    }
-
-    getStartTestData() : TestRunModel{
-        this.runTimeParams.testId = this.testId;
-        this.runTimeParams.testRunId = Util.getUniqueId();
-        let startData : TestRunModel = {
-            testId: this.testId,
-            testRunId: this.runTimeParams.testRunId,
-            environmentVariables: this.runTimeParams.env,
-            secrets: this.runTimeParams.secrets,
-            displayName: this.runTimeParams.runDisplayName,
-            description: this.runTimeParams.runDescription
-        }
-        return startData;
     }
 
     getAutoStopCriteria(autoStopInput : AutoStopCriteriaObjYaml | string | null): AutoStopCriteria | null {
