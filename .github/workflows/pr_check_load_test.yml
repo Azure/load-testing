@@ -45,6 +45,6 @@ jobs:
         uses: actions/checkout@v2
 
       - name: run basic e2e
-        uses: ./github/actions/setup-template
+        uses: ./.github/actions/setup-template
         with:
           configFile: ${{ matrix.configFile }}
