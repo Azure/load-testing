@@ -33,8 +33,12 @@ permissions:
 jobs:
   setup-os-for-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml', 'sample-test-locust.yaml']
     outputs:
       os: ${{ steps.set-os.outputs.os }}
+      configFile: ${{ steps.set-os.outputs.configFile }}
     steps:
       - name: Generate Random OS
         id: set-os
@@ -43,14 +47,13 @@ jobs:
           rand_os=${os_options[$((RANDOM % 2))]}
           echo "Selected OS: $rand_os"
           echo "::set-output name=os::$rand_os"
+          echo "Selected configFile: $matrix.configFile"
+          echo "::set-output name=configGile::$matrix.configFile"
         shell: bash
 
   run-integration-test:
     environment: automation test
     name: Validate PR
-    strategy:
-      matrix:
-        configFile: ['sample-test-url.yaml', 'sample-test-jmx.yaml', 'sample-test-locust.yaml']
     needs: setup-os-for-tests
     runs-on: ${{ needs.setup-os-for-tests.outputs.os }}
     steps:
@@ -90,7 +93,7 @@ jobs:
         uses: ./
         id: alt
         with:
-          loadTestConfigFile: ${{ matrix.configFile }}
+          loadTestConfigFile: ${{ needs.setup-os-for-tests.outputs.configFile }}
           loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
           resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
           overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
