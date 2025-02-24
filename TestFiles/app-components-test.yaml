@@ -8,7 +8,7 @@ autoStop:
   errorPercentage: 10
   timeWindow: 20
 appComponents:
-- resourceId: "/subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/adonew-sampleapp-rg/providers/Microsoft.Web/serverfarms/adonew-sampleapp-host"
+- resourceId: "/subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/cnt-integration-tests-rg/providers/Microsoft.Web/serverfarms/cnt-integration-tests-server"
   kind: app # Optional
   metrics:
     - name: "CpuPercentage"
@@ -16,7 +16,7 @@ appComponents:
     - name: "MemoryPercentage"
       aggregation: "Average"
       namespace: Microsoft.Web/serverfarms
-- resourceId: "/subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/kc-aci-rg/providers/Microsoft.KeyVault/vaults/acisextension"
+- resourceId: "/subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/cnt-integration-tests-rg/providers/Microsoft.KeyVault/vaults/cnt-tests-akv"
   metrics:
     - name: "ServiceApiHit"
       aggregation: "Count"
