@@ -1,6 +1,6 @@
 version: v0.1
 testName: testId
-testPlan: ./../ConfigFiles/BasicTest.jmx
+testPlan: ../TestFiles/BasicTest.jmx
 testType: JMX
 description: 'E2E for the build pipeline (JMX)'
 autoStop:
