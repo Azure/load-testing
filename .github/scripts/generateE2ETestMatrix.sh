@@ -10,8 +10,8 @@ while read -r config; do
     rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
 
     configFile=$(echo "$config" | jq -r '.configFile')
-    secrets=$(echo "$config" | jq -c '.secrets' | jq -r)
-    env=$(echo "$config" | jq -c '.env' | jq -r)
+    secrets=$(echo "$config" | jq -c '.secrets' | jq '@json')
+    env=$(echo "$config" | jq -c '.env' | jq '@json')
 
     echo "Config File: $configFile"
     echo "Secrets: $secrets"
