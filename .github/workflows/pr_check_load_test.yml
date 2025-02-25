@@ -49,12 +49,12 @@ jobs:
           ScriptsRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  && pwd )"
           E2ETestConfigFile="./.github/workflows/config/e2eTestConfig.json"
           # configs=$(echo '${{ env.CONFIG_FILES }}' | jq -r '.[]')
-          configs=$(jq '.[]' "${E2ETestConfigFile}")
+          configs=$(jq -c '.[]' "${E2ETestConfigFile}")
           matrix_json="{\"include\":["
 
           for config in $configs; do
             rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
-            configFile=$(echo '$config' | jq -r '.configFile')
+            configFile=$(echo "$config" | jq -r '.configFile')
             matrix_json+="{\"configFile\":\"$configFile\",\"os\":\"$rand_os\"},"
           done
 
