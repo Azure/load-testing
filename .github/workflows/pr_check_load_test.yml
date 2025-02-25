@@ -46,7 +46,15 @@ jobs:
         run: |
           os_options=('ubuntu-latest' 'windows-latest')
 
-          ls -la
+          ls -l
+
+          echo "cd .github"
+          cd .github
+          ls -l
+          
+          echo "cd workflows"
+          cd workflows
+          ls -l
 
           ScriptsRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  && pwd )"
           E2ETestConfigFile="$ScriptsRoot/.github/workflows/config/e2eTestConfig.json"
