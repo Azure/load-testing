@@ -46,7 +46,7 @@ jobs:
           ScriptsRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  && pwd )"
           E2ETestConfigFile="$ScriptsRoot/../config/e2eTestConfig.json"
           # configs=$(echo '${{ env.CONFIG_FILES }}' | jq -r '.[]')
-          configs=$(jq '.[]' '${E2ETestConfigFile}')
+          configs=$(jq '.[]' "${E2ETestConfigFile}")
           matrix_json="{\"include\":["
 
           for config in $configs; do
