@@ -6,13 +6,15 @@ configs=$(jq -c '.[]' "${E2ETestConfigFile}")
 
 matrix_json="{\"include\":["
 
-for config in $configs; do
+while read -r config; do
     rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
+
     configFile=$(echo "$config" | jq -r '.configFile')
-    secrets=$(echo "$config" | jq -r '.secrets')
-    env=$(echo "$config" | jq -r '.env')
+    secrets=$(echo "$config" | jq -r '.secrets' | jq .)
+    env=$(echo "$config" | jq -r '.env' | jq .)
+
     matrix_json+="{\"configFile\":\"$configFile\",\"secrets\":\"$secrets\",\"env\":\"$env\",\"os\":\"$rand_os\"},"
-done
+done <<< "$(echo -e "$configs")"
 
 matrix_json="${matrix_json::-1}]}"  # Remove trailing comma
 

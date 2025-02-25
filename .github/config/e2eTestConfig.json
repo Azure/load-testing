@@ -56,8 +56,8 @@
     },
     {
         "configFile": "secrets-and-env-runtime-test.yaml",
-        "secrets": "[{'name': 'endpoint', 'value': 'cnt-integration-tests-server.azurewebsites.net'}]",
-        "env": "[{'name': 'endpoint2', 'value': 'cnt-integration-tests-server.azurewebsites.net'}]"
+        "secrets": "[{\"name\": \"endpoint\", \"value\": \"cnt-integration-tests-server.azurewebsites.net\"}]",
+        "env": "[{\"name\": \"endpoint2\", \"value\": \"cnt-integration-tests-server.azurewebsites.net\"}]"
     },
     {
         "configFile": "userproperties-test.yaml",
