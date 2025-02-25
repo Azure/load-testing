@@ -13,6 +13,14 @@ while read -r config; do
     secrets=$(echo "$config" | jq -r '.secrets')
     env=$(echo "$config" | jq -r '.env')
 
+    if [ "$secrets" != "" ]; then
+        secrets=$(echo "$secrets" | sed "s/'/\"/g")
+    fi
+
+    if [ "$env" != "" ]; then
+        env=$(echo "$env" | sed "s/'/\"/g")
+    fi
+
     echo "Config File: $configFile"
     echo "Secrets: $secrets"
     echo "Env: $env"
