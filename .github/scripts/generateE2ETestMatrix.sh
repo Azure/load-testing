@@ -10,8 +10,12 @@ while read -r config; do
     rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
 
     configFile=$(echo "$config" | jq -r '.configFile')
-    secrets=$(echo "$config" | jq -r '.secrets' | jq -c)
-    env=$(echo "$config" | jq -r '.env' | jq -c)
+    secrets=$(echo "$config" | jq -c '.secrets' | jq -r)
+    env=$(echo "$config" | jq -c '.env' | jq -r)
+
+    echo "Config File: $configFile"
+    echo "Secrets: $secrets"
+    echo "Env: $env"
 
     matrix_json+="{\"configFile\":\"$configFile\",\"secrets\":\"$secrets\",\"env\":\"$env\",\"os\":\"$rand_os\"},"
 done <<< "$(echo -e "$configs")"
