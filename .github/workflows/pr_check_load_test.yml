@@ -38,13 +38,16 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Generate Dynamic Matrix
         id: set-matrix
         run: |
           os_options=('ubuntu-latest' 'windows-latest')
 
           ScriptsRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  && pwd )"
-          E2ETestConfigFile="$ScriptsRoot/config/e2eTestConfig.json"
+          E2ETestConfigFile="$ScriptsRoot/../config/e2eTestConfig.json"
           # configs=$(echo '${{ env.CONFIG_FILES }}' | jq -r '.[]')
           configs=$(jq '.[]' "${E2ETestConfigFile}")
           matrix_json="{\"include\":["
