@@ -25,8 +25,6 @@ on:
 env:
   LOAD_TEST_RESOURCE: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
   LOAD_TEST_RESOURCE_GROUP: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
-  CONFIG_FILES: '["basic-test-url.yaml", "basic-test-jmx.yaml", "basic-test-locust.yaml", "app-components-test.yaml"]'
-  E2E_TEST_CONFIG_FILE_PATH: './config/e2eTestConfig.json'
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -97,6 +95,8 @@ jobs:
           resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
           overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
           outputVariableName: 'loadTestRunId'
+          secrets: ${{ matrix.secrets }}
+          env: ${{ matrix.env }}
         continue-on-error: true
   
       - name: Print the Output

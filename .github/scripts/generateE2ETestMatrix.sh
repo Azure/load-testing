@@ -9,7 +9,9 @@ matrix_json="{\"include\":["
 for config in $configs; do
     rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
     configFile=$(echo "$config" | jq -r '.configFile')
-    matrix_json+="{\"configFile\":\"$configFile\",\"os\":\"$rand_os\"},"
+    secrets=$(echo "$config" | jq -r '.secrets')
+    env=$(echo "$config" | jq -r '.env')
+    matrix_json+="{\"configFile\":\"$configFile\",\"secrets\":\"$secrets\",\"env\":\"$env\",\"os\":\"$rand_os\"},"
 done
 
 matrix_json="${matrix_json::-1}]}"  # Remove trailing comma
