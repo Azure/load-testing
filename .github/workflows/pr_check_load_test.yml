@@ -89,14 +89,14 @@ jobs:
       - name: Set Secrets
         id: secrets
         run: |
-            secrets=${{ matrix.secrets }}
+            secrets="${{ matrix.secrets }}"
             echo "::set-output name=secrets::$(echo "$secrets" | sed "s/'/\"/g")"
         shell : bash
 
       - name: Set Env vars
         id: env
         run: |
-            env=${{ matrix.env }}
+            env="${{ matrix.env }}"
             echo "::set-output name=env::$(echo "$env" | sed "s/'/\"/g")"
         shell : bash
     
