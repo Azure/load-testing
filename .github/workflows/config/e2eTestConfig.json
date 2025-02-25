@@ -1,0 +1,12 @@
+[
+    {
+        "configFile": "basic-test-url.yaml",
+        "secrets": "",
+        "env": ""
+    },
+    {
+        "configFile": "basic-test-jmx.yaml",
+        "secrets": "",
+        "env": ""
+    }
+]
