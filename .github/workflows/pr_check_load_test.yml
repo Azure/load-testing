@@ -44,7 +44,7 @@ jobs:
           os_options=('ubuntu-latest' 'windows-latest')
 
           ScriptsRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  && pwd )"
-          E2ETestConfigFile="$ScriptsRoot/../config/e2eTestConfig.json"
+          E2ETestConfigFile="$ScriptsRoot/e2eTestConfig.json"
           # configs=$(echo '${E2ETestConfigFile}' | jq -r '.[]')
           configs=$(jq '.[]' '${{ env.E2E_TEST_CONFIG_FILE_PATH }}')
           matrix_json="{\"include\":["
