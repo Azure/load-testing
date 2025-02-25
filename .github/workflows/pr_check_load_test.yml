@@ -45,7 +45,8 @@ jobs:
         id: set-matrix
         run: |
           chmod +x ./.github/scripts/generateE2ETestMatrix.sh
-         ./.github/scripts/generateE2ETestMatrix.sh
+          ./.github/scripts/generateE2ETestMatrix.sh
+        shell: bash
 
   run-integration-test:
     environment: automation test
