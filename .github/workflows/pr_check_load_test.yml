@@ -85,6 +85,20 @@ jobs:
               echo "::set-output name=GUID::$(uuidgen)"
             fi
         shell : bash
+
+      - name: Set Secrets
+        id: secrets
+        run: |
+            secrets=${{ matrix.secrets }}
+            echo "::set-output name=secrets::$(echo "$secrets" | sed "s/'/\"/g")"
+        shell : bash
+
+      - name: Set Env vars
+        id: env
+        run: |
+            env=${{ matrix.env }}
+            echo "::set-output name=env::$(echo "$env" | sed "s/'/\"/g")"
+        shell : bash
     
       - name: 'Azure Load Testing'
         uses: ./
@@ -95,8 +109,8 @@ jobs:
           resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
           overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
           outputVariableName: 'loadTestRunId'
-          secrets: ${{ matrix.secrets }}
-          env: ${{ matrix.env }}
+          secrets: ${{ steps.secrets.outputs.secrets }}
+          env: ${{ steps.env.outputs.env }}
         continue-on-error: true
   
       - name: Print the Output
@@ -117,4 +131,3 @@ jobs:
             exit 1
           fi
         shell: bash
-        
