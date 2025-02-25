@@ -26,7 +26,7 @@ env:
   LOAD_TEST_RESOURCE: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
   LOAD_TEST_RESOURCE_GROUP: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
   CONFIG_FILES: '["basic-test-url.yaml", "basic-test-jmx.yaml", "basic-test-locust.yaml", "app-components-test.yaml"]'
-  E2E_TEST_CONFIG_FILE_PATH: '../config/e2eTestConfig.json'
+  E2E_TEST_CONFIG_FILE_PATH: './config/e2eTestConfig.json'
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -49,7 +49,7 @@ jobs:
           ScriptsRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  && pwd )"
           E2ETestConfigFile="$ScriptsRoot/config/e2eTestConfig.json"
           # configs=$(echo '${{ env.CONFIG_FILES }}' | jq -r '.[]')
-          configs=$(jq '.[]' "${E2ETestConfigFile}")
+          configs=$(jq '.[]' "${{ env.E2E_TEST_CONFIG_FILE_PATH }}")
           matrix_json="{\"include\":["
 
           for config in $configs; do
