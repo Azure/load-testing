@@ -52,6 +52,7 @@ jobs:
     needs: generate-matrix
     strategy:
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      max-parallel: 5
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
