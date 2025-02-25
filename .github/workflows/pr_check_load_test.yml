@@ -44,24 +44,8 @@ jobs:
       - name: Generate Dynamic Matrix
         id: set-matrix
         run: |
-          os_options=('ubuntu-latest' 'windows-latest')
-
-          ScriptsRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  && pwd )"
-          E2ETestConfigFile="./.github/workflows/config/e2eTestConfig.json"
-          # configs=$(echo '${{ env.CONFIG_FILES }}' | jq -r '.[]')
-          configs=$(jq -c '.[]' "${E2ETestConfigFile}")
-          matrix_json="{\"include\":["
-
-          for config in $configs; do
-            rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
-            configFile=$(echo "$config" | jq -r '.configFile')
-            matrix_json+="{\"configFile\":\"$configFile\",\"os\":\"$rand_os\"},"
-          done
-
-          matrix_json="${matrix_json::-1}]}"  # Remove trailing comma
-          
-          echo "Generated Matrix: $matrix_json"
-          echo "::set-output name=matrix::$matrix_json"  # Set matrix output
+          chmod +x ./.github/scripts/generateE2ETestMatrix.sh
+         ./.github/scripts/generateE2ETestMatrix.sh
 
   run-integration-test:
     environment: automation test
@@ -107,7 +91,7 @@ jobs:
         uses: ./
         id: alt
         with:
-          loadTestConfigFile: ./TestFiles/${{ matrix.configFile }}
+          loadTestConfigFile: ./ConfigFiles/${{ matrix.configFile }}
           loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
           resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
           overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
