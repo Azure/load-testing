@@ -1,5 +1,5 @@
 version: v0.1
-testName: testId
+testName: basictestlocust
 testPlan: ../TestFiles/BasicLocustTest.py
 testType: Locust
 description: 'E2E for the build pipeline (Locust)'

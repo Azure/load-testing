@@ -1,0 +1,14 @@
+displayName: CSV Test
+testPlan: ../TestFiles/CSVTest.jmx
+description: 'Csv tests with # records equal to # engines'
+engineInstances: 2
+testId: csvtest
+testType: JMX
+splitAllCSVs: True
+configurationFiles:
+- ../TestFiles/AdditionalFiles/csv_tworecords.csv
+failureCriteria:
+- percentage(error) > 0
+env:
+- name: csvfilename
+  value: csv_tworecords.csv

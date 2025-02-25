@@ -1,0 +1,14 @@
+displayName: Zip artifact test
+testPlan: ../TestFiles/ZipArchiveCSVTest.jmx
+description: Zip artifact test with csv file in the zip file and with Split CSV option set
+engineInstances: 2
+testId: zipartifactstest
+testType: JMX
+splitAllCSVs: True
+zipArtifacts:
+- ../TestFiles/AdditionalFiles/csv_fiverecords.zip
+failureCriteria:
+- percentage(error) > 0
+env:
+- name: csvfilename
+  value: csv_fiverecords.csv

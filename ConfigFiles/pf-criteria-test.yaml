@@ -1,0 +1,43 @@
+displayName: PF Criteria tests
+testPlan: ../TestFiles/BasicTest.jmx
+description: PF Criteria tests
+engineInstances: 1
+testId: pfcriteriatest
+testType: JMX
+splitAllCSVs: False
+appComponents:
+- resourceId: "/subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/cnt-integration-tests-rg/providers/Microsoft.Web/serverfarms/cnt-integration-tests-server"
+failureCriteria:
+  clientMetrics: 
+    - max(latency) < 0
+    - count(requests) < 0
+    - avg(requests_per_sec) < 0
+    - percentage(error) > 90
+    - min(response_time_ms) < 0
+    - p50(response_time_ms) < 0
+    - p75(response_time_ms) < 0
+    - p90(response_time_ms) < 0
+    - p95(response_time_ms) < 0
+    - p96(response_time_ms) < 0
+    - p97(response_time_ms) < 0
+    - p98(response_time_ms) < 0
+    - p99(response_time_ms) < 0
+    - p999(response_time_ms) < 0
+    - p9999(response_time_ms) < 0
+  serverMetrics:
+    - resourceId: /subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/cnt-integration-tests-rg/providers/Microsoft.Web/serverfarms/cnt-integration-tests-server
+      metricNamespace: microsoft.web/serverfarms
+      metricName: CpuPercentage
+      aggregation: Average
+      condition: GreaterThan
+      value: 0
+    - resourceId: /subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/cnt-integration-tests-rg/providers/Microsoft.Web/serverfarms/cnt-integration-tests-server
+      metricNamespace: microsoft.web/serverfarms
+      metricName: MemoryPercentage
+      aggregation: Average
+      condition: GreaterThan
+      value: 100
+referenceIdentities:
+  - kind: "Metrics"
+    type: "UserAssigned"
+    value: /subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourcegroups/cnt-integration-tests-rg/providers/microsoft.managedidentity/userassignedidentities/cnt-integration-tests-mi1-eastus

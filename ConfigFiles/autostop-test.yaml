@@ -1,0 +1,10 @@
+displayName: Autostop Test
+testPlan: ../TestFiles/AutoStop.jmx
+description: AutoStop operation
+engineInstances: 1
+testId: autostoptest
+testType: JMX
+splitAllCSVs: False
+autoStop:
+  errorPercentage: 0
+  timeWindow: 5

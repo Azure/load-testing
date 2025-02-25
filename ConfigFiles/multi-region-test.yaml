@@ -1,0 +1,16 @@
+displayName: Multi region load test
+testPlan: ../TestFiles/BasicTest.jmx
+description: Multi region load test
+engineInstances: 4
+testId: multiregiontest
+testType: JMX
+splitAllCSVs: False
+regionalLoadTestConfig:
+- region: eastus
+  engineInstances: 1
+- region: southcentralus
+  engineInstances: 1
+- region: southeastasia
+  engineInstances: 1
+- region: japaneast
+  engineInstances: 1

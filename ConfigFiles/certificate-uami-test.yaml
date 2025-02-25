@@ -1,0 +1,16 @@
+displayName: Certificate UAMI Test
+testPlan: ../TestFiles/CertificateTest.jmx
+description: Certificate tests with user assigned managed identity
+engineInstances: 1
+testId: certificateuamitest
+testType: JMX
+splitAllCSVs: False
+failureCriteria:
+- percentage(error) > 0
+keyVaultReferenceIdentity: /subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourcegroups/cnt-integration-tests-rg/providers/microsoft.managedidentity/userassignedidentities/cnt-integration-tests-mi1-eastus
+env:
+- name: endpoint
+  value: cnt-integration-tests-server.azurewebsites.net
+certificates:
+- name: SSLCert
+  value: https://cnt-tests-akv.vault.azure.net/certificates/cnt-integration-tests-server-sslcert/e0ed7089a6ea485c87ed9c07a868e255

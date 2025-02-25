@@ -1,5 +1,5 @@
 version: v0.1
-testName: basicAppComponentsTest-edit
+testName: basicAppComponentsTest
 displayName: E2E test for app components
 testPlan: ../TestFiles/BasicTest.jmx
 testType: JMX

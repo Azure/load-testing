@@ -1,0 +1,9 @@
+displayName: User Properties test
+testPlan: ../TestFiles/UserPropertiesTest.jmx
+description: User properties test
+engineInstances: 1
+testId: userpropertiestest
+testType: JMX
+splitAllCSVs: False
+properties:
+  userPropertyFile: ../TestFiles/AdditionalFiles/user.properties

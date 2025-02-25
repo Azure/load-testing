@@ -1,5 +1,5 @@
 version: v0.1
-testName: testId
+testName: basictestjmx
 testPlan: ../TestFiles/BasicTest.jmx
 testType: JMX
 description: 'E2E for the build pipeline (JMX)'

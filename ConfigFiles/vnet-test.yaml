@@ -1,0 +1,14 @@
+displayName: VNet injection test
+testPlan: ../TestFiles/VNetTest.jmx
+description: VNet injection test with subnet id
+engineInstances: 1
+testId: vnettest
+testType: JMX
+subnetId: /subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/cnt-integration-tests-rg/providers/Microsoft.Network/virtualNetworks/cnt-integration-tests-vnet-eastus/subnets/loadtestingsubnet
+publicIPDisabled: false
+splitAllCSVs: False
+failureCriteria:
+- percentage(error) > 0
+env:
+- name: endpoint
+  value: private-cnt-integration-tests-server.azurewebsites.net
