@@ -1,0 +1,12 @@
+version: v0.1
+testName: basicAppComponentsTest
+displayName: E2E test for app components edit
+testPlan: ../TestFiles/BasicTest.jmx
+testType: JMX
+description: 'E2E for the build pipeline (JMX)'
+autoStop:
+  errorPercentage: 40
+  timeWindow: 30
+appComponents:
+- resourceId: "/subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/cnt-integration-tests-rg/providers/Microsoft.Web/serverfarms/cnt-integration-tests-server"
+  kind: app

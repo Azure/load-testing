@@ -25,7 +25,6 @@ on:
 env:
   LOAD_TEST_RESOURCE: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
   LOAD_TEST_RESOURCE_GROUP: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
-  CONFIG_FILES: '["basic-test-url.yaml", "basic-test-jmx.yaml", "basic-test-locust.yaml", "app-components-test.yaml"]'
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -37,22 +36,15 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Generate Dynamic Matrix
         id: set-matrix
         run: |
-          os_options=('ubuntu-latest' 'windows-latest')
-          configs=$(echo '${{ env.CONFIG_FILES }}' | jq -r '.[]')
-          matrix_json="{\"include\":["
-
-          for config in $configs; do
-            rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
-            matrix_json+="{\"configFile\":\"$config\",\"os\":\"$rand_os\"},"
-          done
-
-          matrix_json="${matrix_json::-1}]}"  # Remove trailing comma
-          
-          echo "Generated Matrix: $matrix_json"
-          echo "::set-output name=matrix::$matrix_json"  # Set matrix output
+          chmod +x ./.github/scripts/generateE2ETestMatrix.sh
+          ./.github/scripts/generateE2ETestMatrix.sh
+        shell: bash
 
   run-integration-test:
     environment: automation test
@@ -60,6 +52,7 @@ jobs:
     needs: generate-matrix
     strategy:
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      max-parallel: 5
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -93,16 +86,32 @@ jobs:
               echo "::set-output name=GUID::$(uuidgen)"
             fi
         shell : bash
+
+      - name: Set Secrets
+        id: secrets
+        run: |
+            secrets="${{ matrix.secrets }}"
+            echo "::set-output name=secrets::$(echo "$secrets" | sed "s/'/\"/g")"
+        shell : bash
+
+      - name: Set Env vars
+        id: env
+        run: |
+            env="${{ matrix.env }}"
+            echo "::set-output name=env::$(echo "$env" | sed "s/'/\"/g")"
+        shell : bash
     
       - name: 'Azure Load Testing'
         uses: ./
         id: alt
         with:
-          loadTestConfigFile: ./TestFiles/${{ matrix.configFile }}
+          loadTestConfigFile: ./ConfigFiles/${{ matrix.configFile }}
           loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
           resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
           overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
           outputVariableName: 'loadTestRunId'
+          secrets: ${{ steps.secrets.outputs.secrets }}
+          env: ${{ steps.env.outputs.env }}
         continue-on-error: true
   
       - name: Print the Output
@@ -123,4 +132,3 @@ jobs:
             exit 1
           fi
         shell: bash
-        
