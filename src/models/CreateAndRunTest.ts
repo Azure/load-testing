@@ -201,8 +201,8 @@ async function awaitResultsPopulation(testRunId: string, apiService: APIService)
     let reportsAvailable = false;
     let testRunObj : TestRunModel | null = null;
     console.log("Test run completed. Polling for statistics and dashboard report to populate.");
-    // Polling for max 3 min for statistics and pass fail criteria to populate
-    while((!reportsAvailable || isNullOrUndefined(vusers)) && count < 18){
+    // Polling for max 5 min for statistics and pass fail criteria to populate
+    while((!reportsAvailable || isNullOrUndefined(vusers)) && count < 30){
         await Util.sleep(10000);
         testRunObj = await apiService.getTestRunAPI(testRunId);
         vusers = testRunObj.virtualUsers;
