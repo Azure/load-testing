@@ -6,3 +6,7 @@ description: 'E2E for the build pipeline (JMX)'
 autoStop:
   errorPercentage: 90
   timeWindow: 60
+failureCriteria:
+- Homepage: percentage(error) > 10
+- Homepage: avg(response_time_ms) > 100
+- avg(response_time_ms) > 20

@@ -5,7 +5,7 @@ engineInstances: 1
 testId: vnettest
 testType: JMX
 subnetId: /subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/cnt-integration-tests-rg/providers/Microsoft.Network/virtualNetworks/cnt-integration-tests-vnet-eastus/subnets/loadtestingsubnet
-publicIPDisabled: false
+publicIPDisabled: true
 splitAllCSVs: False
 failureCriteria:
 - percentage(error) > 0

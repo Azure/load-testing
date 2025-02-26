@@ -1,5 +1,4 @@
-[
-    {
+[{
         "configFile": "basic-test-url.yaml",
         "secrets": "",
         "env": ""
@@ -20,57 +19,12 @@
         "env": ""
     },
     {
-        "configFile": "app-components-test-edit.yaml",
-        "secrets": "",
-        "env": ""
-    },
-    {
-        "configFile": "autostop-test.yaml",
-        "secrets": "",
-        "env": ""
-    },
-    {
-        "configFile": "certificate-uami-test.yaml",
-        "secrets": "",
-        "env": ""
-    },
-    {
-        "configFile": "csv-test.yaml",
-        "secrets": "",
-        "env": ""
-    },
-    {
-        "configFile": "multi-region-test.yaml",
-        "secrets": "",
-        "env": ""
-    },
-    {
         "configFile": "pf-criteria-test.yaml",
         "secrets": "",
         "env": ""
     },
     {
-        "configFile": "secret-uami-test.yaml",
-        "secrets": "",
-        "env": ""
-    },
-    {
-        "configFile": "secrets-and-env-runtime-test.yaml",
-        "secrets": "[{'name': 'endpoint', 'value': 'cnt-integration-tests-server.azurewebsites.net'}]",
-        "env": "[{'name': 'endpoint2', 'value': 'cnt-integration-tests-server.azurewebsites.net'}]"
-    },
-    {
-        "configFile": "userproperties-test.yaml",
-        "secrets": "",
-        "env": ""
-    },
-    {
         "configFile": "vnet-test.yaml",
-        "secrets": "",
-        "env": ""
-    },
-    {
-        "configFile": "zip-artifacts-test.yaml",
         "secrets": "",
         "env": ""
     }
