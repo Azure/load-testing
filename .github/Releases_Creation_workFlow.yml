@@ -1,0 +1,24 @@
+name: Create Release Branch with date
+
+on:
+  workflow_dispatch:  # Allows manual triggering from GitHub UI
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create and push release branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          RELEASE_BRANCH="releases/$(date +%Y-%m-%d)"
+          git checkout -b $RELEASE_BRANCH
+          echo "Node modules and build files go here" > build.log
+          npm install
+          git add .
+          git commit -m "Automated release branch creation"
+          git push origin $RELEASE_BRANCH
