@@ -1,0 +1,33 @@
+version: v0.1
+testId: SampleTest
+testName: SampleTest
+displayName: Sample Test
+description: Load test website home page
+testPlan: SampleTest.jmx
+testType: JMX
+engineInstances: 2
+publicIPDisabled: false
+appComponents:
+  - resourceId: >-
+      /subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Web/serverfarms/sample-web
+    kind: app
+    metrics:
+      - name: CpuPercentage
+        aggregation: Average
+      - name: MemoryPercentage
+        aggregation: Average
+        namespace: Microsoft.Web/serverfarms
+  - resourceId: >-
+      /subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Web/serverfarms/sample-web
+    kind: app, functionapp
+    metrics:
+      - name: CpuPercentage
+        aggregation: Average
+      - name: MemoryPercentage
+        aggregation: Average
+  - resourceId: >-
+      /subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Web/serverfarms/sample-web/xyz
+    resourceName: xyz
+    metrics:
+      - name: CpuPercentage
+        aggregation: Average

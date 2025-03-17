@@ -1,19 +1,21 @@
-import * as util from './models/FileUtils';
+import * as util from './Utils/FileUtils';
 import { PostTaskParameters, resultFolder } from "./models/UtilModels";
 import * as fs from 'fs';
-import * as CoreUtils from './models/CoreUtils';
-import { createAndRunTest } from "./models/CreateAndRunTest";
-import { AuthenticationUtils } from "./models/AuthenticationUtils";
-import { APIService } from './models/APIService';
+import * as CoreUtils from './Utils/CoreUtils';
+import { AuthenticatorService } from "./services/AuthenticatorService";
+import { CreateAndRunTest } from "./RunnerFiles/CreateAndRunTest";
+import { APIService } from './services/APIService';
+import { TaskParameters } from './models/TaskParameters';
+import { TaskParametersUtil } from './Utils/TaskParametersUtil';
 
 async function run() {
     try {
-
-        let authContext = new AuthenticationUtils();
+        let taskParameters: TaskParameters = TaskParametersUtil.getTaskParameters();
+        let authContext = new AuthenticatorService(taskParameters);
         let apiService = new APIService(authContext);
 
         await authContext.authorize();
-        let dataPlaneUrl = await apiService.getDataPlaneURL(authContext.resourceId);
+        let dataPlaneUrl = await apiService.getDataPlaneURL(taskParameters.resourceId);
         
         apiService.setBaseURL(dataPlaneUrl);
         CoreUtils.exportVariable(PostTaskParameters.baseUri, apiService.baseURL);
@@ -23,7 +25,8 @@ async function run() {
         }
         fs.mkdirSync(resultFolder);
         
-        await createAndRunTest(apiService);
+        let runner = new CreateAndRunTest(apiService);
+        runner.createAndRunTest();
     }
     catch (err:any) {
         CoreUtils.setFailed(err.message);

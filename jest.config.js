@@ -7,4 +7,6 @@ module.exports = {
     // testPathIgnorePatterns: ["src/models/.*\\.ts", ".*\\.ts"], // references can be used later, so leaving in comments
     // testRegex: "test/.*\\.test\\.ts$",
     coverageReporters: ["json", "lcov", "text", "clover", "cobertura"],
+    coverageDirectory: "<rootDir>/coverage/unit",
+    collectCoverageFrom: ["<rootDir>/src/**/*.ts"],
 };

@@ -1,0 +1,26 @@
+version: v0.1
+testId: SampleTest
+testName: SampleTest
+displayName: Sample Test
+description: Load test website home page
+testPlan: SampleTest.jmx
+testType: JMX
+engineInstances: 2
+publicIPDisabled: false
+configurationFiles:
+  - sampledata.csv
+zipArtifacts:
+  - bigdata.zip
+failureCriteria:
+  clientMetrics:
+    - avg(response_time_ms) > 300
+    - avg(response_time_ms) < 500
+    - GetCustomerName: avg(response_time_ms) > 3000
+  serverMetrics:
+    - resourceId: >-
+        /subscriptions/7c71b563-0dc0-4bc0-bcf6-06f8f0516c7a/resourceGroups/kc-aci-rg/providers/Microsoft.KeyVault/vaults/acisextension
+      metricNamespace: Microsoft.KeyVault/vaults
+      metricName: ServiceApiHit
+      aggregation: Average
+      condition: GreaterThan
+      value: 80

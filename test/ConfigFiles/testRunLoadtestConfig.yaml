@@ -1,0 +1,5 @@
+version: v0.1
+testId: SampleTest
+testPlan: SampleTest.jmx
+testType: JMX
+engineInstances: 1
