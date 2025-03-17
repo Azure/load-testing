@@ -10,11 +10,10 @@ import { TaskParametersUtil } from './Utils/TaskParametersUtil';
 
 async function run() {
     try {
-        let taskParameters: TaskParameters = TaskParametersUtil.getTaskParameters();
+        let taskParameters: TaskParameters = await TaskParametersUtil.getTaskParameters();
         let authContext = new AuthenticatorService(taskParameters);
         let apiService = new APIService(authContext);
 
-        await authContext.authorize();
         let dataPlaneUrl = await apiService.getDataPlaneURL(taskParameters.resourceId);
         
         apiService.setBaseURL(dataPlaneUrl);

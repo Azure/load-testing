@@ -9,17 +9,6 @@ export const resourceGroup = 'resourceGroup';
 export const loadTestResource = 'loadTestResource';
 export const loadTestConfigFile = 'loadTestConfigFile';
 
-export const serviceConnectionInputs = {
-    subscriptionId: 'SubscriptionID',
-    environment: 'environment',
-    authorityUrl: 'environmentAuthorityUrl',
-    authenticationType: 'authenticationType',
-    servicePrincipalId: 'serviceprincipalid',
-    tenantId: 'tenantid',
-    servicePrincipalCertificate: 'servicePrincipalCertificate',
-    servicePrincipalKey: 'serviceprincipalkey',
-}
-
 // labels user visible strings
 export const testRunNameLabel = 'Load Test Run Name';
 export const runDescriptionLabel = 'Load Test Run Description';

@@ -232,12 +232,14 @@ export class CreateAndRunTest {
     }
 
     private printPortalUrl(testRunObj: TestRunModel) {
-        console.log("Creating and running a testRun for the test");
-        let portalUrl = testRunObj.portalUrl;
-        let status = testRunObj.status;
-        if(status) {
-            console.log("View the load test run in progress at: "+ portalUrl)
-        }
+        let resourceId = this.apiService.authContext.taskParameters.resourceId;
+        let subscriptionName = this.apiService.authContext.taskParameters.subscriptionName;
+        let testDisplayName = this.loadTestConfig.displayName;
+
+        console.log("\nView the load test run in Azure portal by following the steps:");
+        console.log("1. Go to your Azure Load Testing resource '"+Util.getResourceNameFromResourceId(resourceId)+"' in subscription '"+subscriptionName+"'");
+        console.log("2. On the Tests page, go to test '"+testDisplayName+"'");
+        console.log("3. Go to test run '"+testRunObj.displayName+"'\n");
     }
 
     private checkForValidationsOfTest(testObj: TestModel) : void {

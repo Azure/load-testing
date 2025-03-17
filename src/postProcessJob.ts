@@ -14,7 +14,7 @@ export async function run() {
 
         if(!isNullOrUndefined(runId) && !isNullOrUndefined(baseUri) && (isNullOrUndefined(isRunCompleted) || isRunCompleted != 'true')) {
             console.log("Stopping the test run");
-            let taskParameters: TaskParameters = TaskParametersUtil.getTaskParameters(true);
+            let taskParameters: TaskParameters = await TaskParametersUtil.getTaskParameters(true);
             const authContext = new AuthenticatorService(taskParameters);
             const apiService = new APIService(authContext);
             await apiService.stopTestRun(baseUri, runId);
