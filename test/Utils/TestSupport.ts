@@ -1,5 +1,5 @@
 import * as Constants from "../Constants/Constants";
-import { TaskLibMock } from "../Mocks/TaskLibMock";
+import { CoreMock } from "../Mocks/CoreMock";
 import * as InputConstants from "../../src/Constants/InputConstants";
 import * as EnvironmentConstants from "../../src/Constants/EnvironmentConstants";
 import * as path from 'path';
@@ -10,24 +10,18 @@ const fs = require('fs');
 
 export class TestSupport {
 
-    public static setupTaskLibMockForTaskParameters(taskLibMock: TaskLibMock) {
-        taskLibMock.setInput(InputConstants.serviceConnectionName, Constants.serviceConnectionName);
-        taskLibMock.setEndpointDataParameter(Constants.serviceConnectionName, InputConstants.serviceConnectionInputs.subscriptionId, Constants.loadtestConfig.subscriptionId);
-        taskLibMock.setEndpointDataParameter(Constants.serviceConnectionName, InputConstants.serviceConnectionInputs.environment, EnvironmentConstants.AzurePublicCloud.cloudName);
-        taskLibMock.setInput(InputConstants.resourceGroup, Constants.loadtestConfig.resourceGroup);
-        taskLibMock.setInput(InputConstants.loadTestResource, Constants.loadtestConfig.resourceName);
-        taskLibMock.setEndpointDataParameter(Constants.serviceConnectionName, InputConstants.serviceConnectionInputs.authorityUrl, Constants.authorityUrl);
-        taskLibMock.setEndpointUrl(Constants.serviceConnectionName, Constants.armEndpoint);
-        taskLibMock.setEndpointAuthorizationScheme(Constants.serviceConnectionName, Constants.authorizationScheme);
+    public static setupMockForTaskParameters(coreMock: CoreMock) {
+        coreMock.setInput(InputConstants.resourceGroup, Constants.loadtestConfig.resourceGroup);
+        coreMock.setInput(InputConstants.loadTestResource, Constants.loadtestConfig.resourceName);
     }
 
-    public static setupTaskLibMockForPostProcess(taskLibMock: TaskLibMock) {
-        taskLibMock.setTaskVariable(PostTaskParameters.runId, 'runid');
-        taskLibMock.setTaskVariable(PostTaskParameters.baseUri, Constants.loadtestConfig.dataPlaneUrl);
-        taskLibMock.setTaskVariable(PostTaskParameters.isRunCompleted, 'false');
+    public static setupMockForPostProcess() {
+        process.env[PostTaskParameters.runId] = 'runid';
+        process.env[PostTaskParameters.baseUri] = Constants.loadtestConfig.dataPlaneUrl;
+        process.env[PostTaskParameters.isRunCompleted] = 'false';
     }
 
-    public static createAndSetLoadTestConfigFile(yamlJson: any, taskLibMock: TaskLibMock, fileName: string = "loadtestConfig.yaml") {
+    public static createAndSetLoadTestConfigFile(yamlJson: any, coreMock: CoreMock, fileName: string = "loadtestConfig.yaml") {
         let yamlStr = yaml.dump(yamlJson);
 
         const configFilesDirectory = './test/ConfigFiles';
@@ -38,7 +32,7 @@ export class TestSupport {
         let configFilePath = path.join(__dirname, "..", "..", "test", "ConfigFiles", fileName);
         fs.writeFileSync(configFilePath, yamlStr);
 
-        taskLibMock.setInput(InputConstants.loadTestConfigFile, configFilePath);
+        coreMock.setInput(InputConstants.loadTestConfigFile, configFilePath);
     }
 
     public static validateTestPayload(testPayload: TestModel, expectedTestPayload: TestModel) {

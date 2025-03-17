@@ -2,7 +2,7 @@ import nock from "nock";
 import * as sinon from "sinon";
 import { AuthenticatorService } from "../src/services/AuthenticatorService";
 import { TestSupport } from "./Utils/TestSupport";
-import { TaskLibMock } from "./Mocks/TaskLibMock";
+import { CoreMock } from "./Mocks/CoreMock";
 import { APIService } from "../src/services/APIService";
 import * as Constants from "./Constants/Constants";
 import { AuthenticatorServiceMock } from "./Mocks/AuthenticatorServiceMock";
@@ -13,12 +13,12 @@ import * as ServerMetricConfigPayloadConstants from "./Constants/ServerMetricCon
 
 describe('server metric config payload tests', () => {
 
-    let taskLibMock: TaskLibMock;
+    let coreMock: CoreMock;
     let authenticatorServiceMock: AuthenticatorServiceMock;
     let runner: CreateAndRunTest;
 
     beforeEach(function () {
-        taskLibMock = new TaskLibMock();
+        coreMock = new CoreMock();
         authenticatorServiceMock = new AuthenticatorServiceMock();
         authenticatorServiceMock.setupMock();
 
@@ -34,7 +34,7 @@ describe('server metric config payload tests', () => {
     });
 
     it("create server metric config", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(AppComponentsAndServerConfigYamls.appComponentsWithMetrics, taskLibMock, "serverMetricLoadtestConfig.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(AppComponentsAndServerConfigYamls.appComponentsWithMetrics, coreMock, "serverMetricLoadtestConfig.yaml");
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(AppComponentsAndServerConfigYamls.appComponentsWithMetrics.testId.toLowerCase()!, 404);
 
@@ -45,7 +45,7 @@ describe('server metric config payload tests', () => {
     });
 
     it("edit server metric config", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(AppComponentsAndServerConfigYamls.appComponentsWithMetrics, taskLibMock, "serverMetricLoadtestConfig.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(AppComponentsAndServerConfigYamls.appComponentsWithMetrics, coreMock, "serverMetricLoadtestConfig.yaml");
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(AppComponentsAndServerConfigYamls.appComponentsWithMetrics.testId.toLowerCase()!, 200);
         dataPlaneAPIMock.mockGetTestServerMetricConfigs(AppComponentsAndServerConfigYamls.appComponentsWithMetrics.testId.toLowerCase()!, 200, ServerMetricConfigPayloadConstants.editServerMetricConfigResponse);

@@ -1,9 +1,8 @@
 import nock from "nock";
 import * as sinon from "sinon";
-import * as tl from "azure-pipelines-task-lib/task";
 import { AuthenticatorService } from "../src/services/AuthenticatorService";
 import { TestSupport } from "./Utils/TestSupport";
-import { TaskLibMock } from "./Mocks/TaskLibMock";
+import { CoreMock } from "./Mocks/CoreMock";
 import { APIService } from "../src/services/APIService";
 import * as Constants from "./Constants/Constants";
 import * as TestReponseConstants from "./Constants/TestReponseConstants";
@@ -19,12 +18,12 @@ import * as FileUtils from '../src/Utils/FileUtils';
 
 describe('create and run test', () => {
 
-    let taskLibMock: TaskLibMock;
+    let coreMock: CoreMock;
     let authenticatorServiceMock: AuthenticatorServiceMock;
     let runner: CreateAndRunTest;
 
     beforeEach(function () {
-        taskLibMock = new TaskLibMock();
+        coreMock = new CoreMock();
         authenticatorServiceMock = new AuthenticatorServiceMock();
         authenticatorServiceMock.setupMock();
 
@@ -40,7 +39,7 @@ describe('create and run test', () => {
     });
 
     it("create jmx test flow", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, taskLibMock, "createAndRunTest.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, coreMock, "createAndRunTest.yaml");
         
         let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
         let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
@@ -73,8 +72,8 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = taskLibMock.getTaskVariable(PostTaskParameters.runId);
-        let isRunCompleted = taskLibMock.getTaskVariable(PostTaskParameters.isRunCompleted);
+        let testRunId = process.env[PostTaskParameters.runId];
+        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");
@@ -138,7 +137,7 @@ describe('create and run test', () => {
                 },
             }
         }
-        TestSupport.createAndSetLoadTestConfigFile(yamlJSON, taskLibMock, "createAndRunTest.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(yamlJSON, coreMock, "createAndRunTest.yaml");
         
         let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(existingTestObj);
         let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
@@ -175,15 +174,15 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = taskLibMock.getTaskVariable(PostTaskParameters.runId);
-        let isRunCompleted = taskLibMock.getTaskVariable(PostTaskParameters.isRunCompleted);
+        let testRunId = process.env[PostTaskParameters.runId];
+        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");
     });
 
     it("create url test flow", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, taskLibMock, "createAndRunTest.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, coreMock, "createAndRunTest.yaml");
         
         let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
         let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
@@ -215,15 +214,15 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = taskLibMock.getTaskVariable(PostTaskParameters.runId);
-        let isRunCompleted = taskLibMock.getTaskVariable(PostTaskParameters.isRunCompleted);
+        let testRunId = process.env[PostTaskParameters.runId];
+        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");
     });
 
     it("file validation failed", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, taskLibMock, "createAndRunTest.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, coreMock, "createAndRunTest.yaml");
         
         let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
         let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
@@ -237,7 +236,7 @@ describe('create and run test', () => {
     });
 
     it("additional file validation failed", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, taskLibMock, "createAndRunTest.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, coreMock, "createAndRunTest.yaml");
         
         let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
         let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
@@ -251,7 +250,7 @@ describe('create and run test', () => {
     });
 
     it("file validation timeout", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, taskLibMock, "createAndRunTest.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, coreMock, "createAndRunTest.yaml");
         
         let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
         let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
@@ -265,7 +264,7 @@ describe('create and run test', () => {
     });
 
     it("test run status failed", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, taskLibMock, "createAndRunTest.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, coreMock, "createAndRunTest.yaml");
         
         let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
         let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
@@ -298,17 +297,17 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = taskLibMock.getTaskVariable(PostTaskParameters.runId);
-        let isRunCompleted = taskLibMock.getTaskVariable(PostTaskParameters.isRunCompleted);
-        let taskResult = taskLibMock.getResult();
+        let testRunId = process.env[PostTaskParameters.runId];
+        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+        let taskResult = coreMock.getResult();
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");
-        expect(taskResult).toBe(tl.TaskResult.Failed.toString());
+        expect(taskResult).toBe("FAILED");
     });
 
     it("test run result failed", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, taskLibMock, "createAndRunTest.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, coreMock, "createAndRunTest.yaml");
         
         let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
         let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
@@ -341,17 +340,17 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = taskLibMock.getTaskVariable(PostTaskParameters.runId);
-        let isRunCompleted = taskLibMock.getTaskVariable(PostTaskParameters.isRunCompleted);
-        let taskResult = taskLibMock.getResult();
+        let testRunId = process.env[PostTaskParameters.runId];
+        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+        let taskResult = coreMock.getResult();
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");
-        expect(taskResult).toBe(tl.TaskResult.Failed.toString());
+        expect(taskResult).toBe("FAILED");
     });
 
     it("test run results file published", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, taskLibMock, "createAndRunTest.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, coreMock, "createAndRunTest.yaml");
         
         let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
         let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
@@ -397,8 +396,8 @@ describe('create and run test', () => {
         expect(uploadFileToResultsFolderStub.calledWithMatch(sinon.match.any, resultZipFileName)).toBe(true);
         expect(uploadFileToResultsFolderStub.calledWithMatch(sinon.match.any, reportZipFileName)).toBe(true);
 
-        let testRunId = taskLibMock.getTaskVariable(PostTaskParameters.runId);
-        let isRunCompleted = taskLibMock.getTaskVariable(PostTaskParameters.isRunCompleted);
+        let testRunId = process.env[PostTaskParameters.runId];
+        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");

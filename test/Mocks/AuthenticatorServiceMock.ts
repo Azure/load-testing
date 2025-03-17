@@ -8,7 +8,6 @@ export class AuthenticatorServiceMock {
     private getARMTokenHeaderStub: sinon.SinonStub = sinon.stub();
 
     public setupMock() {
-        sinon.stub(AuthenticatorService.prototype, "authorize").callsFake(this.authorize);
         this.getDataPlaneHeaderStub = sinon.stub(AuthenticatorService.prototype, "getDataPlaneHeader").callsFake(this.getDataPlaneHeader);
         this.getARMTokenHeaderStub = sinon.stub(AuthenticatorService.prototype, "getARMTokenHeader").callsFake(this.getARMTokenHeader);
     }
@@ -19,12 +18,6 @@ export class AuthenticatorServiceMock {
 
     public getARMTokenHeaderCalled(): boolean {
         return this.getARMTokenHeaderStub.called;
-    }
-
-    private async authorize() {
-        return new Promise<void>((resolve, reject) => {
-            resolve();
-        });
     }
 
     private async getDataPlaneHeader() {

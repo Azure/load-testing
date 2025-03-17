@@ -1,6 +1,5 @@
 import nock from "nock";
 import * as sinon from "sinon";
-import { TaskLibMock } from "./Mocks/TaskLibMock";
 import { AuthenticatorServiceMock } from "./Mocks/AuthenticatorServiceMock";
 import { TestSupport } from "./Utils/TestSupport";
 import { APIService } from "../src/services/APIService";
@@ -9,14 +8,12 @@ import { PostTaskParameters } from "../src/models/UtilModels";
 
 describe('post process job tests', () => {
 
-    let taskLibMock: TaskLibMock;
     let authenticatorServiceMock: AuthenticatorServiceMock;
 
     beforeEach(function () {
-        taskLibMock = new TaskLibMock();
         authenticatorServiceMock = new AuthenticatorServiceMock();
         authenticatorServiceMock.setupMock();
-        TestSupport.setupTaskLibMockForTaskParameters(taskLibMock);
+        TestSupport.setupMockForPostProcess();
     });
   
     afterEach(function () {
@@ -26,7 +23,7 @@ describe('post process job tests', () => {
 
     it("stop is called when test run is not terminated", async () => {
         let stopTestRunStub = sinon.stub(APIService.prototype, "stopTestRun");
-        TestSupport.setupTaskLibMockForPostProcess(taskLibMock);
+        TestSupport.setupMockForPostProcess();
 
         await run();
 
@@ -35,8 +32,8 @@ describe('post process job tests', () => {
 
     it("stop is not called when test run is terminated", async () => {
         let stopTestRunStub = sinon.stub(APIService.prototype, "stopTestRun");
-        TestSupport.setupTaskLibMockForPostProcess(taskLibMock);
-        taskLibMock.setTaskVariable(PostTaskParameters.isRunCompleted, 'true');
+        TestSupport.setupMockForPostProcess();
+        process.env[PostTaskParameters.isRunCompleted] = "true";
 
         await run();
 

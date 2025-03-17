@@ -1,15 +1,15 @@
 import * as sinon from "sinon";
 import { TestSupport } from "./Utils/TestSupport";
-import { TaskLibMock } from "./Mocks/TaskLibMock";
+import { CoreMock } from "./Mocks/CoreMock";
 import * as InputConstants from "../src/Constants/InputConstants";
 import { LoadtestConfigUtil } from "../src/Utils/LoadtestConfigUtil";
 
 describe('parse invalid load test config tests', () => {
 
-    let taskLibMock: TaskLibMock;
+    let coreMock: CoreMock;
 
     beforeEach(function () {
-        taskLibMock = new TaskLibMock();
+        coreMock = new CoreMock();
     });
   
     afterEach(function () {
@@ -17,13 +17,13 @@ describe('parse invalid load test config tests', () => {
     });
 
     it("missing config file", async () => {
-        taskLibMock.setInput(InputConstants.loadTestConfigFile, "");
+        coreMock.setInput(InputConstants.loadTestConfigFile, "");
 
         expect(() => LoadtestConfigUtil.parseLoadtestConfigFile()).toThrow(`The input field "${InputConstants.loadTestConfigFileLabel}" is empty. Provide the path to load test yaml file.`);
     });
 
     it("invalid config file extension", async () => {
-        taskLibMock.setInput(InputConstants.loadTestConfigFile, "invalidConfigFile.json");
+        coreMock.setInput(InputConstants.loadTestConfigFile, "invalidConfigFile.json");
 
         expect(() => LoadtestConfigUtil.parseLoadtestConfigFile()).toThrow("The Load Test configuration file should be of type .yaml or .yml");
     });
@@ -38,7 +38,7 @@ describe('parse invalid load test config tests', () => {
             testType: 'URL',
             configurationFiles: [ 'sampledata.csv', 'samplezip.zip' ]
         };
-        TestSupport.createAndSetLoadTestConfigFile(yamlJson, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(yamlJson, coreMock);
 
         expect(() => LoadtestConfigUtil.parseLoadtestConfigFile()).toThrow("Only CSV files are allowed as configuration files for a URL-based test.");
     });
@@ -54,7 +54,7 @@ describe('parse invalid load test config tests', () => {
             configurationFiles: [ 'sampledata.csv' ],
             zipArtifacts: [ 'bigdata.zip' ]
         };
-        TestSupport.createAndSetLoadTestConfigFile(yamlJson, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(yamlJson, coreMock);
 
         expect(() => LoadtestConfigUtil.parseLoadtestConfigFile()).toThrow("Zip artifacts are not supported for the URL-based test.");
     });
@@ -70,7 +70,7 @@ describe('parse invalid load test config tests', () => {
             configurationFiles: [ 'sampledata.csv' ],
             properties: { userPropertyFile: 'user.properties' },
         };
-        TestSupport.createAndSetLoadTestConfigFile(yamlJson, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(yamlJson, coreMock);
 
         expect(() => LoadtestConfigUtil.parseLoadtestConfigFile()).toThrow("User property file is not supported for the URL-based test.");
     });
@@ -90,7 +90,7 @@ describe('parse invalid load test config tests', () => {
                 }
             ],
         };
-        TestSupport.createAndSetLoadTestConfigFile(yamlJson, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(yamlJson, coreMock);
 
         expect(() => LoadtestConfigUtil.parseLoadtestConfigFile()).toThrow("Invalid secret name");
     });
@@ -111,7 +111,7 @@ describe('parse invalid load test config tests', () => {
                 }
             ],
         };
-        TestSupport.createAndSetLoadTestConfigFile(yamlJson, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(yamlJson, coreMock);
 
         expect(() => LoadtestConfigUtil.parseLoadtestConfigFile()).toThrow("Invalid secret url");
     });
@@ -136,7 +136,7 @@ describe('parse invalid load test config tests', () => {
                   }
             ],
         };
-        TestSupport.createAndSetLoadTestConfigFile(yamlJson, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(yamlJson, coreMock);
 
         expect(() => LoadtestConfigUtil.parseLoadtestConfigFile()).toThrow("Only one certificate can be added in the load test configuration");
     });

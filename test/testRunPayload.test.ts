@@ -2,7 +2,7 @@ import nock from "nock";
 import * as sinon from "sinon";
 import { AuthenticatorService } from "../src/services/AuthenticatorService";
 import { TestSupport } from "./Utils/TestSupport";
-import { TaskLibMock } from "./Mocks/TaskLibMock";
+import { CoreMock } from "./Mocks/CoreMock";
 import { APIService } from "../src/services/APIService";
 import * as Constants from "./Constants/Constants";
 import { AuthenticatorServiceMock } from "./Mocks/AuthenticatorServiceMock";
@@ -13,12 +13,12 @@ import * as InputConstants from "../src/Constants/InputConstants";
 
 describe('test run payload tests', () => {
 
-    let taskLibMock: TaskLibMock;
+    let coreMock: CoreMock;
     let authenticatorServiceMock: AuthenticatorServiceMock;
     let runner: CreateAndRunTest;
 
     beforeEach(function () {
-        taskLibMock = new TaskLibMock();
+        coreMock = new CoreMock();
         authenticatorServiceMock = new AuthenticatorServiceMock();
         authenticatorServiceMock.setupMock();
 
@@ -34,7 +34,7 @@ describe('test run payload tests', () => {
     });
 
     it("without run time params", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, taskLibMock, "testRunLoadtestConfig.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, coreMock, "testRunLoadtestConfig.yaml");
 
         let testId = testYamls.jmxBasicYaml.testId.toLowerCase()!;
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
@@ -74,12 +74,12 @@ describe('test run payload tests', () => {
         let expectedSecrets = { secret1: { type: 'SECRET_VALUE', value: 'abc' } };
         let expectedEnv = { env1: 'abc' };
         
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, coreMock);
 
-        taskLibMock.setInput(InputConstants.testRunName, 'runtimename');
-        taskLibMock.setInput(InputConstants.runDescription, 'Run Time Description');
-        taskLibMock.setInput(InputConstants.secrets, JSON.stringify(secrets));
-        taskLibMock.setInput(InputConstants.envVars, JSON.stringify(env));
+        coreMock.setInput(InputConstants.testRunName, 'runtimename');
+        coreMock.setInput(InputConstants.runDescription, 'Run Time Description');
+        coreMock.setInput(InputConstants.secrets, JSON.stringify(secrets));
+        coreMock.setInput(InputConstants.envVars, JSON.stringify(env));
 
         let testId = testYamls.jmxBasicYaml.testId.toLowerCase()!;
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
@@ -106,9 +106,9 @@ describe('test run payload tests', () => {
             "value": "abc"
         };
         
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, taskLibMock, "testRunLoadtestConfig.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, coreMock, "testRunLoadtestConfig.yaml");
 
-        taskLibMock.setInput(InputConstants.envVars, JSON.stringify(env));
+        coreMock.setInput(InputConstants.envVars, JSON.stringify(env));
 
         let testId = testYamls.jmxBasicYaml.testId.toLowerCase()!;
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
@@ -125,9 +125,9 @@ describe('test run payload tests', () => {
             "value": "abc"
         };
         
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, taskLibMock, "testRunLoadtestConfig.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, coreMock, "testRunLoadtestConfig.yaml");
 
-        taskLibMock.setInput(InputConstants.secrets, JSON.stringify(secrets));
+        coreMock.setInput(InputConstants.secrets, JSON.stringify(secrets));
 
         let testId = testYamls.jmxBasicYaml.testId.toLowerCase()!;
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);

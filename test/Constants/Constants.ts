@@ -1,10 +1,7 @@
-import { AppComponents, FileStatus, TestModel, TestRunModel } from "../../src/models/PayloadModels";
+import { AppComponents, TestModel } from "../../src/models/PayloadModels";
 import { TaskParameters } from "../../src/models/TaskParameters";
 
 export const armEndpoint = "https://management.azure.com";
-export const serviceConnectionName = "fakeServiceConnectionName";
-export const authorityUrl = "https://fakeAuthorityUrl";
-export const authorizationScheme = "fakeScheme";
 import * as EnvironmentConstants from "../../src/Constants/EnvironmentConstants";
 
 export const loadtestConfig = {
@@ -26,14 +23,12 @@ export const loadtestResourceId = `/subscriptions/${loadtestConfig.subscriptionI
 
  export const defaultTaskParameters: TaskParameters = {
     subscriptionId: loadtestConfig.subscriptionId,
+    subscriptionName: "fakeSubscriptionName",
     environment: EnvironmentConstants.AzurePublicCloud.cloudName,
     armTokenScope: EnvironmentConstants.AzurePublicCloud.armTokenScope,
     dataPlaneTokenScope: EnvironmentConstants.AzurePublicCloud.dataPlaneTokenScope,
     resourceId: loadtestResourceId,
-    serviceConnectionName: serviceConnectionName,
-    authorizationScheme: authorizationScheme,
     armEndpoint: armEndpoint,
-    authorityHostUrl: authorityUrl,
 };
 
 export const APIRoute = {

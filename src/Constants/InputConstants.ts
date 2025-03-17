@@ -4,7 +4,6 @@ export const overRideParameters = 'overrideParameters';
 export const outputVariableName = 'outputVariableName';
 export const envVars = 'env';
 export const secrets = 'secrets';
-export const serviceConnectionName = 'connectedServiceNameARM';
 export const resourceGroup = 'resourceGroup';
 export const loadTestResource = 'loadTestResource';
 export const loadTestConfigFile = 'loadTestConfigFile';

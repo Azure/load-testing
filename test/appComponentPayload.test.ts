@@ -2,7 +2,7 @@ import nock from "nock";
 import * as sinon from "sinon";
 import { AuthenticatorService } from "../src/services/AuthenticatorService";
 import { TestSupport } from "./Utils/TestSupport";
-import { TaskLibMock } from "./Mocks/TaskLibMock";
+import { CoreMock } from "./Mocks/CoreMock";
 import { APIService } from "../src/services/APIService";
 import * as Constants from "./Constants/Constants";
 import { AuthenticatorServiceMock } from "./Mocks/AuthenticatorServiceMock";
@@ -13,12 +13,12 @@ import * as AppComponentsPayloadConstants from "./Constants/AppComponentsPayload
 
 describe('app component payload tests', () => {
 
-    let taskLibMock: TaskLibMock;
+    let coreMock: CoreMock;
     let authenticatorServiceMock: AuthenticatorServiceMock;
     let runner: CreateAndRunTest;
 
     beforeEach(function () {
-        taskLibMock = new TaskLibMock();
+        coreMock = new CoreMock();
         authenticatorServiceMock = new AuthenticatorServiceMock();
         authenticatorServiceMock.setupMock();
 
@@ -34,7 +34,7 @@ describe('app component payload tests', () => {
     });
 
     it("create app component", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(AppComponentsAndServerConfigYamls.appComponentsWithMetrics, taskLibMock, "appCompLoadtestConfig.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(AppComponentsAndServerConfigYamls.appComponentsWithMetrics, coreMock, "appCompLoadtestConfig.yaml");
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(AppComponentsAndServerConfigYamls.appComponentsWithMetrics.testId.toLowerCase()!, 404);
 
@@ -45,7 +45,7 @@ describe('app component payload tests', () => {
     });
 
     it("edit app component", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(AppComponentsAndServerConfigYamls.appComponentsWithMetrics, taskLibMock, "appCompLoadtestConfig.yaml");
+        TestSupport.createAndSetLoadTestConfigFile(AppComponentsAndServerConfigYamls.appComponentsWithMetrics, coreMock, "appCompLoadtestConfig.yaml");
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(AppComponentsAndServerConfigYamls.appComponentsWithMetrics.testId.toLowerCase()!, 200);
         dataPlaneAPIMock.mockGetTestAppComponents(AppComponentsAndServerConfigYamls.appComponentsWithMetrics.testId.toLowerCase()!, 200, AppComponentsPayloadConstants.editAppComponentsResponse);

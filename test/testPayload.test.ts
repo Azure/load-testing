@@ -2,7 +2,7 @@ import nock from "nock";
 import * as sinon from "sinon";
 import { AuthenticatorService } from "../src/services/AuthenticatorService";
 import { TestSupport } from "./Utils/TestSupport";
-import { TaskLibMock } from "./Mocks/TaskLibMock";
+import { CoreMock } from "./Mocks/CoreMock";
 import { APIService } from "../src/services/APIService";
 import * as Constants from "./Constants/Constants";
 import { AuthenticatorServiceMock } from "./Mocks/AuthenticatorServiceMock";
@@ -16,12 +16,12 @@ import * as InputConstants from "../src/Constants/InputConstants";
 
 describe('test payload tests', () => {
 
-    let taskLibMock: TaskLibMock;
+    let coreMock: CoreMock;
     let authenticatorServiceMock: AuthenticatorServiceMock;
     let runner: CreateAndRunTest;
 
     beforeEach(function () {
-        taskLibMock = new TaskLibMock();
+        coreMock = new CoreMock();
         authenticatorServiceMock = new AuthenticatorServiceMock();
         authenticatorServiceMock.setupMock();
 
@@ -37,7 +37,7 @@ describe('test payload tests', () => {
     });
 
     it("create basic jmx test", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxBasicYaml, coreMock);
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(testYamls.jmxBasicYaml.testId.toLowerCase()!, 404);
 
@@ -48,7 +48,7 @@ describe('test payload tests', () => {
     });
 
     it("create comprehensive jmx test", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, coreMock);
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(testYamls.jmxComprehensiveYaml.testId.toLowerCase()!, 404);
 
@@ -59,7 +59,7 @@ describe('test payload tests', () => {
     });
 
     it("edit comprehensive jmx test", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, coreMock);
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(testYamls.jmxComprehensiveYaml.testId.toLowerCase()!, 200, TestPayloadConstants.editJmxTestResponse);
 
@@ -70,8 +70,8 @@ describe('test payload tests', () => {
     });
 
     it("override params comprehensive jmx test", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, taskLibMock);
-        taskLibMock.setInput(InputConstants.overRideParameters, JSON.stringify(TestPayloadConstants.overrideParams));
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, coreMock);
+        coreMock.setInput(InputConstants.overRideParameters, JSON.stringify(TestPayloadConstants.overrideParams));
 
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(TestPayloadConstants.overrideParams.testId!, 404);
@@ -83,7 +83,7 @@ describe('test payload tests', () => {
     });
 
     it("create url test", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, coreMock);
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(testYamls.urlYaml.testId.toLowerCase()!, 404);
 
@@ -94,7 +94,7 @@ describe('test payload tests', () => {
     });
 
     it("create locust test", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.locustYaml, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.locustYaml, coreMock);
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(testYamls.locustYaml.testId.toLowerCase()!, 404);
 
@@ -105,7 +105,7 @@ describe('test payload tests', () => {
     });
 
     it("create public ip disabled test", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(testYamls.subnetIdPIPDisabledTrue, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.subnetIdPIPDisabledTrue, coreMock);
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(testYamls.subnetIdPIPDisabledTrue.testId.toLowerCase()!, 404);
 
@@ -116,7 +116,7 @@ describe('test payload tests', () => {
     });
 
     it("create reference identities test", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(ReferenceIdentityYamls.referenceIdentitiesBasicYaml, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(ReferenceIdentityYamls.referenceIdentitiesBasicYaml, coreMock);
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(ReferenceIdentityYamls.referenceIdentitiesBasicYaml.testId.toLowerCase()!, 404);
 
@@ -127,7 +127,7 @@ describe('test payload tests', () => {
     });
 
     it("create pf server criteria test", async () => {
-        TestSupport.createAndSetLoadTestConfigFile(FailureCriteriaYamls.ClientAndServerPFDefaultMetrics, taskLibMock);
+        TestSupport.createAndSetLoadTestConfigFile(FailureCriteriaYamls.ClientAndServerPFDefaultMetrics, coreMock);
         let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
         dataPlaneAPIMock.mockGetTest(FailureCriteriaYamls.ClientAndServerPFDefaultMetrics.testId.toLowerCase()!, 200, TestPayloadConstants.editPFServerCriteriaTestResponse);
 

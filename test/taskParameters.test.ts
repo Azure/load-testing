@@ -1,18 +1,19 @@
 import * as sinon from "sinon";
 import { TestSupport } from "./Utils/TestSupport";
-import { TaskLibMock } from "./Mocks/TaskLibMock";
+import { CoreMock } from "./Mocks/CoreMock";
 import * as Constants from "./Constants/Constants";
 import * as EnvironmentConstants from "../src/Constants/EnvironmentConstants";
 import * as InputConstants from "../src/Constants/InputConstants";
 import { TaskParametersUtil } from "../src/Utils/TaskParametersUtil";
+import * as AzCliUtility from "../src/Utils/AzCliUtility";
 
 describe('task parameters tests', () => {
 
-    let taskLibMock: TaskLibMock;
+    let coreMock: CoreMock;
 
     beforeEach(function () {
-        taskLibMock = new TaskLibMock();
-        TestSupport.setupTaskLibMockForTaskParameters(taskLibMock);
+        coreMock = new CoreMock();
+        TestSupport.setupMockForTaskParameters(coreMock);
     });
   
     afterEach(function () {
@@ -20,80 +21,146 @@ describe('task parameters tests', () => {
     });
 
     it("sets inputs for public cloud", async () => {
-        let taskParameters = TaskParametersUtil.getTaskParameters();
+        let accountShowResult = {
+            name: "fakeSubscriptionName",
+            id: Constants.loadtestConfig.subscriptionId,
+        };
+        let accountShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["account", "show"]).resolves(accountShowResult);
         
-        expect(taskParameters.serviceConnectionName).toBe(Constants.serviceConnectionName);
+        let cloudShowResult = {
+            name: EnvironmentConstants.AzurePublicCloud.cloudName,
+            endpoints: {
+                resourceManager: Constants.armEndpoint,
+            }
+        };
+        let cloudShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["cloud", "show"]).resolves(cloudShowResult);
+
+        let taskParameters = await TaskParametersUtil.getTaskParameters();
+        
+        expect(accountShowStub.calledOnce).toBe(true);
+        expect(cloudShowStub.calledOnce).toBe(true);
         expect(taskParameters.resourceId.toLowerCase()).toBe(Constants.loadtestResourceId.toLowerCase());
         expect(taskParameters.subscriptionId).toBe(Constants.loadtestConfig.subscriptionId);
-        expect(taskParameters.authorizationScheme).toBe(Constants.authorizationScheme);
+        expect(taskParameters.subscriptionName).toBe("fakeSubscriptionName");
         expect(taskParameters.environment).toBe(EnvironmentConstants.AzurePublicCloud.cloudName);
-        expect(taskParameters.authorityHostUrl).toBe(Constants.authorityUrl);
         expect(taskParameters.armEndpoint).toBe(Constants.armEndpoint);
         expect(taskParameters.dataPlaneTokenScope).toBe(EnvironmentConstants.AzurePublicCloud.dataPlaneTokenScope);
         expect(taskParameters.armTokenScope).toBe(EnvironmentConstants.AzurePublicCloud.armTokenScope);
     });
 
     it("sets inputs for gov cloud", async () => {
-        taskLibMock.setEndpointDataParameter(Constants.serviceConnectionName, InputConstants.serviceConnectionInputs.environment, EnvironmentConstants.AzureUSGovernmentCloud.cloudName);
-        let taskParameters = TaskParametersUtil.getTaskParameters();
+        let accountShowResult = {
+            name: "fakeSubscriptionName",
+            id: Constants.loadtestConfig.subscriptionId,
+        };
+        let accountShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["account", "show"]).resolves(accountShowResult);
         
-        expect(taskParameters.serviceConnectionName).toBe(Constants.serviceConnectionName);
+        let cloudShowResult = {
+            name: EnvironmentConstants.AzureUSGovernmentCloud.cloudName,
+            endpoints: {
+                resourceManager: "https://management.usgovcloudapi.net/",
+            }
+        };
+        let cloudShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["cloud", "show"]).resolves(cloudShowResult);
+
+        let taskParameters = await TaskParametersUtil.getTaskParameters();
+        
+        expect(accountShowStub.calledOnce).toBe(true);
+        expect(cloudShowStub.calledOnce).toBe(true);
         expect(taskParameters.resourceId.toLowerCase()).toBe(Constants.loadtestResourceId.toLowerCase());
         expect(taskParameters.subscriptionId).toBe(Constants.loadtestConfig.subscriptionId);
+        expect(taskParameters.subscriptionName).toBe("fakeSubscriptionName");
         expect(taskParameters.environment).toBe(EnvironmentConstants.AzureUSGovernmentCloud.cloudName);
-        expect(taskParameters.authorityHostUrl).toBe(Constants.authorityUrl);
-        expect(taskParameters.armEndpoint).toBe(Constants.armEndpoint);
+        expect(taskParameters.armEndpoint).toBe("https://management.usgovcloudapi.net/");
         expect(taskParameters.dataPlaneTokenScope).toBe(EnvironmentConstants.AzureUSGovernmentCloud.dataPlaneTokenScope);
         expect(taskParameters.armTokenScope).toBe(EnvironmentConstants.AzureUSGovernmentCloud.armTokenScope);
     });
 
     it("sets inputs for gov cloud with different case", async () => {
-        taskLibMock.setEndpointDataParameter(Constants.serviceConnectionName, InputConstants.serviceConnectionInputs.environment, EnvironmentConstants.AzureUSGovernmentCloud.cloudName.toUpperCase());
-        let taskParameters = TaskParametersUtil.getTaskParameters();
+        let accountShowResult = {
+            name: "fakeSubscriptionName",
+            id: Constants.loadtestConfig.subscriptionId,
+        };
+        let accountShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["account", "show"]).resolves(accountShowResult);
         
-        expect(taskParameters.serviceConnectionName).toBe(Constants.serviceConnectionName);
+        let cloudShowResult = {
+            name: EnvironmentConstants.AzureUSGovernmentCloud.cloudName.toUpperCase(),
+            endpoints: {
+                resourceManager: "https://management.usgovcloudapi.net/",
+            }
+        };
+        let cloudShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["cloud", "show"]).resolves(cloudShowResult);
+
+        let taskParameters = await TaskParametersUtil.getTaskParameters();
+        
+        expect(accountShowStub.calledOnce).toBe(true);
+        expect(cloudShowStub.calledOnce).toBe(true);
         expect(taskParameters.resourceId.toLowerCase()).toBe(Constants.loadtestResourceId.toLowerCase());
         expect(taskParameters.subscriptionId).toBe(Constants.loadtestConfig.subscriptionId);
+        expect(taskParameters.subscriptionName).toBe("fakeSubscriptionName");
         expect(taskParameters.environment).toBe(EnvironmentConstants.AzureUSGovernmentCloud.cloudName.toUpperCase());
-        expect(taskParameters.authorityHostUrl).toBe(Constants.authorityUrl);
-        expect(taskParameters.armEndpoint).toBe(Constants.armEndpoint);
+        expect(taskParameters.armEndpoint).toBe("https://management.usgovcloudapi.net/");
         expect(taskParameters.dataPlaneTokenScope).toBe(EnvironmentConstants.AzureUSGovernmentCloud.dataPlaneTokenScope);
         expect(taskParameters.armTokenScope).toBe(EnvironmentConstants.AzureUSGovernmentCloud.armTokenScope);
     });
 
     it("does not set resource id for postprocess", async () => {
-        let taskParameters = TaskParametersUtil.getTaskParameters(true);
+        let accountShowResult = {
+            name: "fakeSubscriptionName",
+            id: Constants.loadtestConfig.subscriptionId,
+        };
+        let accountShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["account", "show"]).resolves(accountShowResult);
         
-        expect(taskParameters.serviceConnectionName).toBe(Constants.serviceConnectionName);
+        let cloudShowResult = {
+            name: EnvironmentConstants.AzurePublicCloud.cloudName,
+            endpoints: {
+                resourceManager: Constants.armEndpoint,
+            }
+        };
+        let cloudShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["cloud", "show"]).resolves(cloudShowResult);
+
+        let taskParameters = await TaskParametersUtil.getTaskParameters(true);
+        
+        expect(accountShowStub.called).toBe(false);
+        expect(cloudShowStub.calledOnce).toBe(true);
         expect(taskParameters.resourceId).toBe('');
         expect(taskParameters.subscriptionId).toBe('');
+        expect(taskParameters.subscriptionName).toBe('');
         expect(taskParameters.environment).toBe(EnvironmentConstants.AzurePublicCloud.cloudName);
-        expect(taskParameters.authorityHostUrl).toBe(Constants.authorityUrl);
         expect(taskParameters.armEndpoint).toBe(Constants.armEndpoint);
         expect(taskParameters.dataPlaneTokenScope).toBe(EnvironmentConstants.AzurePublicCloud.dataPlaneTokenScope);
         expect(taskParameters.armTokenScope).toBe(EnvironmentConstants.AzurePublicCloud.armTokenScope);
     });
 
-    it("missing service connection throws error", async () => {
-        taskLibMock.setInput(InputConstants.serviceConnectionName, '');
+    it("az cli account show error throws error", async () => {
+        let accountShowResult = {
+            name: "fakeSubscriptionName",
+            id: Constants.loadtestConfig.subscriptionId,
+        };
+        let accountShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["account", "show"]).resolves(accountShowResult);
         
-        expect(() => TaskParametersUtil.getTaskParameters()).toThrow(`The input field "azureSubscription" is empty. Provide an existing service connection`);
+        let cloudShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["cloud", "show"]).rejects("Error");
+        
+        expect(accountShowStub.calledOnce).toBe(true);
+        expect(cloudShowStub.calledOnce).toBe(true);
+        expect(() => TaskParametersUtil.getTaskParameters()).toThrow(`Azure CLI for setting endPoint and scope`);
     });
 
-    it("missing subscription throws error", async () => {
-        taskLibMock.setEndpointDataParameter(Constants.serviceConnectionName, InputConstants.serviceConnectionInputs.subscriptionId, '');
+    it("az cli cloud show error throws error", async () => {
+        let accountShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["account", "show"]).rejects("Error");
         
-        expect(() => TaskParametersUtil.getTaskParameters()).toThrow(`The subscription assigned to the service connection is empty. Provide an proper service connection with an SPN assigned to it.`);
+        expect(accountShowStub.calledOnce).toBe(true);
+        expect(() => TaskParametersUtil.getTaskParameters()).toThrow(`Azure CLI for getting subscription name`);
     });
 
     it("missing resource group throws error", async () => {
-        taskLibMock.setInput(InputConstants.resourceGroup, '');
+        coreMock.setInput(InputConstants.resourceGroup, '');
         
         expect(() => TaskParametersUtil.getTaskParameters()).toThrow(`The input field "${InputConstants.resourceGroupLabel}" is empty. Provide an existing resource group name.`);
     });
 
     it("missing load test resource throws error", async () => {
-        taskLibMock.setInput(InputConstants.loadTestResource, '');
+        coreMock.setInput(InputConstants.loadTestResource, '');
         
         expect(() => TaskParametersUtil.getTaskParameters()).toThrow(`The input field "${InputConstants.loadTestResourceLabel}" is empty. Provide an existing load test resource name.`);
     });
