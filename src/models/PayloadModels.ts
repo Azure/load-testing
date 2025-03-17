@@ -1,4 +1,4 @@
-import { TestKind } from "./engine/TestKind";
+import { TestKind } from "./TestKind";
 
 export interface LoadTestResource {
     readonly id: string;
@@ -106,7 +106,7 @@ export interface TestModel {
     keyvaultReferenceIdentityType?: string;
     keyvaultReferenceIdentityId?: string| null;
     metricsReferenceIdentityType?: string;
-    metricsReferenceIdentityId?: string | null;
+    metricsReferenceIdentityId?: string| null;
     engineBuiltinIdentityType?: string;
     engineBuiltinIdentityIds?: string[] | null;
     baselineTestRunId?: string;
