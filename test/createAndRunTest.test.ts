@@ -72,8 +72,8 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = process.env[PostTaskParameters.runId];
-        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+        let testRunId = coreMock.getVariable(PostTaskParameters.runId);
+        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");
@@ -174,8 +174,8 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = process.env[PostTaskParameters.runId];
-        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+        let testRunId = coreMock.getVariable(PostTaskParameters.runId);
+        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");
@@ -214,8 +214,8 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = process.env[PostTaskParameters.runId];
-        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+        let testRunId = coreMock.getVariable(PostTaskParameters.runId);
+        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");
@@ -297,8 +297,8 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = process.env[PostTaskParameters.runId];
-        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+        let testRunId = coreMock.getVariable(PostTaskParameters.runId);
+        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
         let taskResult = coreMock.getResult();
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
@@ -340,8 +340,8 @@ describe('create and run test', () => {
         expect(awaitTestRunTerminationsStub.calledOnce).toBe(true);
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
-        let testRunId = process.env[PostTaskParameters.runId];
-        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+        let testRunId = coreMock.getVariable(PostTaskParameters.runId);
+        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
         let taskResult = coreMock.getResult();
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
@@ -396,8 +396,8 @@ describe('create and run test', () => {
         expect(uploadFileToResultsFolderStub.calledWithMatch(sinon.match.any, resultZipFileName)).toBe(true);
         expect(uploadFileToResultsFolderStub.calledWithMatch(sinon.match.any, reportZipFileName)).toBe(true);
 
-        let testRunId = process.env[PostTaskParameters.runId];
-        let isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+        let testRunId = coreMock.getVariable(PostTaskParameters.runId);
+        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
         expect(isRunCompleted).toBe("true");

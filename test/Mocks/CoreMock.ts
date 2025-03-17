@@ -19,6 +19,11 @@ export class CoreMock {
         this.mockValues[key] = value;
     }
 
+    public getVariable(variableName: string): string | undefined {
+        let key = `VAR_${variableName}`;
+        return this.mockValues[key];
+    }
+
     public debugCalledWith(message: string): boolean {
         return this.debugStub.calledWith(message);
     }
@@ -27,17 +32,12 @@ export class CoreMock {
         return this.mockValues['RESULT'];
     }
 
-    private getInput(input: string): string | undefined {
+    private getInput(input: string): string {
         let key = `INPUT_${input}`;
-        return this.mockValues[key];
+        return this.mockValues[key] ?? "";
     }
 
-    private getVariable(variableName: string): string | undefined {
-        let key = `VAR_${variableName}`;
-        return this.mockValues[key];
-    }
-
-    private setFailed(message: string): void {
+    private setFailed(message: string | Error): void {
         this.mockValues['RESULT'] = 'FAILED';
     }
 

@@ -291,7 +291,7 @@ export class LoadtestConfigUtil {
                     }
                 }
                 else {
-                    loadtestConfig.serverMetricsConfig[key].aggregation = loadtestConfig.serverMetricsConfig[key].aggregation + "," + serverComponent.aggregation;
+                    loadtestConfig.serverMetricsConfig[key]!.aggregation = loadtestConfig.serverMetricsConfig[key]!.aggregation + "," + serverComponent.aggregation;
                 }
             }
         }
