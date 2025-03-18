@@ -4,7 +4,6 @@ import { AuthenticatorServiceMock } from "./Mocks/AuthenticatorServiceMock";
 import { TestSupport } from "./Utils/TestSupport";
 import { APIService } from "../src/services/APIService";
 import { run } from "../src/postProcessJob";
-import { PostTaskParameters } from "../src/models/UtilModels";
 
 describe('post process job tests', () => {
 
@@ -13,7 +12,6 @@ describe('post process job tests', () => {
     beforeEach(function () {
         authenticatorServiceMock = new AuthenticatorServiceMock();
         authenticatorServiceMock.setupMock();
-        TestSupport.setupMockForPostProcess();
     });
   
     afterEach(function () {
