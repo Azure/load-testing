@@ -1,10 +1,12 @@
+import * as sinon from "sinon";
 import * as Constants from "../Constants/Constants";
 import { CoreMock } from "../Mocks/CoreMock";
 import * as InputConstants from "../../src/Constants/InputConstants";
-import * as EnvironmentConstants from "../../src/Constants/EnvironmentConstants";
 import * as path from 'path';
 import { TestModel } from "../../src/models/PayloadModels";
 import { PostTaskParameters } from "../../src/models/UtilModels";
+import * as EnvironmentConstants from "../../src/Constants/EnvironmentConstants";
+import * as AzCliUtility from "../../src/Utils/AzCliUtility";
 const yaml = require('js-yaml');
 const fs = require('fs');
 
@@ -15,10 +17,23 @@ export class TestSupport {
         coreMock.setInput(InputConstants.loadTestResource, Constants.loadtestConfig.resourceName);
     }
 
-    public static setupMockForPostProcess() {
-        process.env[PostTaskParameters.runId] = 'runid';
-        process.env[PostTaskParameters.baseUri] = Constants.loadtestConfig.dataPlaneUrl;
-        process.env[PostTaskParameters.isRunCompleted] = 'false';
+    public static setupMockForPostProcess(isTestRunCompleted: boolean = false) {
+        let stub = sinon.stub(AzCliUtility, "execAz");
+        let cloudShowResult = {
+            name: EnvironmentConstants.AzurePublicCloud.cloudName,
+            endpoints: {
+                resourceManager: Constants.armEndpoint,
+            }
+        };
+        // account show is not called so 1st call is cloud show
+        stub.onFirstCall().resolves(cloudShowResult);
+
+        let processEnv = {
+            [PostTaskParameters.runId]: 'runid',
+            [PostTaskParameters.baseUri]: Constants.loadtestConfig.dataPlaneUrl,
+            [PostTaskParameters.isRunCompleted]: isTestRunCompleted ? 'true' : 'false',
+        }
+        sinon.stub(process, 'env').value(processEnv);
     }
 
     public static createAndSetLoadTestConfigFile(yamlJson: any, coreMock: CoreMock, fileName: string = "loadtestConfig.yaml") {
