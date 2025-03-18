@@ -190,7 +190,7 @@ export class YamlConfig {
             }
 
             for(let serverComponent of metrics) {
-                let key : string = resourceId.toLowerCase() + '/' + (serverComponent.namespace ?? Util.getResourceTypeFromResourceId(resourceId)) + '/' + serverComponent.name;
+                let key : string = (resourceId + '/' + (serverComponent.namespace ?? Util.getResourceTypeFromResourceId(resourceId)) + '/' + serverComponent.name).toLowerCase();
                 if(!this.serverMetricsConfig.hasOwnProperty(key) || isNullOrUndefined(this.serverMetricsConfig[key])) {
                     this.serverMetricsConfig[key] = {
                         name: serverComponent.name,
