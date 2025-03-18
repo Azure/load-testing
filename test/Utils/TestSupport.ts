@@ -15,10 +15,13 @@ export class TestSupport {
         coreMock.setInput(InputConstants.loadTestResource, Constants.loadtestConfig.resourceName);
     }
 
-    public static setupMockForPostProcess() {
-        sinon.stub(process.env, PostTaskParameters.runId).value('runid');
-        sinon.stub(process.env, PostTaskParameters.baseUri).value(Constants.loadtestConfig.dataPlaneUrl);
-        sinon.stub(process.env, PostTaskParameters.isRunCompleted).value('false');
+    public static setupMockForPostProcess(isTestRunCompleted: boolean = false) {
+        let processEnv = {
+            [PostTaskParameters.runId]: 'runid',
+            [PostTaskParameters.baseUri]: Constants.loadtestConfig.dataPlaneUrl,
+            [PostTaskParameters.isRunCompleted]: isTestRunCompleted ? 'true' : 'false',
+        }
+        sinon.stub(process, 'env').value(processEnv);
     }
 
     public static createAndSetLoadTestConfigFile(yamlJson: any, coreMock: CoreMock, fileName: string = "loadtestConfig.yaml") {
