@@ -1,16 +1,16 @@
-import { FeatureFlags } from "./FeatureFlags";
+import { FeatureFlags } from "../models/FeatureFlags";
 import { Definitions } from "../models/APIResponseModel";
-import { APIRoute } from "../models/constants";
-import * as util from '../models/util';
-import { AuthenticationUtils } from "../models/AuthenticationUtils";
+import { APIRoute } from "../Constants/GeneralConstants";
+import * as util from '../Utils/CommonUtils';
+import { AuthenticatorService } from "./AuthenticatorService";
 import { FetchCallType } from "../models/UtilModels";
-import * as FetchUtil from './../models/FetchHelper';
+import * as FetchUtil from '../Utils/FetchUtils';
 
 export class FeatureFlagService {
     featureFlagCache: { [key: string]: boolean } = {};
-    authContext: AuthenticationUtils;
+    authContext: AuthenticatorService;
 
-    constructor(authContext: AuthenticationUtils) {
+    constructor(authContext: AuthenticatorService) {
         this.authContext = authContext;
     }
 
@@ -19,10 +19,9 @@ export class FeatureFlagService {
             return {featureFlag: flag, enabled: this.featureFlagCache[flag.toString()]};
         }
 
-        let uri: string = baseUrl + APIRoute.FeatureFlags(flag.toString());
+        let uri: string = (new URL(APIRoute.FeatureFlags(flag.toString()), baseUrl)).toString();
         let headers = this.authContext.getDataPlaneHeader(FetchCallType.get);
         let flagResponse = await FetchUtil.httpClientRetries(uri, headers, FetchCallType.get, 3, "", false, false);
-        
         try {
             let flagObj = (await util.getResultObj(flagResponse)) as Definitions["FeatureFlagResponse"];
             this.featureFlagCache[flag.toString()] = flagObj.enabled;

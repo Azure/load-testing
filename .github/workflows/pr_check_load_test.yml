@@ -105,7 +105,7 @@ jobs:
         uses: ./
         id: alt
         with:
-          loadTestConfigFile: ./ConfigFiles/${{ matrix.configFile }}
+          loadTestConfigFile: ./E2ETests/ConfigFiles/${{ matrix.configFile }}
           loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
           resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
           overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"

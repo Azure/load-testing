@@ -333,3 +333,5 @@ ASALocalRun/
 .vscode
 TmpFiles
 loadTest
+test/**/ConfigFiles
+**/*.pem

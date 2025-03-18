@@ -6,12 +6,6 @@ export interface AutoStopCriteriaObjYaml {
     timeWindow ?: number;
 }
 
-export enum ParamType {
-    env = "env",
-    secrets = "secrets", 
-    cert = "cert"
-}
-
 export interface RunTimeParams {
     env: { [key: string]: string };
     secrets: { [key: string] : SecretMetadata };
@@ -128,9 +122,4 @@ export enum ValidCriteriaTypes {
 export const ConditionEnumToSignMap : { [key in ValidConditionsEnumValuesList]: string } = {
     [ValidConditionsEnumValuesList.GreaterThan]: '>',
     [ValidConditionsEnumValuesList.LessThan]: '<'
-}
-
-export enum ValidationType {
-    test,
-    testrun
 }

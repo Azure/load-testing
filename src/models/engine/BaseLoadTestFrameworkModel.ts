@@ -1,4 +1,4 @@
-import { TestKind } from "./TestKind";
+import { TestKind } from "../TestKind";
 
 /**
  * Represents a load test framework.

@@ -1,4 +1,4 @@
-import { TestKind } from "./TestKind";
+import { TestKind } from "../TestKind";
 import { BaseLoadTestFrameworkModel } from "./BaseLoadTestFrameworkModel";
 
 /**
