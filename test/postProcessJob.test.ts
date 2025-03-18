@@ -33,7 +33,7 @@ describe('post process job tests', () => {
     it("stop is not called when test run is terminated", async () => {
         let stopTestRunStub = sinon.stub(APIService.prototype, "stopTestRun");
         TestSupport.setupMockForPostProcess();
-        process.env[PostTaskParameters.isRunCompleted] = "true";
+        sinon.stub(process.env, PostTaskParameters.isRunCompleted).value("true");
 
         await run();
 
