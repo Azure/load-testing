@@ -5,6 +5,8 @@ import * as InputConstants from "../../src/Constants/InputConstants";
 import * as path from 'path';
 import { TestModel } from "../../src/models/PayloadModels";
 import { PostTaskParameters } from "../../src/models/UtilModels";
+import * as EnvironmentConstants from "../../src/Constants/EnvironmentConstants";
+import * as AzCliUtility from "../../src/Utils/AzCliUtility";
 const yaml = require('js-yaml');
 const fs = require('fs');
 
@@ -16,6 +18,16 @@ export class TestSupport {
     }
 
     public static setupMockForPostProcess(isTestRunCompleted: boolean = false) {
+         let stub = sinon.stub(AzCliUtility, "execAz");
+        let cloudShowResult = {
+            name: EnvironmentConstants.AzurePublicCloud.cloudName,
+            endpoints: {
+                resourceManager: Constants.armEndpoint,
+            }
+        };
+        // account show is not called so 1st call is cloud show
+        stub.onFirstCall().resolves(cloudShowResult);
+
         let processEnv = {
             [PostTaskParameters.runId]: 'runid',
             [PostTaskParameters.baseUri]: Constants.loadtestConfig.dataPlaneUrl,
