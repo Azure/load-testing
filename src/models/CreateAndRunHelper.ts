@@ -79,12 +79,12 @@ export function getPayloadForAppcomponents(yamlModel: YamlConfig ,existingData:E
     for(let [resourceId, keys] of existingData.appComponents) {
         if(!yamlModel.appComponents.hasOwnProperty(resourceId.toLowerCase())) {
             for(let key of keys) {
-                yamlModel.appComponents[key] = null;
+                !yamlModel.appComponents.hasOwnProperty(key) && (yamlModel.appComponents[key] = null);
             }
         } else {
             for(let key of keys) {
                 if(key != null && key != resourceId.toLowerCase()) {
-                    yamlModel.appComponents[key] = null;
+                    !yamlModel.appComponents.hasOwnProperty(key) && (yamlModel.appComponents[key] = null);
                 }
             }
         }
@@ -231,7 +231,7 @@ export function validateAndSetOverrideParams(yamlModel: YamlConfig) : void {
         let overRideParamsObj = JSON.parse(overRideParams);
 
         if(overRideParamsObj.testId != undefined) {
-            yamlModel.testId = overRideParamsObj.testId;
+            yamlModel.testId = overRideParamsObj.testId.toLowerCase();
         }
         if(overRideParamsObj.displayName != undefined) {
             yamlModel.displayName = overRideParamsObj.displayName;

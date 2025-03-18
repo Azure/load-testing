@@ -731,24 +731,24 @@ export function validateOverRideParameters(overRideParams: string | undefined): 
                 const result = unSupportedKeys.map(element => `${element}`).join(", ");
                 return {valid : false, error : `The ${InputConstants.overRideParametersLabel} provided has unsupported field(s) "${result}".`};
             }
-            if(overRideParamsObj.testId != undefined) {
-                if(typeof overRideParamsObj.testId != 'string') {
-                    return {valid : false, error : `The testId provided in the overrideParameters is not a string.`};
+            if(!isNullOrUndefined(overRideParamsObj.testId)) {
+                if(typeof overRideParamsObj.testId != 'string' || invalidName(overRideParamsObj.testId.toLowerCase())) {
+                    return {valid : false, error : `The value "${overRideParamsObj.testId}" for testId provided in overrideParameters is not a valid string. Allowed characters are [a-zA-Z0-9-_] and the length must be between 2 to 50 characters.`};
                 }
             }
-            if(overRideParamsObj.displayName != undefined) {
-                if(typeof overRideParamsObj.displayName != 'string') {
-                    return {valid : false, error : `The displayName provided in the overrideParameters is not a string.`};
+            if(!isNullOrUndefined(overRideParamsObj.displayName)) {
+                if(typeof overRideParamsObj.displayName != 'string' || invalidDisplayName(overRideParamsObj.displayName)) {
+                    return {valid : false, error : `The value "${overRideParamsObj.displayName}" for displayName provided in overrideParameters is invalid. Display name must be a string of length between 2 to 50.`};
                 }
             }
-            if(overRideParamsObj.description != undefined) {
-                if(typeof overRideParamsObj.description != 'string') {
-                    return {valid : false, error : `The description provided in the overrideParameters is not a string.`};
+            if(!isNullOrUndefined(overRideParamsObj.description)) {
+                if(typeof overRideParamsObj.description != 'string' || invalidDescription(overRideParamsObj.description)) {
+                    return {valid : false, error : `The value "${overRideParamsObj.description}" for description provided in overrideParameters is invalid. Description must be a string of length less than 100.`};
                 }
             }
-            if(overRideParamsObj.engineInstances != undefined) {
-                if(typeof overRideParamsObj.engineInstances != 'number') {
-                    return {valid : false, error : `The engineInstances provided in the overrideParameters is not a number.`};
+            if(!isNullOrUndefined(overRideParamsObj.engineInstances)) {
+                if(typeof overRideParamsObj.engineInstances != 'number' || inValidEngineInstances(overRideParamsObj.engineInstances)) {
+                    return {valid : false, error : `The value "${overRideParamsObj.engineInstances}" for engineInstances provided in overrideParameters is invalid. The value should be an integer between 1 and 400.`};
                 }
             }
             if(!isNullOrUndefined(overRideParamsObj.autoStop)) {
