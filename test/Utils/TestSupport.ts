@@ -18,7 +18,7 @@ export class TestSupport {
     }
 
     public static setupMockForPostProcess(isTestRunCompleted: boolean = false) {
-         let stub = sinon.stub(AzCliUtility, "execAz");
+        let stub = sinon.stub(AzCliUtility, "execAz");
         let cloudShowResult = {
             name: EnvironmentConstants.AzurePublicCloud.cloudName,
             endpoints: {
