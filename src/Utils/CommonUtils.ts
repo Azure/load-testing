@@ -321,7 +321,7 @@ export function validateOverRideParameters(overRideParams: string | undefined): 
                 return {valid : false, error : `The ${InputConstants.overRideParametersLabel} provided has unsupported field(s) "${result}".`};
             }
             if(!isNullOrUndefined(overRideParamsObj.testId)) {
-                if(typeof overRideParamsObj.testId != 'string' || invalidName(overRideParamsObj.testId)) {
+                if(typeof overRideParamsObj.testId != 'string' || invalidName(overRideParamsObj.testId.toLowerCase())) {
                     return {valid : false, error : `The value "${overRideParamsObj.testId}" for testId provided in overrideParameters is not a valid string. Allowed characters are [a-zA-Z0-9-_] and the length must be between 2 to 50 characters.`};
                 }
             }
