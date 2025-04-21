@@ -54,7 +54,7 @@ export const resultZipFileName = 'results.zip';
 export const correlationHeader = 'x-ms-correlation-request-id';
 
 export module ApiVersionConstants {
-    export const latestVersion = '2024-12-01-preview';
+    export const latestVersion = '2025-03-01-preview';
     export const tm2022Version = '2022-11-01';
     export const cp2022Version = '2022-12-01'
 }
