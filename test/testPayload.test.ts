@@ -148,6 +148,15 @@ describe('test payload tests', () => {
         
         TestSupport.validateTestPayload(testPayload, TestPayloadConstants.undefinedMaxVUAutostopCriteriaTestExpectedPayload); 
     });
+
+    it("missing key max vu autostop test", async () => {
+        TestSupport.createAndSetLoadTestConfigFile(AutoStopCriteriaYamls.MissingKeyMaxVUAutostop, coreMock);
+        let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
+        dataPlaneAPIMock.mockGetTest(AutoStopCriteriaYamls.MissingKeyMaxVUAutostop.testId.toLowerCase()!, 404);
+        await runner.initialize();
+        let testPayload = await runner.getTestPayload();
+        TestSupport.validateTestPayload(testPayload, TestPayloadConstants.missingKeyVUAutostopCriteriaTestExpectedPayload); 
+    });
     
     it("null max vu autostop test", async () => {
         TestSupport.createAndSetLoadTestConfigFile(AutoStopCriteriaYamls.NullMaxVUAutostop, coreMock);
