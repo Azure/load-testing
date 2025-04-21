@@ -455,6 +455,26 @@ export const undefinedMaxVUAutostopCriteriaTestExpectedPayload: TestModel = {
     engineBuiltinIdentityType: ManagedIdentityTypeForAPI.None,
     metricsReferenceIdentityType: ManagedIdentityTypeForAPI.SystemAssigned,
 }
+
+
+export const missingKeyVUAutostopCriteriaTestExpectedPayload: TestModel = {
+    testId: 'sampletest',
+    description: 'Load test website home page',
+    displayName: 'Sample Test',
+    loadTestConfiguration: {
+        engineInstances: 2,
+    },
+    kind: TestKind.JMX,
+    autoStopCriteria: {
+        autoStopDisabled: false,
+        errorRate: 80,
+        errorRateTimeWindowInSeconds: 60,
+    },
+    keyvaultReferenceIdentityType: ManagedIdentityTypeForAPI.SystemAssigned,
+    engineBuiltinIdentityType: ManagedIdentityTypeForAPI.None,
+    metricsReferenceIdentityType: ManagedIdentityTypeForAPI.SystemAssigned,
+}
+
 export const nullMaxVUAutostopCriteriaTestExpectedPayload: TestModel = {
     testId: 'sampletest',
     description: 'Load test website home page',
