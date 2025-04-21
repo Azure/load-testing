@@ -52,7 +52,8 @@ export const createJmxTestExpectedPayload: TestModel = {
     autoStopCriteria: {
         autoStopDisabled: false,
         errorRate: 80,
-        errorRateTimeWindowInSeconds: 60
+        errorRateTimeWindowInSeconds: 60,
+        maximumVirtualUsersPerEngine: 5000
     },
     subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
     publicIPDisabled: false,
@@ -182,7 +183,8 @@ export const editJmxTestExpectedPayload: TestModel = {
     autoStopCriteria: {
         autoStopDisabled: false,
         errorRate: 80,
-        errorRateTimeWindowInSeconds: 60
+        errorRateTimeWindowInSeconds: 60,
+        maximumVirtualUsersPerEngine: 5000
     },
     subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
     publicIPDisabled: false,
@@ -265,7 +267,8 @@ export const createUrlTestExpectedPayload: TestModel = {
     autoStopCriteria: {
         autoStopDisabled: false,
         errorRate: 80,
-        errorRateTimeWindowInSeconds: 60
+        errorRateTimeWindowInSeconds: 60,
+        maximumVirtualUsersPerEngine: 5000
     },
     subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
     publicIPDisabled: false,
@@ -362,7 +365,8 @@ export const createReferenceIdentitiesTestExpectedPayload: TestModel = {
     autoStopCriteria: {
         autoStopDisabled: false,
         errorRate: 80,
-        errorRateTimeWindowInSeconds: 60
+        errorRateTimeWindowInSeconds: 60,
+        maximumVirtualUsersPerEngine: 5000
     },
     subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
     publicIPDisabled: false,
@@ -427,6 +431,42 @@ export const editPFServerCriteriaTestExpectedPayload: TestModel = {
         }
     },
     publicIPDisabled: false,
+    keyvaultReferenceIdentityType: ManagedIdentityTypeForAPI.SystemAssigned,
+    engineBuiltinIdentityType: ManagedIdentityTypeForAPI.None,
+    metricsReferenceIdentityType: ManagedIdentityTypeForAPI.SystemAssigned,
+}
+
+export const undefinedMaxVUAutostopCriteriaTestExpectedPayload: TestModel = {
+    testId: 'sampletest',
+    description: 'Load test website home page',
+    displayName: 'Sample Test',
+    loadTestConfiguration: {
+        engineInstances: 2,
+    },
+    kind: TestKind.JMX,
+    autoStopCriteria: {
+        autoStopDisabled: false,
+        errorRate: 80,
+        errorRateTimeWindowInSeconds: 60,
+    },
+    keyvaultReferenceIdentityType: ManagedIdentityTypeForAPI.SystemAssigned,
+    engineBuiltinIdentityType: ManagedIdentityTypeForAPI.None,
+    metricsReferenceIdentityType: ManagedIdentityTypeForAPI.SystemAssigned,
+}
+export const nullMaxVUAutostopCriteriaTestExpectedPayload: TestModel = {
+    testId: 'sampletest',
+    description: 'Load test website home page',
+    displayName: 'Sample Test',
+    loadTestConfiguration: {
+        engineInstances: 2,
+    },
+    kind: TestKind.JMX,
+    autoStopCriteria: {
+        autoStopDisabled: false,
+        errorRate: 80,
+        errorRateTimeWindowInSeconds: 60,
+        maximumVirtualUsersPerEngine: null,
+    },
     keyvaultReferenceIdentityType: ManagedIdentityTypeForAPI.SystemAssigned,
     engineBuiltinIdentityType: ManagedIdentityTypeForAPI.None,
     metricsReferenceIdentityType: ManagedIdentityTypeForAPI.SystemAssigned,

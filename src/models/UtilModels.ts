@@ -4,6 +4,7 @@ export interface AutoStopCriteriaObjYaml {
     autoStopEnabled? : boolean;
     errorPercentage ?: number;
     timeWindow ?: number;
+    maximumVirtualUsersPerEngine ?: number | null;
 }
 
 export interface RunTimeParams {

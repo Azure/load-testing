@@ -165,6 +165,7 @@ export interface AutoStopCriteria {
     autoStopDisabled? : boolean;
     errorRate ?: number;
     errorRateTimeWindowInSeconds ?: number;
+    maximumVirtualUsersPerEngine ?: number | null;
 }
 
 export interface LoadTestConfiguration {

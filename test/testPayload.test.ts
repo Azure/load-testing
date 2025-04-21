@@ -9,6 +9,7 @@ import { AuthenticatorServiceMock } from "./Mocks/AuthenticatorServiceMock";
 import * as testYamls from './Constants/testYamls';
 import * as ReferenceIdentityYamls from './Constants/ReferenceIdentityYamls';
 import * as FailureCriteriaYamls from './Constants/FailureCriteriaYamls';
+import * as AutoStopCriteriaYamls from './Constants/AutoStopCriteriaYamls';
 import { CreateAndRunTest } from "../src/RunnerFiles/CreateAndRunTest";
 import { DataPlaneAPIMock } from "./Mocks/DataPlaneAPIMock";
 import * as TestPayloadConstants from "./Constants/TestPayloadConstants";
@@ -135,5 +136,27 @@ describe('test payload tests', () => {
         let testPayload = await runner.getTestPayload();
 
         TestSupport.validateTestPayload(testPayload, TestPayloadConstants.editPFServerCriteriaTestExpectedPayload); 
+    });
+
+    it("undefined max vu autostop test", async () => {
+        TestSupport.createAndSetLoadTestConfigFile(AutoStopCriteriaYamls.UndefinedMaxVUAutostop, coreMock);
+        let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
+        dataPlaneAPIMock.mockGetTest(AutoStopCriteriaYamls.UndefinedMaxVUAutostop.testId.toLowerCase()!, 404);
+        
+        await runner.initialize();
+        let testPayload = await runner.getTestPayload();
+        
+        TestSupport.validateTestPayload(testPayload, TestPayloadConstants.undefinedMaxVUAutostopCriteriaTestExpectedPayload); 
+    });
+    
+    it("null max vu autostop test", async () => {
+        TestSupport.createAndSetLoadTestConfigFile(AutoStopCriteriaYamls.NullMaxVUAutostop, coreMock);
+        let dataPlaneAPIMock = new DataPlaneAPIMock(Constants.loadtestResourceId);
+        dataPlaneAPIMock.mockGetTest(AutoStopCriteriaYamls.NullMaxVUAutostop.testId.toLowerCase()!, 404);
+        
+        await runner.initialize();
+        let testPayload = await runner.getTestPayload();
+        
+        TestSupport.validateTestPayload(testPayload, TestPayloadConstants.nullMaxVUAutostopCriteriaTestExpectedPayload); 
     });
 })

@@ -33,7 +33,7 @@ export const referenceIdentitiesBasicYaml : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     referenceIdentities: [
       {
         kind : "KeyVault",
@@ -102,7 +102,7 @@ export const referenceIdentitiesSystemAssignedBasicYaml : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     referenceIdentities: [
       {
         kind : "KeyVault",
@@ -161,7 +161,7 @@ export const referenceIdentitiesSystemAssignedAndUserAssignedYaml : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     referenceIdentities: [
       {
         kind : "KeyVault",
@@ -224,7 +224,7 @@ export const noReferenceIdentities : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     regionalLoadTestConfig: [
       {
         region: 'eastus',
@@ -272,7 +272,7 @@ export const keyVaultGivenOutOfRefIds : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     regionalLoadTestConfig: [
       {
         region: 'eastus',
@@ -320,7 +320,7 @@ export const referenceIdentities2SystemAssignedForKeyVault : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     referenceIdentities: [
       {
         kind : "KeyVault",
