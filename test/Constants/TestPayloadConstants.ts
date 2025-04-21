@@ -291,7 +291,8 @@ export const createLocustTestExpectedPayload: TestModel = {
     autoStopCriteria: {
         autoStopDisabled: false,
         errorRate: 80,
-        errorRateTimeWindowInSeconds: 60
+        errorRateTimeWindowInSeconds: 60,
+        maximumVirtualUsersPerEngine: 5000
     },
     subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
     publicIPDisabled: false,
@@ -317,7 +318,8 @@ export const createPublicIPDisabledTestExpectedPayload: TestModel = {
     autoStopCriteria: {
         autoStopDisabled: false,
         errorRate: 80,
-        errorRateTimeWindowInSeconds: 60
+        errorRateTimeWindowInSeconds: 60,
+        maximumVirtualUsersPerEngine: 5000
     },
     subnetId: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg()/providers/Microsoft.Network/virtualNetworks/load-testing-vnet/subnets/load-testing',
     publicIPDisabled: true,
