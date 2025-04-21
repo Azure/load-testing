@@ -41,7 +41,7 @@ export const jmxComprehensiveYaml : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'UserAssigned',
     regionalLoadTestConfig: [
@@ -90,7 +90,7 @@ export const caseSensitiveYaml : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourcegroups/sample-rg/providers/microsoft.managedidentity/userassignedidentities/sample-identity',
     keyVaultReferenceIdentityType: 'UserAssigned'
 }
@@ -109,7 +109,7 @@ export const urlYaml : any =
     publicIPDisabled: false,
     configurationFiles: [ 'sampledata.csv' ],
     splitAllCSVs: true,
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'UserAssigned'
 }
@@ -130,7 +130,7 @@ export const locustYaml : any =
     zipArtifacts: [ 'bigdata.zip' ],
     splitAllCSVs: true,
     properties: { userPropertyFile: 'locust.conf' },
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'UserAssigned'
 }
@@ -149,7 +149,7 @@ export const subnetIdPIPDisabledTrue : any =
     publicIPDisabled: true,
     configurationFiles: [ 'sampledata.csv' ],
     splitAllCSVs: true,
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg()/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'UserAssigned'
 }
@@ -199,7 +199,7 @@ export const noTestID : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -237,7 +237,7 @@ export const invalidTestID : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -275,7 +275,7 @@ export const noTestPlan : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -313,7 +313,7 @@ export const invalidDisplayName : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -350,7 +350,7 @@ export const invalidDescription : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -389,7 +389,7 @@ export const invalidTestType : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -428,7 +428,7 @@ export const wrongTestPlanURL : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -467,7 +467,7 @@ export const wrongTestPlanJMX : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -506,7 +506,7 @@ export const wrongTestPlanLocust : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -546,7 +546,7 @@ export const invalidEngines1 : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -586,7 +586,7 @@ export const invalidEngines2 : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -626,7 +626,7 @@ export const invalidEngines3 : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -665,7 +665,7 @@ export const invalidSubnet1 : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -704,7 +704,7 @@ export const invalidSubnet2 : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -743,7 +743,7 @@ export const invalidSubnet3 : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentity: '/subscriptions/abcdef01-2345-6789-0abc-def012345678/resourceGroups/sample-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/sample-identity',
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
@@ -782,7 +782,7 @@ export const invalidKVID : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
 }
 
 export const invalidKVIDType : any = 
@@ -817,7 +817,7 @@ export const invalidKVIDType : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentityType : 'Invalid'
 }
 
@@ -854,7 +854,7 @@ export const systemAssignedNotValidForNonNullkvid : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentityType: 'SystemAssigned'
 }
 
@@ -890,7 +890,7 @@ export const userAssignedNotValidForNullkvid : any =
       'percentage(error) > 50',
       { GetCustomerDetails: 'avg(latency) >200' }
     ],
-    autoStop: { errorPercentage: 80, timeWindow: 60 },
+    autoStop: { errorPercentage: 80, timeWindow: 60, maximumVirtualUsersPerEngine: 5000, },
     keyVaultReferenceIdentityType: 'UserAssigned'
 }
 

@@ -118,6 +118,7 @@ export class LoadtestConfigUtil {
                 autoStopDisabled : false,
                 errorRate: autoStopInput.errorPercentage,
                 errorRateTimeWindowInSeconds: autoStopInput.timeWindow,
+                maximumVirtualUsersPerEngine: autoStopInput.maximumVirtualUsersPerEngine,
             };
             autoStop = data;
         }
