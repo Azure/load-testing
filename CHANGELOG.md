@@ -2,26 +2,13 @@
 
 All notable changes to the Azure Load Testing GitHub Action will be documented in this file.
 
-## [v2] - 2025-11
+## [v1] - 2025-11
 
 ### Recommended Version
-**v2 is now the recommended version for all users.**
+**v1 is the recommended version for all users.**
 
 ### Changed
 - Updated data plane token scope from `https://loadtest.azure-dev.com` to `https://cnt-prod.loadtesting.azure.com` for production Azure Load Testing service.
-
-### Migration Guide
-To migrate from v1 to v2, update your workflow file:
-
-```yaml
-# Before (v1)
-- uses: azure/load-testing@v1
-
-# After (v2)
-- uses: azure/load-testing@v2
-```
-
-No other changes are required. All existing functionality and parameters remain the same.
 
 ## [v1] - Previous Release
 

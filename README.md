@@ -57,7 +57,7 @@ For using any credentials like Azure Service Principal in your workflow, add the
     
 ## Azure Load Testing Action
 
-This section describes the Azure Load Testing GitHub action. You can use this action by referencing `azure/load-testing@v2` action in your workflow. The action runs on Windows, Linux, and Mac runners.
+This section describes the Azure Load Testing GitHub action. You can use this action by referencing `azure/load-testing@v1` action in your workflow. The action runs on Windows, Linux, and Mac runners.
 
 You can use the following parameters to configure the GitHub action.
 
@@ -76,7 +76,7 @@ The following YAML code snippet describes how to use the action in a GitHub Acti
 
 ```yaml
 - name: 'Azure Load Testing'
-  uses: azure/load-testing@v2
+  uses: azure/load-testing@v1
   with:
     loadTestConfigFile: '< YAML File path>'
     loadTestResource: '<name of the load test resource>'
@@ -122,7 +122,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout GitHub Actions 
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
           
       - name: Login to Azure
         uses: azure/login@v1
@@ -131,7 +131,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
         
       - name: 'Azure Load Testing'
-        uses: azure/load-testing@v2
+        uses: azure/load-testing@v1
         with:
           loadTestConfigFile: 'SampleApp.yaml'
           loadTestResource: 'loadTestResourceName'
