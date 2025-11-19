@@ -8,7 +8,7 @@ type EnvironmentSettings = {
 export const AzurePublicCloud: EnvironmentSettings = {
     cloudName: "AzureCloud",
     armTokenScope: "https://management.core.windows.net",
-    dataPlaneTokenScope: "https://loadtest.azure-dev.com",
+    dataPlaneTokenScope: "https://cnt-prod.loadtesting.azure.com",
     armEndpoint: "https://management.azure.com",
 }
 
