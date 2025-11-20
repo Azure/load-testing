@@ -4,19 +4,19 @@ import { AccountType, ControlPlaneTokenScope, DataPlaneTokenScope } from "../mod
 export async function execAz(tokenScope: ControlPlaneTokenScope| DataPlaneTokenScope): Promise<any> {
     const cmdArguments = ["account", "get-access-token", "--resource"];
     cmdArguments.push(tokenScope);
-    return runCommand(cmdArguments);
+    return runCommand(cmdArguments, false);
 }
 
 export async function getAccounts(accountType: AccountType): Promise<any> {
     const cmdArguments = accountType === 'Subscription' ? ["account", "show"] : ["cloud", "show"];
-    return runCommand(cmdArguments);
+    return runCommand(cmdArguments, true);
 }
 
-async function runCommand(cmdArguments: string[]): Promise<any> {
+async function runCommand(cmdArguments: string[], isLogin: boolean): Promise<any> {
     console.log(`Executing az command: az ${cmdArguments.join(" ")}`, process.platform);
     const azCmd = process.platform === "win32" ? "az.cmd" : "az";
     return new Promise<any>((resolve, reject) => {
-        execFile(azCmd, [...cmdArguments, "--out", "json"], { encoding: "utf8", shell : true }, (error:any, stdout:any) => {
+        execFile(azCmd, [...cmdArguments, "--out", "json"], { encoding: "utf8", shell : process.platform === "win32" && isLogin }, (error:any, stdout:any) => {
             if (error) {
                 return reject(error);
             }
