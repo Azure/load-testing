@@ -21,7 +21,7 @@ describe('task parameters tests', () => {
     });
 
     it("sets inputs for public cloud", async () => {
-        let stub = sinon.stub(AzCliUtility, "execAz");
+        let stub = sinon.stub(AzCliUtility, "getAccounts");
         let accountShowResult = {
             name: "fakeSubscriptionName",
             id: Constants.loadtestConfig.subscriptionId,
@@ -38,8 +38,8 @@ describe('task parameters tests', () => {
 
         let taskParameters = await TaskParametersUtil.getTaskParameters();
         
-        expect(stub.calledWith(["account", "show"])).toBe(true);
-        expect(stub.calledWith(["cloud", "show"])).toBe(true);
+        expect(stub.calledWith('Subscription')).toBe(true);
+        expect(stub.calledWith('Cloud')).toBe(true);
         expect(taskParameters.resourceId.toLowerCase()).toBe(Constants.loadtestResourceId.toLowerCase());
         expect(taskParameters.subscriptionId).toBe(Constants.loadtestConfig.subscriptionId);
         expect(taskParameters.subscriptionName).toBe("fakeSubscriptionName");
@@ -50,7 +50,7 @@ describe('task parameters tests', () => {
     });
 
     it("sets inputs for gov cloud", async () => {
-        let stub = sinon.stub(AzCliUtility, "execAz");
+        let stub = sinon.stub(AzCliUtility, "getAccounts");
         let accountShowResult = {
             name: "fakeSubscriptionName",
             id: Constants.loadtestConfig.subscriptionId,
@@ -67,8 +67,8 @@ describe('task parameters tests', () => {
 
         let taskParameters = await TaskParametersUtil.getTaskParameters();
         
-        expect(stub.calledWith(["account", "show"])).toBe(true);
-        expect(stub.calledWith(["cloud", "show"])).toBe(true);
+        expect(stub.calledWith('Subscription')).toBe(true);
+        expect(stub.calledWith('Cloud')).toBe(true);
         expect(taskParameters.resourceId.toLowerCase()).toBe(Constants.loadtestResourceId.toLowerCase());
         expect(taskParameters.subscriptionId).toBe(Constants.loadtestConfig.subscriptionId);
         expect(taskParameters.subscriptionName).toBe("fakeSubscriptionName");
@@ -79,7 +79,7 @@ describe('task parameters tests', () => {
     });
 
     it("sets inputs for gov cloud with different case", async () => {
-        let stub = sinon.stub(AzCliUtility, "execAz");
+        let stub = sinon.stub(AzCliUtility, "getAccounts");
         let accountShowResult = {
             name: "fakeSubscriptionName",
             id: Constants.loadtestConfig.subscriptionId,
@@ -96,8 +96,8 @@ describe('task parameters tests', () => {
 
         let taskParameters = await TaskParametersUtil.getTaskParameters();
         
-        expect(stub.calledWith(["account", "show"])).toBe(true);
-        expect(stub.calledWith(["cloud", "show"])).toBe(true);
+        expect(stub.calledWith('Subscription')).toBe(true);
+        expect(stub.calledWith('Cloud')).toBe(true);
         expect(taskParameters.resourceId.toLowerCase()).toBe(Constants.loadtestResourceId.toLowerCase());
         expect(taskParameters.subscriptionId).toBe(Constants.loadtestConfig.subscriptionId);
         expect(taskParameters.subscriptionName).toBe("fakeSubscriptionName");
@@ -108,7 +108,7 @@ describe('task parameters tests', () => {
     });
 
     it("does not set resource id for postprocess", async () => {
-        let stub = sinon.stub(AzCliUtility, "execAz");
+        let stub = sinon.stub(AzCliUtility, "getAccounts");
         let cloudShowResult = {
             name: EnvironmentConstants.AzurePublicCloud.cloudName,
             endpoints: {
@@ -120,8 +120,8 @@ describe('task parameters tests', () => {
 
         let taskParameters = await TaskParametersUtil.getTaskParameters(true);
         
-        expect(stub.calledWith(["account", "show"])).toBe(false);
-        expect(stub.calledWith(["cloud", "show"])).toBe(true);
+        expect(stub.calledWith('Subscription')).toBe(false);
+        expect(stub.calledWith('Cloud')).toBe(true);
         expect(taskParameters.resourceId).toBe('');
         expect(taskParameters.subscriptionId).toBe('');
         expect(taskParameters.subscriptionName).toBe('');
@@ -132,7 +132,7 @@ describe('task parameters tests', () => {
     });
 
     it("az cli cloud show error throws error", async () => {
-        let stub = sinon.stub(AzCliUtility, "execAz");
+        let stub = sinon.stub(AzCliUtility, "getAccounts");
         let accountShowResult = {
             name: "fakeSubscriptionName",
             id: Constants.loadtestConfig.subscriptionId,
@@ -145,14 +145,14 @@ describe('task parameters tests', () => {
     });
 
     it("az cli account show error throws error", async () => {
-        let accountShowStub = sinon.stub(AzCliUtility, "execAz").withArgs(["account", "show"]).rejects(new Error("Error"));
+        let accountShowStub = sinon.stub(AzCliUtility, "getAccounts").withArgs('Subscription').rejects(new Error("Error"));
         
         expect(async () => await TaskParametersUtil.getTaskParameters()).rejects.toThrow(`Azure CLI for getting subscription name`);
         expect(accountShowStub.calledOnce).toBe(true);
     });
 
     it("missing resource group throws error", async () => {
-        let stub = sinon.stub(AzCliUtility, "execAz");
+        let stub = sinon.stub(AzCliUtility, "getAccounts");
         let accountShowResult = {
             name: "fakeSubscriptionName",
             id: Constants.loadtestConfig.subscriptionId,
@@ -164,7 +164,7 @@ describe('task parameters tests', () => {
     });
 
     it("missing load test resource throws error", async () => {
-        let stub = sinon.stub(AzCliUtility, "execAz");
+        let stub = sinon.stub(AzCliUtility, "getAccounts");
         let accountShowResult = {
             name: "fakeSubscriptionName",
             id: Constants.loadtestConfig.subscriptionId,

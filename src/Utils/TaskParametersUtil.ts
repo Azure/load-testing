@@ -43,7 +43,7 @@ export class TaskParametersUtil {
 
     private static async setSubscriptionParameters(taskParameters: TaskParameters) {
         try {
-            var result: any = await AzCliUtility.getSubscriptions();
+            var result: any = await AzCliUtility.getAccounts('Subscription');
 
             taskParameters.subscriptionId = result.id;
             taskParameters.subscriptionName = result.name;
@@ -59,7 +59,7 @@ export class TaskParametersUtil {
     private static async setEndpointAndScopeParameters(taskParameters: TaskParameters) {
         try 
         {
-            var result: any = await AzCliUtility.getSubscriptions();
+            var result: any = await AzCliUtility.getAccounts('Cloud');
             let env = result ? result.name : null;
             taskParameters.environment = env ?? EnvironmentConstants.AzurePublicCloud.cloudName;
 

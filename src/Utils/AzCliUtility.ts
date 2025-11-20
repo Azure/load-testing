@@ -1,5 +1,5 @@
 import { execFile } from "child_process";
-import { ControlPlaneTokenScope, DataPlaneTokenScope } from "../models/TaskParameters";
+import { AccountType, ControlPlaneTokenScope, DataPlaneTokenScope } from "../models/TaskParameters";
 
 export async function execAz(tokenScope: ControlPlaneTokenScope| DataPlaneTokenScope): Promise<any> {
     const cmdArguments = ["account", "get-access-token", "--resource"];
@@ -7,8 +7,8 @@ export async function execAz(tokenScope: ControlPlaneTokenScope| DataPlaneTokenS
     return runCommand(cmdArguments);
 }
 
-export async function getSubscriptions(): Promise<any> {
-    const cmdArguments = ["cloud", "show"];
+export async function getAccounts(accountType: AccountType): Promise<any> {
+    const cmdArguments = accountType === 'Subscription' ? ["account", "show"] : ["cloud", "show"];
     return runCommand(cmdArguments);
 }
 
