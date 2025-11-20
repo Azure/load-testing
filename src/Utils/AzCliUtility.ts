@@ -18,3 +18,4 @@ export async function execAz(cmdArguments: string[]): Promise<any> {
         });
     });
 }
+
