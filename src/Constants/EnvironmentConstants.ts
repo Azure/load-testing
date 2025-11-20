@@ -1,19 +1,21 @@
+import { ControlPlaneTokenScope, DataPlaneTokenScope, publicTokenScope, usGovernmentTokenScope, armUsGovernmentTokenScope, armPublicTokenScope } from "../models/TaskParameters";
+
 type EnvironmentSettings = {
     cloudName: string;
-    armTokenScope: string;
-    dataPlaneTokenScope: string;
+    armTokenScope: ControlPlaneTokenScope;
+    dataPlaneTokenScope: DataPlaneTokenScope;
     armEndpoint?: string;
 }
 
 export const AzurePublicCloud: EnvironmentSettings = {
     cloudName: "AzureCloud",
-    armTokenScope: "https://management.core.windows.net",
-    dataPlaneTokenScope: "https://loadtest.azure-dev.com",
+    armTokenScope: armPublicTokenScope,
+    dataPlaneTokenScope: publicTokenScope,
     armEndpoint: "https://management.azure.com",
 }
 
 export const AzureUSGovernmentCloud: EnvironmentSettings = {
     cloudName: "AzureUSGovernment",
-    armTokenScope: "https://management.usgovcloudapi.net",
-    dataPlaneTokenScope: "https://cnt-prod.loadtesting.azure.us",
+    armTokenScope: armUsGovernmentTokenScope,
+    dataPlaneTokenScope: usGovernmentTokenScope,
 }

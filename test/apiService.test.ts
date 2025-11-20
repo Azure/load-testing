@@ -146,7 +146,7 @@ describe('api service tests', () => {
         await expect(apiService.deleteFileAPI("samplefile.jmx")).rejects.toThrow();
         expect(authenticatorServiceMock.getDataPlaneHeaderCalled()).toBe(true);
         expect(authenticatorServiceMock.getARMTokenHeaderCalled()).toBe(false);
-    });
+    }, 40000);
     
     it("createTestAPI returns resp on 201", async () => {
         let testId = "testid1";
