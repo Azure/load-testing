@@ -18,12 +18,12 @@ describe('authenticator service tests', () => {
         let tokenResult = {
             accessToken: "token"
         };
-        let stub = sinon.stub(AzCliUtility, "execAz").withArgs(["account", "get-access-token", "--resource", Constants.defaultTaskParameters.dataPlaneTokenScope]).resolves(tokenResult);
+        let stub = sinon.stub(AzCliUtility, "getDPTokens").withArgs(Constants.defaultTaskParameters.dataPlaneTokenScope).resolves(tokenResult);
 
         let authenticatorService = new AuthenticatorService(Constants.defaultTaskParameters);
         let result = await authenticatorService.getDataPlaneHeader(FetchCallType.get);
         
-        expect(stub.calledWith(["account", "get-access-token", "--resource", Constants.defaultTaskParameters.dataPlaneTokenScope])).toBe(true);
+        expect(stub.calledWith(Constants.defaultTaskParameters.dataPlaneTokenScope)).toBe(true);
         expect(result).toHaveProperty("Authorization");
     });
 
@@ -31,12 +31,12 @@ describe('authenticator service tests', () => {
         let tokenResult = {
             accessToken: "token"
         };
-        let stub = sinon.stub(AzCliUtility, "execAz").withArgs(["account", "get-access-token", "--resource", Constants.defaultTaskParameters.armTokenScope]).resolves(tokenResult);
+        let stub = sinon.stub(AzCliUtility, "getDPTokens").withArgs(Constants.defaultTaskParameters.armTokenScope).resolves(tokenResult);
 
         let authenticatorService = new AuthenticatorService(Constants.defaultTaskParameters);
         let result = await authenticatorService.getARMTokenHeader();
         
-        expect(stub.calledWith(["account", "get-access-token", "--resource", Constants.defaultTaskParameters.armTokenScope])).toBe(true);
+        expect(stub.calledWith(Constants.defaultTaskParameters.armTokenScope)).toBe(true);
         expect(result).toHaveProperty("Authorization");
     });
 
