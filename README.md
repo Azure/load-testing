@@ -54,7 +54,11 @@ For using any credentials like Azure Service Principal in your workflow, add the
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     ```
-    
+
+## Breaking changes
+
+The minor versions from `1.1` such as `1.1.x` will stop to work due to a breaking change, we recommend to use the `v1` tag which is promised to support, We are bumping the minor version upgrade to `1.2.1` now, use this if needs the pinning.
+
 ## Azure Load Testing Action
 
 This section describes the Azure Load Testing GitHub action. You can use this action by referencing `azure/load-testing@v1` action in your workflow. The action runs on Windows, Linux, and Mac runners.
