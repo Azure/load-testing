@@ -41,7 +41,7 @@ export class AuthenticatorService {
     {
         let tokenScopeDecoded = scope == TokenScope.Dataplane ? this.taskParameters.dataPlaneTokenScope : this.taskParameters.armTokenScope;
         try {
-            let result: any = await AzCliUtility.execAz(tokenScopeDecoded);
+            let result: any = await AzCliUtility.getDPTokens(tokenScopeDecoded);
             let token = result.accessToken;
             scope == TokenScope.ControlPlane ? this.controlPlaneToken = token : this.dataPlanetoken = token;
             return token;

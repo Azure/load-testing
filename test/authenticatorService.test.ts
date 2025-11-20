@@ -18,7 +18,7 @@ describe('authenticator service tests', () => {
         let tokenResult = {
             accessToken: "token"
         };
-        let stub = sinon.stub(AzCliUtility, "execAz").withArgs(Constants.defaultTaskParameters.dataPlaneTokenScope).resolves(tokenResult);
+        let stub = sinon.stub(AzCliUtility, "getDPTokens").withArgs(Constants.defaultTaskParameters.dataPlaneTokenScope).resolves(tokenResult);
 
         let authenticatorService = new AuthenticatorService(Constants.defaultTaskParameters);
         let result = await authenticatorService.getDataPlaneHeader(FetchCallType.get);
@@ -31,7 +31,7 @@ describe('authenticator service tests', () => {
         let tokenResult = {
             accessToken: "token"
         };
-        let stub = sinon.stub(AzCliUtility, "execAz").withArgs(Constants.defaultTaskParameters.armTokenScope).resolves(tokenResult);
+        let stub = sinon.stub(AzCliUtility, "getDPTokens").withArgs(Constants.defaultTaskParameters.armTokenScope).resolves(tokenResult);
 
         let authenticatorService = new AuthenticatorService(Constants.defaultTaskParameters);
         let result = await authenticatorService.getARMTokenHeader();

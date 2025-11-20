@@ -1,19 +1,18 @@
 import { execFile } from "child_process";
 import { AccountType, ControlPlaneTokenScope, DataPlaneTokenScope } from "../models/TaskParameters";
 
-export async function execAz(tokenScope: ControlPlaneTokenScope| DataPlaneTokenScope): Promise<any> {
+export async function getDPTokens(tokenScope: ControlPlaneTokenScope| DataPlaneTokenScope): Promise<any> {
     const cmdArguments = ["account", "get-access-token", "--resource"];
     cmdArguments.push(tokenScope);
-    return runCommand(cmdArguments);
+    return execAz(cmdArguments);
 }
 
 export async function getAccounts(accountType: AccountType): Promise<any> {
     const cmdArguments = accountType === 'Subscription' ? ["account", "show"] : ["cloud", "show"];
-    return runCommand(cmdArguments);
+    return execAz(cmdArguments);
 }
 
-async function runCommand(cmdArguments: string[]): Promise<any> {
-    console.log(`Executing az command: az ${cmdArguments.join(" ")}`, process.platform);
+async function execAz(cmdArguments: string[]): Promise<any> {
     const azCmd = process.platform === "win32" ? "az.cmd" : "az";
     return new Promise<any>((resolve, reject) => {
         execFile(azCmd, [...cmdArguments, "--out", "json"], { encoding: "utf8", shell : process.platform === "win32" }, (error:any, stdout:any) => {
