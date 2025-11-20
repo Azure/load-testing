@@ -13,6 +13,7 @@ export async function getAccounts(accountType: AccountType): Promise<any> {
 }
 
 async function runCommand(cmdArguments: string[]): Promise<any> {
+    console.log(`Executing az command: az ${cmdArguments.join(" ")}`, process.platform);
     const azCmd = process.platform === "win32" ? "az.cmd" : "az";
     return new Promise<any>((resolve, reject) => {
         execFile(azCmd, [...cmdArguments, "--out", "json"], { encoding: "utf8", shell : false }, (error:any, stdout:any) => {
