@@ -64,6 +64,7 @@ jobs:
           node-version: '20'
   
       - name: Installing dependencies and building latest changes
+        if: github.ref == 'refs/heads/main'
         run: |
           npm install --include=dev -f
           npm ci
