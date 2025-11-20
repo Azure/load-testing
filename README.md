@@ -57,7 +57,9 @@ For using any credentials like Azure Service Principal in your workflow, add the
 
 ## Breaking changes
 
-The minor versions from `1.1` such as `1.1.x` will stop to work due to a breaking change, we recommend to use the `v1` tag which is promised to support, We are bumping the minor version upgrade to `1.2.1` now, use this if needs the pinning.
+All minor versions under `1.1` (e.g., `1.1.x`) will stop working due to a breaking change.
+To ensure continued compatibility, we recommend switching to the `v1` tag, which we will continue to support.
+We are also bumping the minor version to `1.2.1`. If you prefer to pin to a specific version, please update your workflows to use `1.2.1`.
 
 ## Azure Load Testing Action
 
