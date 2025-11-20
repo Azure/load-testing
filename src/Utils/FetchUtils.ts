@@ -17,8 +17,10 @@ const methodEnumToString : { [key in FetchCallType] : string } = {
 // (note mohit): shift to the enum later.
 export async function httpClientRetries(urlSuffix : string, header : IHeaders, method : FetchCallType , retries : number = 1, data : string , isUploadCall : boolean = true, log: boolean = true) : Promise<IHttpClientResponse>{
     let httpResponse : IHttpClientResponse;
+    const retrriableCodes = [408,429,500,502,503,504]; // 408 - Request Timeout, 429 - Too Many Requests, 500 - Internal Server Error, 502 - Bad Gateway, 503 - Service Unavailable, 504 - Gateway Timeout
+    let backOffTimeForRetry = 5; // seconds
+    let correlationId = `gh-actions-${getUniqueId()}`;
     try {
-        let correlationId = `gh-actions-${getUniqueId()}`;
         header[correlationHeader] = correlationId; // even if we put console.debug its printing along with the logs, so lets just go ahead with the differentiation with azdo, so we can search the timeframe for azdo in correlationid and resource filter.
         if(method == FetchCallType.get){
             httpResponse = await httpClient.get(urlSuffix, header);
@@ -45,7 +47,10 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
         if(httpResponse.message.statusCode!= undefined && httpResponse.message.statusCode >= 300){
             CoreUtils.debug(`correlation id : ${correlationId}`);
         }
-        if(httpResponse.message.statusCode!=undefined && [408,429,502,503,504].includes(httpResponse.message.statusCode)){
+        if(httpResponse.message.statusCode!=undefined && retrriableCodes.includes(httpResponse.message.statusCode)){
+            if(method == FetchCallType.patch){
+                backOffTimeForRetry += 60; // extra 60 seconds for patch, basically this happens when the service didnot handle some of the external service dependencies, and the external can take time to recover.
+            }
             let err = await getResultObj(httpResponse);
             throw {message : (err && err.error && err.error.message) ? err.error.message : errorCorrection(httpResponse)}; // throwing as message to catch it as err.message
         }
@@ -53,7 +58,7 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
     }
     catch(err:any){
         if(retries){
-            let sleeptime = (5-retries)*1000 + Math.floor(Math.random() * 5001);
+            let sleeptime = backOffTimeForRetry * 1000;
             if (log) {
                 console.log(`Failed to connect to ${urlSuffix} due to ${err.message}, retrying in ${sleeptime/1000} seconds`);
             }
@@ -61,6 +66,7 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
             return await httpClientRetries(urlSuffix,header,method,retries-1,data);
         }
         else{
+            console.log(err, "\ncorrelationId:" + correlationId);
             throw new Error(`Operation did not succeed after 3 retries. Pipeline failed with error : ${err.message}`);
         }
     }
