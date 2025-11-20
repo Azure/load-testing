@@ -64,7 +64,7 @@ jobs:
           node-version: '20'
   
       - name: Installing dependencies and building latest changes
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main')
         run: |
           npm install --include=dev -f
           npm ci
