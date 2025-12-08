@@ -444,3 +444,27 @@ export function getAllFileErrors(testObj:TestModel | null): { [key: string]: str
 
     return fileErrors;
 }
+
+/**
+ * This function returns the string with only ascii charaters, removing the non-ascii characters.
+ * @param pipelineName - original pipeline name
+ * @returns sanitised pipeline name with only ascii characters
+ */
+export function sanitisePipelineNameHeader(pipelineName: string | null): string | null {
+    if(!pipelineName) {
+        return pipelineName;
+    }
+    let result = "";
+    for (const ch of pipelineName) {
+        const code = ch.codePointAt(0)!;
+        const allowed = (code >= 32 && code <= 126); // ASCII characters range, the only allowed characters in headers.
+        if(allowed) {
+            result += ch;
+        }
+    }
+    result = result.trim();
+    if(result.length == 0) {
+        result = "-"; // this is what GH does when i try to give all non-ascii characters in the repo name.
+    }
+    return result;
+}
