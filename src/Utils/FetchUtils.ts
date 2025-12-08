@@ -1,5 +1,5 @@
 import { IHeaders, IHttpClientResponse } from 'typed-rest-client/Interfaces';
-import { errorCorrection, getResultObj, getUniqueId, sleep } from './CommonUtils';
+import { errorCorrection, getResultObj, getUniqueId, sanitisePipelineNameHeader, sleep } from './CommonUtils';
 import { FetchCallType, correlationHeader } from './../models/UtilModels';
 import * as httpc from 'typed-rest-client/HttpClient';
 import { uploadFileData } from './FileUtils';
@@ -39,7 +39,7 @@ export async function httpClientRetries(urlSuffix : string, header : IHeaders, m
             const pipelineName = process.env.GITHUB_WORKFLOW || "Unknown Pipeline";
             const pipelineUri = `${githubBaseUrl}/${repository}/actions/runs/${runId}`;
             
-            header['x-ms-pipeline-name'] = pipelineName;   // setting these for patch calls.
+            header['x-ms-pipeline-name'] = sanitisePipelineNameHeader(pipelineName);   // setting these for patch calls.
             header['x-ms-pipeline-uri'] = pipelineUri;
             httpResponse = await httpClient.request(methodEnumToString[method], urlSuffix, data, header);
         }
