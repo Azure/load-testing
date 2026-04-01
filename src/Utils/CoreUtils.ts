@@ -18,7 +18,7 @@ export function getInput(name: string): string | undefined {
 
 export function getBoolInput(name: string, defaultValue: boolean = false): boolean {
     try {
-        return core.getBooleanInput(name, {required: false});
+        return core.getBooleanInput(name, {required: true});
     } catch (error) {
         return defaultValue;
     }
