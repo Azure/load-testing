@@ -89,7 +89,7 @@ jobs:
         shell : bash
     
       - name: 'Azure Load Testing'
-        uses: load-testing@v1
+        uses: Azure/load-testing@v1
         id: alt
         with:
           loadTestConfigFile: ./E2ETests/ConfigFiles/${{ matrix.configFile }}
