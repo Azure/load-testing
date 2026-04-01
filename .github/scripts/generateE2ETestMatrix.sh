@@ -1,5 +1,5 @@
 os_options=('ubuntu-latest' 'windows-latest')
-node_options=('20' '22')
+node_options=('18' '20' '22')
 
 ScriptsRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  && pwd )"
 E2ETestConfigFile="$ScriptsRoot/../config/e2eTestConfig.json"
@@ -9,7 +9,7 @@ matrix_json="{\"include\":["
 
 while read -r config; do
     rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
-    rand_node=${node_options[$((RANDOM % 2))]}  # Random Node version for each test
+    rand_node=${node_options[$((RANDOM % 3))]}  # Random Node version for each test
 
     configFile=$(echo "$config" | jq -r '.configFile')
     secrets=$(echo "$config" | jq -r '.secrets')
