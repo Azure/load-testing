@@ -1,0 +1,121 @@
+name: WorkFlow to trigger on the update of tags.
+
+on:
+  push:
+    tags:
+      - '*'
+
+# NOTE : This workflow doesn't run on PRs against forks of this repositories
+# Since they won't have access to the repository secrets. Ref: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+# CONFIGURATION
+# For help, go to https://github.com/Azure/Actions
+#
+# 1. Set up the following secrets in your repository:
+#   AZURE_CREDENTIALS
+#
+# 2. Change these variables for your configuration:
+
+env:
+  LOAD_TEST_RESOURCE: ${{ secrets.LOAD_TEST_RESOURCE_NAME }}
+  LOAD_TEST_RESOURCE_GROUP: ${{ secrets.LOAD_TEST_RESOURCE_GROUP_NAME }}
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents : read # This is required for actions/checkout
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Generate Dynamic Matrix
+        id: set-matrix
+        run: |
+          chmod +x ./.github/scripts/generateE2ETestMatrix.sh
+          ./.github/scripts/generateE2ETestMatrix.sh
+        shell: bash
+
+  run-integration-test:
+    environment: automation test
+    name: Validate PR
+    needs: generate-matrix
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      max-parallel: 5
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+  
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+  
+      - name: Azure authentication
+        uses: azure/login@v1
+        continue-on-error: false
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  
+      - name: Generate GUID
+        id: guid
+        run: |
+            if [[ "${{ runner.os }}" == "Windows" ]]; then
+              echo "::set-output name=GUID::$(powershell -Command "[guid]::NewGuid().ToString()")"
+            else
+              echo "::set-output name=GUID::$(uuidgen)"
+            fi
+        shell : bash
+
+      - name: Set Secrets
+        id: secrets
+        run: |
+            secrets="${{ matrix.secrets }}"
+            echo "::set-output name=secrets::$(echo "$secrets" | sed "s/'/\"/g")"
+        shell : bash
+
+      - name: Set Env vars
+        id: env
+        run: |
+            env="${{ matrix.env }}"
+            echo "::set-output name=env::$(echo "$env" | sed "s/'/\"/g")"
+        shell : bash
+    
+      - name: 'Azure Load Testing'
+        uses: load-testing@v1
+        id: alt
+        with:
+          loadTestConfigFile: ./E2ETests/ConfigFiles/${{ matrix.configFile }}
+          loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
+          resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
+          overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
+          outputVariableName: 'loadTestRunId'
+          secrets: ${{ steps.secrets.outputs.secrets }}
+          env: ${{ steps.env.outputs.env }}
+        continue-on-error: true
+  
+      - name: Print the Output
+        run: echo "The Test ID is ${{ steps.alt.outputs['loadTestRunId.testRunId'] }}"
+        shell: bash
+  
+      - name: Check for results and report files
+        run: |
+          if [[ -d "./loadTest" ]]; then
+            if [[ -f "./loadTest/results.zip" && -f "./loadTest/report.zip" ]]; then
+              echo "Both results.zip and report.zip files are present."
+            else
+              echo "One or both of the files are missing."
+              exit 1
+            fi
+          else
+            echo "loadTest directory is missing."
+            exit 1
+          fi
+        shell: bash
