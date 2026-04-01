@@ -23,7 +23,7 @@ export class CreateAndRunTest {
         this.apiService = apiService;
     }
 
-    public async createAndRunTest() {
+    public async createAndRunTest(waitForRunCompletionInput: boolean = true) {
         await this.initialize();
         let testPayload = await this.getTestPayload();
 
@@ -62,13 +62,18 @@ export class CreateAndRunTest {
     
         CoreUtils.exportVariable(PostTaskParameters.runId, testRunResult.testRunId);
     
-        await this.awaitTerminationForTestRun(testRunResult.testRunId, this.apiService);
-        testRunResult = await this.awaitResultsPopulation(testRunResult.testRunId, this.apiService) ?? testRunResult;
-        CoreUtils.exportVariable(PostTaskParameters.isRunCompleted, 'true');
-    
-        this.printMetrics(testRunResult);
-        await this.uploadResultsToPipeline(testRunResult);
-        this.setTaskResults(testRunResult);
+        if(waitForRunCompletionInput) {
+            await this.awaitTerminationForTestRun(testRunResult.testRunId, this.apiService);
+            testRunResult = await this.awaitResultsPopulation(testRunResult.testRunId, this.apiService) ?? testRunResult;
+            CoreUtils.exportVariable(PostTaskParameters.isRunCompleted, 'true');
+        
+            this.printMetrics(testRunResult);
+            await this.uploadResultsToPipeline(testRunResult);
+            this.setTaskResults(testRunResult);
+        } else {
+            console.log("Test run started. Not waiting for completion as per input.");
+            this.setRunStarted();
+        }
         this.setOutputVariable(testRunResult);
     }
 
@@ -311,6 +316,10 @@ export class CreateAndRunTest {
             console.log("Please go to the Portal for more error details: "+ testRunObj.portalUrl);
             CoreUtils.setFailed("TestStatus: " + testRunObj.status);
         }
+    }
+
+    private setRunStarted() : void {
+        console.log("Result: Test Run Started Successfully.");
     }
     
     private setOutputVariable(testRunObj: TestRunModel) {

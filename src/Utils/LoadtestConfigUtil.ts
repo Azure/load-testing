@@ -281,7 +281,10 @@ export class LoadtestConfigUtil {
             for(let serverComponent of metrics) {
                 let key : string = (resourceId + '/' + (serverComponent.namespace ?? Util.getResourceTypeFromResourceId(resourceId)) + '/' + serverComponent.name).toLowerCase();
 
-                if(!loadtestConfig.serverMetricsConfig.hasOwnProperty(key) || isNullOrUndefined(loadtestConfig.serverMetricsConfig[key])) {
+                if(loadtestConfig.serverMetricsConfig.hasOwnProperty(key) && !isNullOrUndefined(loadtestConfig.serverMetricsConfig[key])) {
+                    loadtestConfig.serverMetricsConfig[key]!.aggregation = loadtestConfig.serverMetricsConfig[key]!.aggregation + "," + serverComponent.aggregation;
+                }
+                else {
                     loadtestConfig.serverMetricsConfig[key] = {
                         name: serverComponent.name,
                         aggregation: serverComponent.aggregation,
@@ -290,9 +293,6 @@ export class LoadtestConfigUtil {
                         resourceType: Util.getResourceTypeFromResourceId(resourceId) ?? '',
                         id: key
                     }
-                }
-                else {
-                    loadtestConfig.serverMetricsConfig[key]!.aggregation = loadtestConfig.serverMetricsConfig[key]!.aggregation + "," + serverComponent.aggregation;
                 }
             }
         }

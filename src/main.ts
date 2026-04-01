@@ -7,6 +7,7 @@ import { CreateAndRunTest } from "./RunnerFiles/CreateAndRunTest";
 import { APIService } from './services/APIService';
 import { TaskParameters } from './models/TaskParameters';
 import { TaskParametersUtil } from './Utils/TaskParametersUtil';
+import * as InputConstants from './Constants/InputConstants';
 
 async function run() {
     try {
@@ -24,8 +25,10 @@ async function run() {
         }
         fs.mkdirSync(resultFolder);
         
+        let waitForRunCompletionInput : boolean = CoreUtils.getBoolInput(InputConstants.waitForCompletion, true);
+
         let runner = new CreateAndRunTest(apiService);
-        runner.createAndRunTest();
+        runner.createAndRunTest(waitForRunCompletionInput);
     }
     catch (err:any) {
         CoreUtils.setFailed(err.message);

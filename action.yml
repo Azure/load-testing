@@ -28,6 +28,10 @@ inputs:
   outputVariableName:
     description: 'Name of the output variable that stores the test run ID for use in subsequent tasks.'
     required: false
+  waitForCompletion:
+    description: 'Wait for the load test run to complete. If false, the action will return after starting the test run. Default is true.'
+    required: false
+    default: 'true'
 
 branding:
     icon: 'extension-icon.svg'

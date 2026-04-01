@@ -7,6 +7,7 @@ export const secrets = 'secrets';
 export const resourceGroup = 'resourceGroup';
 export const loadTestResource = 'loadTestResource';
 export const loadTestConfigFile = 'loadTestConfigFile';
+export const waitForCompletion = 'waitForCompletion';
 
 // labels user visible strings
 export const testRunNameLabel = 'Load Test Run Name';
