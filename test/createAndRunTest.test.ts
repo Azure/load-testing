@@ -403,4 +403,46 @@ describe('create and run test', () => {
         expect(isRunCompleted).toBe("true");
     });
 
+    it("test run wont wait for completion when the wait is explicit false.", async () => {
+        TestSupport.createAndSetLoadTestConfigFile(testYamls.jmxComprehensiveYaml, coreMock, "createAndRunTest.yaml");
+        
+        let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
+        let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
+        let getServerMetricsConfigStub = sinon.stub(APIService.prototype, "getServerMetricsConfig").resolves(null);
+        let uploadFilesStub = sinon.stub(APIService.prototype, "uploadFile");
+        let deleteFileAPIStub = sinon.stub(APIService.prototype, "deleteFileAPI");
+        let createTestAPIStub = sinon.stub(APIService.prototype, "createTestAPI").resolves(TestPayloadConstants.createJmxTestExpectedPayload);
+        let patchAppComponentsStub = sinon.stub(APIService.prototype, "patchAppComponents");
+        let patchServerMetricsConfigStub = sinon.stub(APIService.prototype, "patchServerMetricsConfig");
+        let createTestRunStub = sinon.stub(APIService.prototype, "createTestRun").resolves(TestRunResponseConstants.testRunNonTerminalResponse);
+        let awaitTestTerminationsStub = sinon.stub(runner, "awaitTerminationForFileValidation").resolves(TestReponseConstants.testFileValidationCompletedResponse);
+        let awaitTestRunTerminationsStub = sinon.stub(runner, "awaitTerminationForTestRun").resolves(TestRunResponseConstants.testRunResultFailedResponse);
+        let awaitResultsPopulationStub = sinon.stub(runner, "awaitResultsPopulation").resolves(TestRunResponseConstants.testRunResultFailedResponse);
+
+        await runner.createAndRunTest(false);
+
+        expect(getTestAPIStub.calledOnce).toBe(true);
+        expect(getAppComponentsStub.notCalled).toBe(true);
+        expect(getServerMetricsConfigStub.notCalled).toBe(true);
+        expect(deleteFileAPIStub.notCalled).toBe(true);
+        expect(uploadFilesStub.calledWithMatch(sinon.match.any, FileType.TEST_SCRIPT)).toBe(true);
+        expect(uploadFilesStub.calledWithMatch(sinon.match.any, FileType.ADDITIONAL_ARTIFACTS)).toBe(true);
+        expect(uploadFilesStub.calledWithMatch(sinon.match.any, FileType.ZIPPED_ARTIFACTS)).toBe(true);
+        expect(uploadFilesStub.calledWithMatch(sinon.match.any, FileType.USER_PROPERTIES)).toBe(true);
+        expect(createTestAPIStub.calledOnce).toBe(true);
+        expect(patchAppComponentsStub.calledOnce).toBe(true);
+        expect(patchServerMetricsConfigStub.calledOnce).toBe(true);
+        expect(createTestRunStub.calledOnce).toBe(true);
+        expect(awaitTestTerminationsStub.calledOnce).toBe(true);
+        
+        expect(awaitTestRunTerminationsStub.callCount).toBe(0);
+        expect(awaitResultsPopulationStub.callCount).toBe(0);
+
+        let testRunId = coreMock.getVariable(PostTaskParameters.runId);
+        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
+
+        expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
+        expect(isRunCompleted).toBe(undefined);
+    });
+
 })

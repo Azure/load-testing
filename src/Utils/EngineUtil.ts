@@ -94,8 +94,8 @@ export function getLoadTestFrameworkModelFromKind(kind?: TestKind): BaseLoadTest
     return getLoadTestFrameworkModel(getLoadTestFrameworkFromKind(kind));
 }
 
-export module Resources {
-    export module Strings {
+export namespace Resources {
+    export namespace Strings {
         export const allFrameworksFriendly = "URL, JMX and Locust";
     }
 }

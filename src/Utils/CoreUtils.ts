@@ -16,6 +16,14 @@ export function getInput(name: string): string | undefined {
     return variable
 }
 
+export function getBoolInput(name: string, defaultValue: boolean = false): boolean {
+    try {
+        return core.getBooleanInput(name, {required: false});
+    } catch (error) {
+        return defaultValue;
+    }
+}
+
 export function setFailed(message: string) {
     core.setFailed(message);
 }

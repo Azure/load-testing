@@ -53,7 +53,7 @@ export const reportZipFileName = 'report.zip';
 export const resultZipFileName = 'results.zip';
 export const correlationHeader = 'x-ms-correlation-request-id';
 
-export module ApiVersionConstants {
+export namespace ApiVersionConstants {
     export const latestVersion = '2025-03-01-preview';
     export const tm2022Version = '2022-11-01';
     export const cp2022Version = '2022-12-01'
@@ -100,13 +100,13 @@ export interface OutputVariableInterface {
     testRunId: string;
 }
 
-export module PostTaskParameters {
+export namespace PostTaskParameters {
     export const runId = 'LOADTEST_RUNID';
     export const baseUri = 'LOADTEST_RESOURCE_URI';
     export const isRunCompleted = 'LOADTEST_RUN_COMPLETED'; // this is set when the task is completed, to avoid get calls for the test again.
 }
 
-export module OutPutVariablesConstants {
+export namespace OutPutVariablesConstants {
     export const testRunId = 'testRunId';
 }
 
