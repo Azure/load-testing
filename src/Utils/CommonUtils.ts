@@ -149,10 +149,10 @@ export function removeUnits(input:string)
     let i = 0;
     let decimalSeen = false;
     for (; i < input.length; i++) {
-        if(input[i] >= '0' && input[i] <= '9'){
+        if (input[i] >= '0' && input[i] <= '9') {
             continue;
         }
-        if(input[i] == '.' && !decimalSeen){
+        if (input[i] === '.' && !decimalSeen) {
             decimalSeen = true;
             continue;
         }
