@@ -7,7 +7,7 @@ describe("PassFailCriteriaUtil tests", () => {
         });
     });
 
-    it("uses decimal values when evaluating duplicate requests_per_sec criteria", () => {
+    it("keeps minimum threshold when duplicate requests_per_sec criteria are provided", () => {
         expect(getPassFailCriteriaFromString(["avg(requests_per_sec) > 1.9", "avg(requests_per_sec) > 1.2"])).toStrictEqual({
             "requests_per_sec avg > continue": 1.2
         });
