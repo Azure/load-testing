@@ -85,7 +85,7 @@ function validateCriteriaAndConvertToWorkingStringModel(data: any, failureCriter
     if(data.requestName != ""){
         key = key + ' ' + data.requestName;
     }
-    let val: number = parseInt(data.value);
+    let val: number = Number(data.value);
     let currVal = val;
     
     if(failureCriteriaValue.hasOwnProperty(key))

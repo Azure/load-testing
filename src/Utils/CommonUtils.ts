@@ -147,7 +147,7 @@ export function indexOfFirstDigit(input: string) {
 export function removeUnits(input:string) 
 {
     let i = 0;
-    for (; input[i] >= '0' && input[i] <= '9'; i++);
+    for (; (input[i] >= '0' && input[i] <= '9') || input[i] == '.'; i++);
     return i == input.length ? input : input.substring(0,i);
 }
 
