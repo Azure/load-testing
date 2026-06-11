@@ -1,22 +1,6 @@
 import { PassFailServerMetric } from "../models/PayloadModels";
 import { ValidAggregateList, ValidConditionList } from "../models/UtilModels";
-import { indexOfFirstDigit, removeUnits } from "./CommonUtils";
-
-function removeUnitsAllowDecimal(input: string) {
-    let i = 0;
-    let decimalSeen = false;
-    for (; i < input.length; i++) {
-        if (input[i] >= '0' && input[i] <= '9') {
-            continue;
-        }
-        if (input[i] === '.' && !decimalSeen) {
-            decimalSeen = true;
-            continue;
-        }
-        break;
-    }
-    return i == input.length ? input : input.substring(0, i);
-}
+import { indexOfFirstDigit, TryExtractLeadingInteger, TryExtractLeadingDecimal } from "./CommonUtils";
 
 /*
     ado takes the full pf criteria as a string after parsing the string into proper data model, 
@@ -94,7 +78,7 @@ function validateCriteriaAndConvertToWorkingStringModel(data: any, failureCriter
 
     if(data.action == "")
         data.action = "continue"
-    data.value = data.clientMetric === "requests_per_sec" ? removeUnitsAllowDecimal(data.value) : removeUnits(data.value);
+    data.value = data.clientMetric === "requests_per_sec" ? TryExtractLeadingDecimal(data.value) : TryExtractLeadingInteger(data.value);
     if(!validCriteria(data)) 
         throw new Error("Invalid Failure Criteria");
     let key: string = data.clientMetric+' '+data.aggregate+' '+data.condition+' '+data.action;
