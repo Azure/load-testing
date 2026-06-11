@@ -2,6 +2,22 @@ import { PassFailServerMetric } from "../models/PayloadModels";
 import { ValidAggregateList, ValidConditionList } from "../models/UtilModels";
 import { indexOfFirstDigit, removeUnits } from "./CommonUtils";
 
+function removeUnitsAllowDecimal(input: string) {
+    let i = 0;
+    let decimalSeen = false;
+    for (; i < input.length; i++) {
+        if (input[i] >= '0' && input[i] <= '9') {
+            continue;
+        }
+        if (input[i] === '.' && !decimalSeen) {
+            decimalSeen = true;
+            continue;
+        }
+        break;
+    }
+    return i == input.length ? input : input.substring(0, i);
+}
+
 /*
     ado takes the full pf criteria as a string after parsing the string into proper data model, 
 */
@@ -78,14 +94,14 @@ function validateCriteriaAndConvertToWorkingStringModel(data: any, failureCriter
 
     if(data.action == "")
         data.action = "continue"
-    data.value = removeUnits(data.value);
+    data.value = data.clientMetric === "requests_per_sec" ? removeUnitsAllowDecimal(data.value) : removeUnits(data.value);
     if(!validCriteria(data)) 
         throw new Error("Invalid Failure Criteria");
     let key: string = data.clientMetric+' '+data.aggregate+' '+data.condition+' '+data.action;
     if(data.requestName != ""){
         key = key + ' ' + data.requestName;
     }
-    let val: number = parseInt(data.value);
+    let val: number = data.clientMetric === "requests_per_sec" ? Number(data.value) : parseInt(data.value);
     let currVal = val;
     
     if(failureCriteriaValue.hasOwnProperty(key))
