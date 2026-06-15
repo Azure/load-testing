@@ -31,7 +31,7 @@
         "@types/q": "^1.5.8",
         "adm-zip": "^0.5.12",
         "extract-zip": "^2.0.1",
-        "form-data": "^4.0.0",
+        "form-data": "^4.0.6",
         "js-yaml": "^4.1.0",
         "jwt-decode": "^4.0.0",
         "path": "^0.12.7",
