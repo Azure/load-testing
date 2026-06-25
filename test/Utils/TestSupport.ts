@@ -10,6 +10,8 @@ import * as AzCliUtility from "../../src/Utils/AzCliUtility";
 const yaml = require('js-yaml');
 const fs = require('fs');
 
+
+
 export class TestSupport {
 
     public static setupMockForTaskParameters(coreMock: CoreMock) {
