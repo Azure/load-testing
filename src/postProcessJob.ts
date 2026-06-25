@@ -1,7 +1,7 @@
 import { PostTaskParameters } from "./models/UtilModels";
 import * as CoreUtils from './Utils/CoreUtils';
 import { AuthenticatorService } from "./services/AuthenticatorService";
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "./Utils/CommonUtils";
 import { APIService } from "./services/APIService";
 import { TaskParameters } from './models/TaskParameters';
 import { TaskParametersUtil } from './Utils/TaskParametersUtil';

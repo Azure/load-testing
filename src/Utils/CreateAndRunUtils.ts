@@ -1,4 +1,4 @@
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "./CommonUtils";
 import { TestModel, AppComponents, ExistingParams, PassFailMetric, PassFailServerMetric, SecretMetadata, InputArtifacts, ServerMetricConfig, TestRunModel } from "../models/PayloadModels";
 import { ConditionEnumToSignMap, RunTimeParams, ValidConditionsEnumValuesList } from "../models/UtilModels";
 import * as Util from "./CommonUtils";
