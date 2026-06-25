@@ -1,4 +1,4 @@
-import { sanitisePipelineNameHeader } from "../src/Utils/CommonUtils";
+import { sanitisePipelineNameHeader, isNullOrUndefined, isNull } from "../src/Utils/CommonUtils";
 describe("CommonUtils tests", () => {
     it.each([
         {
@@ -44,5 +44,33 @@ describe("CommonUtils tests", () => {
     ])("sanitisePipelineNameHeader removes special characters", ({ input, expected }) => {
         const result = sanitisePipelineNameHeader(input);
         expect(result).toBe(expected);
+    });
+
+    it.each([
+        { input: null, expected: true },
+        { input: undefined, expected: true },
+        { input: "", expected: false },
+        { input: 0, expected: false },
+        { input: false, expected: false },
+        { input: NaN, expected: false },
+        { input: "value", expected: false },
+        { input: {}, expected: false },
+        { input: [], expected: false }
+    ])("isNullOrUndefined returns $expected for $input", ({ input, expected }) => {
+        expect(isNullOrUndefined(input)).toBe(expected);
+    });
+
+    it.each([
+        { input: null, expected: true },
+        { input: undefined, expected: false },
+        { input: "", expected: false },
+        { input: 0, expected: false },
+        { input: false, expected: false },
+        { input: NaN, expected: false },
+        { input: "value", expected: false },
+        { input: {}, expected: false },
+        { input: [], expected: false }
+    ])("isNull returns $expected for $input", ({ input, expected }) => {
+        expect(isNull(input)).toBe(expected);
     });
 });

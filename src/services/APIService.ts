@@ -3,7 +3,7 @@ import { ApiVersionConstants, FetchCallType } from "../models/UtilModels";
 import * as FetchUtil from "../Utils/FetchUtils";
 import * as Util from "../Utils/CommonUtils";
 import { AppComponents, LoadTestResource, ServerMetricConfig, TestModel, TestRunModel, FileType } from "../models/PayloadModels";
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "../Utils/CommonUtils";
 
 export class APIService {
     authContext: AuthenticatorService;

@@ -1,4 +1,4 @@
-import { isNull, isNullOrUndefined } from "util";
+import { isNull, isNullOrUndefined } from "./CommonUtils";
 import { ManagedIdentityType, ReferenceIdentityKinds, ValidationModel, ValidConditionsEnumValuesList, ValidCriteriaTypes } from "../models/UtilModels";
 import { checkFileType, checkFileTypes, getResourceGroupFromResourceId, getResourceNameFromResourceId, getResourceTypeFromResourceId, getSubscriptionIdFromResourceId, invalidDescription, invalidDisplayName, inValidEngineInstances, invalidName, validateAndGetSegregatedManagedIdentities, validateAutoStop } from "./CommonUtils";
 import * as EngineUtil from './EngineUtil';
