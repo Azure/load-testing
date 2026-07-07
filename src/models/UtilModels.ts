@@ -103,7 +103,7 @@ export interface OutputVariableInterface {
 export namespace PostTaskParameters {
     export const runId = 'LOADTEST_RUNID';
     export const baseUri = 'LOADTEST_RESOURCE_URI';
-    export const isRunCompleted = 'LOADTEST_RUN_COMPLETED'; // this is set when the task is completed, to avoid get calls for the test again.
+    export const skipPostProcessing = 'LOADTEST_SKIP_POST_PROCESSING'; // this is set when post-processing (stopping the run) should be skipped, i.e. the run already completed or completion was intentionally skipped.
 }
 
 export namespace OutPutVariablesConstants {

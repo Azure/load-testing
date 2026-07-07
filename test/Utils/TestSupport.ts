@@ -31,7 +31,7 @@ export class TestSupport {
         let processEnv = {
             [PostTaskParameters.runId]: 'runid',
             [PostTaskParameters.baseUri]: Constants.loadtestConfig.dataPlaneUrl,
-            [PostTaskParameters.isRunCompleted]: isTestRunCompleted ? 'true' : 'false',
+            [PostTaskParameters.skipPostProcessing]: isTestRunCompleted ? 'true' : 'false',
         }
         sinon.stub(process, 'env').value(processEnv);
     }
