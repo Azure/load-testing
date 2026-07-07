@@ -442,7 +442,7 @@ describe('create and run test', () => {
         let skipPostProcessing = coreMock.getVariable(PostTaskParameters.skipPostProcessing);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
-        expect(skipPostProcessing).toBe(undefined);
+        expect(skipPostProcessing).toBe("true");
     });
 
 })
