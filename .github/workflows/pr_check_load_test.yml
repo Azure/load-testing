@@ -195,7 +195,7 @@ jobs:
           resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
           overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
           outputVariableName: 'loadTestRunId'
-          waitForRunCompletion: false
+          waitForCompletion: false
         continue-on-error: true
   
       - name: Print the Output
