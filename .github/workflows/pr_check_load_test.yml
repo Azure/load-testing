@@ -136,7 +136,7 @@ jobs:
 
   run-skip-wait-integration-test:
     environment: automation test
-    name: Validate PR
+    name: Validate PR for Skip wait.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
