@@ -23,9 +23,8 @@ async function run() {
         if (fs.existsSync(resultFolder)){
             util.deleteFile(resultFolder);
         }
-        fs.mkdirSync(resultFolder);
-        
         let waitForRunCompletionInput : boolean = CoreUtils.getBoolInput(InputConstants.waitForCompletion, true);
+        waitForRunCompletionInput && fs.mkdirSync(resultFolder); // only make when the wait is true, else folder creation iis un-necessary.
 
         let runner = new CreateAndRunTest(apiService);
         runner.createAndRunTest(waitForRunCompletionInput);
