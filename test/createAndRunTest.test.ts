@@ -73,10 +73,10 @@ describe('create and run test', () => {
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
         let testRunId = coreMock.getVariable(PostTaskParameters.runId);
-        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
+        let skipPostProcessing = coreMock.getVariable(PostTaskParameters.skipPostProcessing);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
-        expect(isRunCompleted).toBe("true");
+        expect(skipPostProcessing).toBe("true");
     });
 
     it("edit jmx test flow", async () => {
@@ -175,10 +175,10 @@ describe('create and run test', () => {
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
         let testRunId = coreMock.getVariable(PostTaskParameters.runId);
-        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
+        let skipPostProcessing = coreMock.getVariable(PostTaskParameters.skipPostProcessing);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
-        expect(isRunCompleted).toBe("true");
+        expect(skipPostProcessing).toBe("true");
     });
 
     it("create url test flow", async () => {
@@ -215,22 +215,22 @@ describe('create and run test', () => {
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
         let testRunId = coreMock.getVariable(PostTaskParameters.runId);
-        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
+        let skipPostProcessing = coreMock.getVariable(PostTaskParameters.skipPostProcessing);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
-        expect(isRunCompleted).toBe("true");
+        expect(skipPostProcessing).toBe("true");
     });
 
     it("file validation failed", async () => {
         TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, coreMock, "createAndRunTest.yaml");
         
-        let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
-        let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
-        let getServerMetricsConfigStub = sinon.stub(APIService.prototype, "getServerMetricsConfig").resolves(null);
-        let uploadFilesStub = sinon.stub(APIService.prototype, "uploadFile");
-        let deleteFileAPIStub = sinon.stub(APIService.prototype, "deleteFileAPI");
-        let createTestAPIStub = sinon.stub(APIService.prototype, "createTestAPI").resolves(TestPayloadConstants.createUrlTestExpectedPayload);
-        let awaitTestTerminationsStub = sinon.stub(runner, "awaitTerminationForFileValidation").resolves(TestReponseConstants.testFileValidationFailedResponse);
+        sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
+        sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
+        sinon.stub(APIService.prototype, "getServerMetricsConfig").resolves(null);
+        sinon.stub(APIService.prototype, "uploadFile");
+        sinon.stub(APIService.prototype, "deleteFileAPI");
+        sinon.stub(APIService.prototype, "createTestAPI").resolves(TestPayloadConstants.createUrlTestExpectedPayload);
+        sinon.stub(runner, "awaitTerminationForFileValidation").resolves(TestReponseConstants.testFileValidationFailedResponse);
 
         expect(async () => await runner.createAndRunTest()).rejects.toThrow("TestPlan validation Failed.");
     });
@@ -238,13 +238,13 @@ describe('create and run test', () => {
     it("additional file validation failed", async () => {
         TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, coreMock, "createAndRunTest.yaml");
         
-        let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
-        let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
-        let getServerMetricsConfigStub = sinon.stub(APIService.prototype, "getServerMetricsConfig").resolves(null);
-        let uploadFilesStub = sinon.stub(APIService.prototype, "uploadFile");
-        let deleteFileAPIStub = sinon.stub(APIService.prototype, "deleteFileAPI");
-        let createTestAPIStub = sinon.stub(APIService.prototype, "createTestAPI").resolves(TestPayloadConstants.createUrlTestExpectedPayload);
-        let awaitTestTerminationsStub = sinon.stub(runner, "awaitTerminationForFileValidation").resolves(TestReponseConstants.testAdditionalFileValidationFailedResponse);
+        sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
+        sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
+        sinon.stub(APIService.prototype, "getServerMetricsConfig").resolves(null);
+        sinon.stub(APIService.prototype, "uploadFile");
+        sinon.stub(APIService.prototype, "deleteFileAPI");
+        sinon.stub(APIService.prototype, "createTestAPI").resolves(TestPayloadConstants.createUrlTestExpectedPayload);
+        sinon.stub(runner, "awaitTerminationForFileValidation").resolves(TestReponseConstants.testAdditionalFileValidationFailedResponse);
 
         expect(async () => await runner.createAndRunTest()).rejects.toThrow("Validation of one or more files failed. Please correct the errors and try again.");
     });
@@ -252,13 +252,13 @@ describe('create and run test', () => {
     it("file validation timeout", async () => {
         TestSupport.createAndSetLoadTestConfigFile(testYamls.urlYaml, coreMock, "createAndRunTest.yaml");
         
-        let getTestAPIStub = sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
-        let getAppComponentsStub = sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
-        let getServerMetricsConfigStub = sinon.stub(APIService.prototype, "getServerMetricsConfig").resolves(null);
-        let uploadFilesStub = sinon.stub(APIService.prototype, "uploadFile");
-        let deleteFileAPIStub = sinon.stub(APIService.prototype, "deleteFileAPI");
-        let createTestAPIStub = sinon.stub(APIService.prototype, "createTestAPI").resolves(TestPayloadConstants.createUrlTestExpectedPayload);
-        let awaitTestTerminationsStub = sinon.stub(runner, "awaitTerminationForFileValidation").resolves(TestReponseConstants.testFileValidationPendingResponse);
+        sinon.stub(APIService.prototype, "getTestAPI").resolves(null);
+        sinon.stub(APIService.prototype, "getAppComponents").resolves(null);
+        sinon.stub(APIService.prototype, "getServerMetricsConfig").resolves(null);
+        sinon.stub(APIService.prototype, "uploadFile");
+        sinon.stub(APIService.prototype, "deleteFileAPI");
+        sinon.stub(APIService.prototype, "createTestAPI").resolves(TestPayloadConstants.createUrlTestExpectedPayload);
+        sinon.stub(runner, "awaitTerminationForFileValidation").resolves(TestReponseConstants.testFileValidationPendingResponse);
 
         expect(async () => await runner.createAndRunTest()).rejects.toThrow("TestPlan validation timeout. Please try again.");
     });
@@ -298,11 +298,11 @@ describe('create and run test', () => {
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
         let testRunId = coreMock.getVariable(PostTaskParameters.runId);
-        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
+        let skipPostProcessing = coreMock.getVariable(PostTaskParameters.skipPostProcessing);
         let taskResult = coreMock.getResult();
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
-        expect(isRunCompleted).toBe("true");
+        expect(skipPostProcessing).toBe("true");
         expect(taskResult).toBe("FAILED");
     });
 
@@ -341,11 +341,11 @@ describe('create and run test', () => {
         expect(awaitResultsPopulationStub.calledOnce).toBe(true);
 
         let testRunId = coreMock.getVariable(PostTaskParameters.runId);
-        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
+        let skipPostProcessing = coreMock.getVariable(PostTaskParameters.skipPostProcessing);
         let taskResult = coreMock.getResult();
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
-        expect(isRunCompleted).toBe("true");
+        expect(skipPostProcessing).toBe("true");
         expect(taskResult).toBe("FAILED");
     });
 
@@ -397,10 +397,10 @@ describe('create and run test', () => {
         expect(uploadFileToResultsFolderStub.calledWithMatch(sinon.match.any, reportZipFileName)).toBe(true);
 
         let testRunId = coreMock.getVariable(PostTaskParameters.runId);
-        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
+        let skipPostProcessing = coreMock.getVariable(PostTaskParameters.skipPostProcessing);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
-        expect(isRunCompleted).toBe("true");
+        expect(skipPostProcessing).toBe("true");
     });
 
     it("test run wont wait for completion when the wait is explicit false.", async () => {
@@ -439,10 +439,10 @@ describe('create and run test', () => {
         expect(awaitResultsPopulationStub.callCount).toBe(0);
 
         let testRunId = coreMock.getVariable(PostTaskParameters.runId);
-        let isRunCompleted = coreMock.getVariable(PostTaskParameters.isRunCompleted);
+        let skipPostProcessing = coreMock.getVariable(PostTaskParameters.skipPostProcessing);
 
         expect(testRunId).toBe(TestRunResponseConstants.testRunNonTerminalResponse.testRunId);
-        expect(isRunCompleted).toBe(undefined);
+        expect(skipPostProcessing).toBe("true");
     });
-
+    
 })

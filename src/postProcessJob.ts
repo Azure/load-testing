@@ -10,9 +10,9 @@ export async function run() {
     try {
         const runId = process.env[PostTaskParameters.runId];
         const baseUri = process.env[PostTaskParameters.baseUri];
-        const isRunCompleted = process.env[PostTaskParameters.isRunCompleted];
+        const skipPostProcessing = process.env[PostTaskParameters.skipPostProcessing];
 
-        if(!isNullOrUndefined(runId) && !isNullOrUndefined(baseUri) && (isNullOrUndefined(isRunCompleted) || isRunCompleted != 'true')) {
+        if(!isNullOrUndefined(runId) && !isNullOrUndefined(baseUri) && (isNullOrUndefined(skipPostProcessing) || skipPostProcessing != 'true')) {
             console.log("Stopping the test run");
             let taskParameters: TaskParameters = await TaskParametersUtil.getTaskParameters(true);
             const authContext = new AuthenticatorService(taskParameters);

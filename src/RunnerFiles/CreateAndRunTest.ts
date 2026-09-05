@@ -65,12 +65,13 @@ export class CreateAndRunTest {
         if(waitForRunCompletionInput) {
             await this.awaitTerminationForTestRun(testRunResult.testRunId, this.apiService);
             testRunResult = await this.awaitResultsPopulation(testRunResult.testRunId, this.apiService) ?? testRunResult;
-            CoreUtils.exportVariable(PostTaskParameters.isRunCompleted, 'true');
+            CoreUtils.exportVariable(PostTaskParameters.skipPostProcessing, 'true');
         
             this.printMetrics(testRunResult);
             await this.uploadResultsToPipeline(testRunResult);
             this.setTaskResults(testRunResult);
         } else {
+            CoreUtils.exportVariable(PostTaskParameters.skipPostProcessing, 'true');
             console.log("Test run started. Not waiting for completion as per input.");
             this.setRunStarted();
         }

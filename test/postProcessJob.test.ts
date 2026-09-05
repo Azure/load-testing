@@ -28,7 +28,7 @@ describe('post process job tests', () => {
         expect(stopTestRunStub.calledOnce).toEqual(true);
     });
 
-    it("stop is not called when test run is terminated", async () => {
+    it("stop is not called when post processing is skipped", async () => {
         let stopTestRunStub = sinon.stub(APIService.prototype, "stopTestRun");
         TestSupport.setupMockForPostProcess(true);
 

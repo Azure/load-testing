@@ -133,3 +133,82 @@ jobs:
             exit 1
           fi
         shell: bash
+
+  run-skip-wait-integration-test:
+    environment: automation test
+    name: Validate PR for Skip wait.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+  
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+  
+      - name: Installing dependencies and building latest changes
+        if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main')
+        run: |
+          npm install --include=dev -f
+          npm ci
+        shell: bash
+  
+      - name: Azure authentication
+        uses: azure/login@v1
+        continue-on-error: false
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  
+      - name: Generate GUID
+        id: guid
+        run: |
+            if [[ "${{ runner.os }}" == "Windows" ]]; then
+              echo "::set-output name=GUID::$(powershell -Command "[guid]::NewGuid().ToString()")"
+            else
+              echo "::set-output name=GUID::$(uuidgen)"
+            fi
+        shell : bash
+
+      - name: Set Secrets
+        id: secrets
+        run: |
+            secrets="${{ matrix.secrets }}"
+            echo "::set-output name=secrets::$(echo "$secrets" | sed "s/'/\"/g")"
+        shell : bash
+
+      - name: Set Env vars
+        id: env
+        run: |
+            env="${{ matrix.env }}"
+            echo "::set-output name=env::$(echo "$env" | sed "s/'/\"/g")"
+        shell : bash
+    
+      - name: 'Azure Load Testing'
+        uses: ./
+        id: alt
+        with:
+          loadTestConfigFile: ./E2ETests/ConfigFiles/basic-test-url.yaml
+          loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
+          resourceGroup: ${{ env.LOAD_TEST_RESOURCE_GROUP }}
+          overRideParameters: "{\"testId\":\"${{ steps.guid.outputs.GUID }}\"}"
+          outputVariableName: 'loadTestRunId'
+          waitForCompletion: false
+        continue-on-error: true
+  
+      - name: Print the Output
+        run: echo "The Test ID is ${{ steps.alt.outputs['loadTestRunId.testRunId'] }}"
+        shell: bash
+  
+      - name: Check for results and report files
+        run: |
+          if [[ -d "./loadTest" ]]; then
+            echo "loadTest directory is created, should have been skipped."
+            exit 0
+          else
+            echo "loadTest directory is missing as expected, good to go."
+            exit 0
+          fi
+        shell: bash
