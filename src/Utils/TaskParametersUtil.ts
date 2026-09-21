@@ -1,4 +1,4 @@
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "./CommonUtils";
 import * as CoreUtils from './CoreUtils';
 import * as InputConstants from "../Constants/InputConstants";
 import * as EnvironmentConstants from "../Constants/EnvironmentConstants";

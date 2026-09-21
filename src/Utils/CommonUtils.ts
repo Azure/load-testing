@@ -1,11 +1,18 @@
 import { IHttpClientResponse } from 'typed-rest-client/Interfaces';
 const { v4: uuidv4 } = require('uuid');
-import { isNullOrUndefined } from 'util';
 import { autoStopDisable, OverRideParametersModel } from '../Constants/GeneralConstants';
 import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, FileStatus } from '../models/PayloadModels';
 import { RunTimeParams, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated, ValidationModel } from '../models/UtilModels';
 import * as InputConstants from '../Constants/InputConstants';
 import * as path from 'path';
+
+export function isNullOrUndefined(value: any): value is null | undefined {
+    return value === null || value === undefined;
+}
+
+export function isNull(value: any): value is null {
+    return value === null;
+}
 
 export function checkFileType(filePath: string, fileExtToValidate: string): boolean{
     if(isNullOrUndefined(filePath)){

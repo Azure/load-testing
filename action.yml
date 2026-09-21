@@ -37,6 +37,6 @@ branding:
     icon: 'extension-icon.svg'
     color: 'blue'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'lib/main.js'
   post: 'lib/postProcessJob.js'
