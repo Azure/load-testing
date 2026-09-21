@@ -1,5 +1,5 @@
 import { IHttpClientResponse } from 'typed-rest-client/Interfaces';
-const { v4: uuidv4 } = require('uuid');
+import { randomUUID } from 'crypto';
 import { autoStopDisable, OverRideParametersModel } from '../Constants/GeneralConstants';
 import { PassFailMetric, Statistics, TestRunArtifacts, TestRunModel, TestModel, FileStatus } from '../models/PayloadModels';
 import { RunTimeParams, PassFailCount, ReferenceIdentityKinds, AllManagedIdentitiesSegregated, ValidationModel } from '../models/UtilModels';
@@ -129,7 +129,7 @@ export function sleep(ms:number) {
 }  
 
 export function getUniqueId() {
-    return uuidv4();
+    return randomUUID();
 }
 
 export function getResultFolder(testArtifacts:TestRunArtifacts | undefined) {
