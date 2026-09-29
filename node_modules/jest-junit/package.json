@@ -1,0 +1,32 @@
+{
+  "name": "jest-junit",
+  "version": "17.0.0",
+  "description": "A jest reporter that generates junit xml files",
+  "main": "index.js",
+  "repository": "https://github.com/jest-community/jest-junit",
+  "author": "Jason Palmer",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "index.js",
+    "utils",
+    "constants"
+  ],
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "mkdirp": "^1.0.4",
+    "strip-ansi": "^6.0.1",
+    "uuid": "^14.0.0",
+    "xml": "^1.0.1"
+  },
+  "devDependencies": {
+    "babel-jest": "^30.2.0",
+    "jest": "^30.2.0",
+    "libxml2-wasm": "^0.4.1",
+    "slash": "^3.0.0"
+  }
+}
