@@ -1,5 +1,5 @@
 os_options=('ubuntu-latest' 'windows-latest')
-node_options=('18' '20' '22' '24')
+node_options=('24')
 
 ScriptsRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  && pwd )"
 E2ETestConfigFile="$ScriptsRoot/../config/e2eTestConfig.json"
