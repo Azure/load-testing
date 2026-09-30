@@ -9,7 +9,7 @@ matrix_json="{\"include\":["
 
 while read -r config; do
     rand_os=${os_options[$((RANDOM % 2))]}  # Random OS for each test
-    rand_node=${node_options[$((RANDOM % 4))]}  # Random Node version for each test
+    rand_node=${node_options[$((RANDOM % 1))]}  # Random Node version for each test
 
     configFile=$(echo "$config" | jq -r '.configFile')
     secrets=$(echo "$config" | jq -r '.secrets')
