@@ -103,7 +103,7 @@ jobs:
         shell : bash
     
       - name: 'Azure Load Testing'
-        uses: azure/load-testing@fa7ee8f7becd06447f042734b6446e8f6fd65f0f # v1.2.6
+        uses: azure/load-testing@v1 # v1.2.6
         id: alt
         with:
           loadTestConfigFile: ./E2ETests/ConfigFiles/${{ matrix.configFile }}
