@@ -98,7 +98,7 @@ jobs:
       - name: Set Env vars
         id: env
         run: |
-            env="${{ matrix.env }}"
+            env="${{ matrix.env }}" 
             echo "::set-output name=env::$(echo "$env" | sed "s/'/\"/g")"
         shell : bash
     
